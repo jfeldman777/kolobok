@@ -78,6 +78,49 @@ a.btn-dl {
   color: #E8A020;
 }
 a.btn-dl:active { filter: brightness(1.08); }
+span.btn-soon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px dashed #444;
+  background: #222;
+  color: #666;
+  cursor: default;
+}
+a.btn-notify {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid #555;
+  background: #2a2a2a;
+  color: #aaa;
+}
+a.btn-notify:active { filter: brightness(1.08); }
+.card-wip { border-color: #3a3528; }
+.wip-note {
+  font-size: 12px;
+  color: #7a7a7a;
+  margin-bottom: 12px !important;
+  line-height: 1.5;
+}
+.wip-note strong { color: #aaa; font-weight: 700; }
+.card-wip .card-follow {
+  margin-top: 8px;
+  margin-bottom: 0 !important;
+  font-size: 12px;
+  color: #5c5c5c;
+}
+.card-wip .card-follow a { color: #7ec8e3; text-decoration: none; }
+.card-wip .card-follow a:active { opacity: 0.85; }
 .card-donate h2 { color: #f0c04a; }
 .donate-req h3 {
   font-size: 11px;
@@ -142,13 +185,22 @@ a.req-val:active { opacity: 0.85; }
     </div>
   </article>
 
-  <article class="card">
+  <article class="card card-wip">
     <h2>Два брата-колобка</h2>
     <p>Два игрока на одном поле: конкуренция или кооперация.</p>
+    <p class="wip-note">
+      Эта версия пока в доработке: скачать файл для офлайн-игры пока нельзя — возможность появится в ближайшее время.
+      Сейчас можно только <strong>поиграть в браузере</strong> (черновой прототип).
+      Следите за обновлениями или напишите автору свой e-mail — пришлём короткое уведомление, когда скачивание будет готово.
+    </p>
     <div class="row">
-      <a class="btn btn-play" href="kolobok2brata.html">Играть</a>
-      <a class="btn btn-dl" href="kolobok2brata.html" download="kolobok2brata.html">Скачать файл</a>
+      <a class="btn btn-play" href="kolobok2brata.html">Играть в браузере</a>
+      <span class="btn-soon" title="Файл для скачивания появится позже">Скачать — скоро</span>
+      <a class="btn btn-notify" href="mailto:theoryoflevels@gmail.com?subject=%D0%9A%D0%BE%D0%BB%D0%BE%D0%B1%D0%BE%D0%BA%20%28%D0%B4%D0%B2%D0%B0%20%D0%B1%D1%80%D0%B0%D1%82%D0%B0%29%20%E2%80%94%20%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%B8%D1%82%D1%8C%20%D0%BE%20%D0%B3%D0%BE%D1%82%D0%BE%D0%B2%D0%BD%D0%BE%D1%81%D1%82%D0%B8%20%D1%81%D0%BA%D0%B0%D1%87%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F&body=%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D1%8C%D1%82%D0%B5%20%D1%8D%D1%82%D0%BE%20%D0%BF%D0%B8%D1%81%D1%8C%D0%BC%D0%BE%20%D1%81%20%D0%B0%D0%B4%D1%80%D0%B5%D1%81%D0%B0%2C%20%D0%BA%D1%83%D0%B4%D0%B0%20%D0%BF%D1%80%D0%B8%D1%81%D0%BB%D0%B0%D1%82%D1%8C%20%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20%28%D0%B5%D1%81%D0%BB%D0%B8%20%D0%BD%D1%83%D0%B6%D0%BD%D0%BE%29%3A%0A%0A">Уведомить по e-mail</a>
     </div>
+    <p class="card-follow">
+      Обновления: <a href="https://github.com/jfeldman777/kolobok" target="_blank" rel="noopener noreferrer">репозиторий на GitHub</a>
+    </p>
   </article>
 
   <article class="card card-donate">
