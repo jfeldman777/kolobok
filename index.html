@@ -78,13 +78,46 @@ a.btn-dl {
   color: #E8A020;
 }
 a.btn-dl:active { filter: brightness(1.08); }
-a.btn-donate {
-  background: #2d2418;
-  border-color: #a67c2e;
-  color: #f0c04a;
-}
-a.btn-donate:active { filter: brightness(1.12); }
 .card-donate h2 { color: #f0c04a; }
+.donate-req h3 {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6a6a6a;
+  margin: 18px 0 10px;
+}
+.donate-req h3:first-of-type { margin-top: 4px; }
+.req-block {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+}
+.req-block:last-child { margin-bottom: 0; }
+.req-block p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #9a9a9a;
+}
+.req-block p:last-child { margin-bottom: 0; }
+.req-bank { font-weight: 700; color: #e8e8e8; }
+.req-val {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 14px;
+  color: #f0c04a;
+  font-weight: 600;
+}
+a.req-val { color: #7ec8e3; text-decoration: none; }
+a.req-val:active { opacity: 0.85; }
+.req-name { color: #ccc; font-weight: 500; font-family: inherit; font-size: 14px; }
+.donate-req .req-block p.req-paypal-hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
 .hint {
   margin-top: 22px;
   padding: 12px 14px;
@@ -118,17 +151,29 @@ a.btn-donate:active { filter: brightness(1.12); }
     </div>
   </article>
 
-  <!-- Донаты: замените username в ссылках на свои логины или удалите лишние кнопки. -->
   <article class="card card-donate">
     <h2>Поддержка автора</h2>
     <p>
       Если вам понравились игры, вы можете поблагодарить автора и перечислить любую сумму
       — по желанию, в этом нет необходимости. Спасибо, что играете.
     </p>
-    <div class="row">
-      <a class="btn btn-donate" href="https://boosty.to/username" target="_blank" rel="noopener noreferrer">Boosty</a>
-      <a class="btn btn-donate" href="https://paypal.me/username" target="_blank" rel="noopener noreferrer">PayPal</a>
-      <a class="btn btn-donate" href="https://ko-fi.com/username" target="_blank" rel="noopener noreferrer">Ko-fi</a>
+    <div class="donate-req">
+      <h3>Для тех, кто в России</h3>
+      <div class="req-block">
+        <p class="req-bank">Сбербанк</p>
+        <p>Телефон для перевода (в т.ч. СБП):<br>
+          <a class="req-val" href="tel:+79516746481">+7&nbsp;(951)&nbsp;674-64-81</a>
+        </p>
+        <p>Получатель: <span class="req-name">Яков&nbsp;Ф.</span></p>
+      </div>
+      <h3>Для всех остальных</h3>
+      <div class="req-block">
+        <p class="req-bank">PayPal</p>
+        <p>Адрес получателя:<br>
+          <span class="req-val">theoryoflevels@gmail.com</span>
+        </p>
+        <p class="req-paypal-hint">В приложении или на сайте PayPal укажите этот e-mail у получателя платежа.</p>
+      </div>
     </div>
   </article>
 
