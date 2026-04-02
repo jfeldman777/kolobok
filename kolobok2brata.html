@@ -20,16 +20,6 @@ html, body {
   height: 100%;
   min-height: 100dvh;
 }
-#launch-panel {
-  flex-shrink: 0;
-  padding: 10px 12px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #333;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 14px;
-}
 #game-title-bar {
   flex-shrink: 0;
   text-align: center;
@@ -42,6 +32,24 @@ html, body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding-top: calc(6px + env(safe-area-inset-top, 0px));
+}
+#live-stage {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #9a8060;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+#launch-panel {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
 }
 #launch-panel h1 {
   font-size: clamp(0.85rem, 2.2vw, 0.95rem);
@@ -57,6 +65,32 @@ html, body {
   font-weight: 500;
   width: 100%;
   margin-top: -6px;
+}
+.stage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.stage-row label {
+  font-size: 12px;
+  color: #aaa;
+}
+.stage-sel {
+  padding: 6px 11px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #222;
+  color: #aaa;
+}
+.stage-sel.active {
+  background: #E8A020;
+  border-color: #E8A020;
+  color: #000;
+  font-weight: 700;
 }
 .mode-toggle {
   display: flex;
@@ -98,6 +132,17 @@ html, body {
   color: #fff;
   min-width: 36px;
 }
+#extras-open {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #6a5a28;
+  background: #2a2410;
+  color: #E8A020;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#extras-open:active { filter: brightness(1.12); }
 #start-btn {
   padding: 10px 18px;
   border-radius: 10px;
@@ -109,15 +154,74 @@ html, body {
   cursor: pointer;
 }
 #start-btn:active { filter: brightness(1.12); }
-#board-wrap {
+
+#play-row {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   width: 100%;
+}
+.side-panel {
+  flex: 0 0 48px;
+  min-width: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(6px + env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-right, 0px))
-    calc(6px + env(safe-area-inset-bottom, 0px));
+  background: #141414;
+  border-right: 1px solid #2a2a2a;
+  padding: 6px 4px;
+}
+.side-panel:last-of-type {
+  border-right: none;
+  border-left: 1px solid #2a2a2a;
+}
+#center-stack {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: #0a0a0a;
+}
+.side-panel-a { box-shadow: inset 4px 0 0 rgba(26, 35, 126, 0.45); }
+.side-panel-b { box-shadow: inset -4px 0 0 rgba(74, 20, 140, 0.45); }
+.side-panel-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.side-marker {
+  font-size: 14px;
+  font-weight: 900;
+  color: #E8A020;
+}
+.side-dots {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1.5px solid #E8A020;
+  background: #1e1000;
+  color: #E8A020;
+  max-width: 44px;
+  word-break: break-all;
+}
+#board-wrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(4px + env(safe-area-inset-left, 0px)) calc(4px + env(safe-area-inset-right, 0px))
+    calc(4px + env(safe-area-inset-bottom, 0px));
 }
 #c {
   display: block;
@@ -125,15 +229,189 @@ html, body {
   max-height: 100%;
   background: #0a0a0a;
 }
+
+#npc-panels-wrap {
+  flex-shrink: 0;
+  background: #121212;
+  border-bottom: 1px solid #2a2a2a;
+  padding: 6px 10px 8px;
+  max-height: min(20vh, 140px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+#npc-panels-wrap .npc-hint {
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 6px;
+  line-height: 1.35;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+#npc-panels-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+.npc-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1.5px solid;
+  white-space: nowrap;
+}
+.npc-chip.done { opacity: 0.35; }
+
+#extras-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 5000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+#extras-modal.open { display: flex; }
+#extras-box {
+  background: #1e1e1e;
+  border-radius: 14px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid #333;
+  position: relative;
+}
+#extras-box h2 {
+  font-size: 16px;
+  color: #fff;
+  margin-bottom: 8px;
+}
+#extras-box .extras-hint {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+  line-height: 1.45;
+}
+.extras-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.extras-row label {
+  min-width: 88px;
+  font-size: 12px;
+  color: #ccc;
+}
+.extras-row input[type=range] { flex: 1; accent-color: #E8A020; }
+.extras-row .val {
+  min-width: 28px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+#extras-apply {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #E8A020;
+  background: #3a2a0a;
+  color: #E8A020;
+  cursor: pointer;
+}
+#extras-reset {
+  margin-top: 8px;
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid #555;
+  background: #2a2a2a;
+  color: #ccc;
+  cursor: pointer;
+}
+#extras-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  #play-row { flex-direction: column; }
+  .side-panel {
+    flex: 0 0 auto;
+    flex-direction: row;
+    width: 100%;
+    border-right: none !important;
+    border-left: none !important;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 8px 12px;
+    justify-content: space-around;
+  }
+  .side-panel:last-of-type {
+    border-top: 1px solid #2a2a2a;
+    border-bottom: none;
+    order: 3;
+  }
+  #center-stack {
+    order: 2;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+  }
+  .side-panel:first-of-type { order: 1; }
+}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="game-title-bar">Два брата-колобка</div>
+  <div id="game-title-bar">
+    Два брата-колобка
+    <span id="live-stage">Этап 1 · с 1 по 8</span>
+  </div>
   <div id="launch-panel">
-    <h1>Два игрока · одно поле</h1>
-    <p class="sub">Старт: A слева, B справа; финиш — центр низа. <b>A:</b> WASD. <b>B:</b> стрелки. <b>Конкуренция</b> — кто быстрее дошёл; салют со стороны победителя. <b>Кооперация</b> — оба должны выйти на FIN; салют посередине.</p>
+    <h1>Два игрока · одно поле · 8 этапов</h1>
+    <p class="sub">
+      Старт: A слева, B справа; финиш — центр низа. <b>A:</b> WASD. <b>B:</b> стрелки.
+      На этапах 2–8 на поле появляются персонажи (фишки) — <b>общие для обоих</b>: подбирает тот, кто наступил на клетку.
+      У каждого игрока уровень = номер этапа; заход на фишку: если <b>уровень фишки &gt; ваш уровень</b> — гибель. Иначе фишка съедается, ваш уровень уменьшается на 1 (минимум 1).
+      Цель — <b>довести свой уровень до 1</b> и попасть на FIN. <b>Съедать всех персонажей на поле не нужно</b> — лишние фишки можно оставить (но они могут мешать ходить). <b>Кооперация</b>: победа, только если оба живы, оба на 1 и оба на FIN; если кто-то погиб или не может дойти до 1 — <b>проигрыш вдвоём</b>.
+      <b>Конкуренция</b>: кто первым пришёл на FIN с уровнем 1; <b>ничья</b>, если оба погибли или у обоих нет возможности дойти до 1. По бокам — текущий уровень A/B; посередине — фишки на поле.
+    </p>
     <span id="game-status" style="font-size:13px;color:#E8A020;font-weight:800;width:100%;min-height:1.2em"></span>
+    <div class="stage-row">
+      <label>Стартовый этап</label>
+      <button type="button" class="stage-sel active" data-st="1" onclick="selectStartStage(1)">1</button>
+      <button type="button" class="stage-sel" data-st="2" onclick="selectStartStage(2)">2</button>
+      <button type="button" class="stage-sel" data-st="3" onclick="selectStartStage(3)">3</button>
+      <button type="button" class="stage-sel" data-st="4" onclick="selectStartStage(4)">4</button>
+      <button type="button" class="stage-sel" data-st="5" onclick="selectStartStage(5)">5</button>
+      <button type="button" class="stage-sel" data-st="6" onclick="selectStartStage(6)">6</button>
+      <button type="button" class="stage-sel" data-st="7" onclick="selectStartStage(7)">7</button>
+      <button type="button" class="stage-sel" data-st="8" onclick="selectStartStage(8)">8</button>
+    </div>
     <div class="mode-toggle">
       <button type="button" class="mode-btn active" id="mode-competition" onclick="setGameMode('competition')">1) Конкуренция</button>
       <button type="button" class="mode-btn" id="mode-cooperation" onclick="setGameMode('cooperation')">2) Кооперация</button>
@@ -144,45 +422,463 @@ html, body {
       <span id="wall-out">14%</span>
     </div>
     <span id="grid-out" style="font-size:12px;color:#888;min-width:auto"></span>
+    <button type="button" id="extras-open" onclick="showExtras()">+ Число персонажей (к-1 … к-7)</button>
     <button type="button" id="start-btn">Сгенерировать поле</button>
   </div>
-  <div id="board-wrap">
-    <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
+
+  <div id="play-row">
+    <aside id="panel-a" class="side-panel side-panel-a" aria-label="Панель игрока A">
+      <div class="side-panel-inner">
+        <span class="side-marker">A</span>
+        <span id="panel-a-lvl" class="side-dots">1</span>
+      </div>
+    </aside>
+    <div id="center-stack">
+      <div id="npc-panels-wrap">
+        <p class="npc-hint"><b>Общие фишки</b> (с этапа 2): цифра ≤ вашего уровня — можно съесть (−1 к уровню); выше — гибель. Счётчик «осталось» справочный — <b>очищать поле полностью не обязательно</b>:</p>
+        <div id="npc-panels-bar"></div>
+      </div>
+      <div id="board-wrap">
+        <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
+      </div>
+    </div>
+    <aside id="panel-b" class="side-panel side-panel-b" aria-label="Панель игрока B">
+      <div class="side-panel-inner">
+        <span class="side-marker">B</span>
+        <span id="panel-b-lvl" class="side-dots">1</span>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="extras-modal" role="dialog" aria-modal="true" aria-labelledby="extras-h2">
+  <div id="extras-box">
+    <button type="button" id="extras-close" onclick="hideExtras()" aria-label="Закрыть">×</button>
+    <h2 id="extras-h2">Число персонажей каждого вида</h2>
+    <p class="extras-hint">Как в «Колобок и его команда»: к-4 — число <b>пар</b> (на поле будет вдвое больше фишек «4»). Сохраняется в браузере (отдельно от одиночной игры).</p>
+    <div class="extras-row"><label>к-1</label><input type="range" id="x-n1" min="1" max="12" value="3"><span class="val" id="x-out-n1">3</span></div>
+    <div class="extras-row"><label>к-2</label><input type="range" id="x-n2" min="1" max="12" value="3"><span class="val" id="x-out-n2">3</span></div>
+    <div class="extras-row"><label>к-3</label><input type="range" id="x-n3" min="1" max="12" value="3"><span class="val" id="x-out-n3">3</span></div>
+    <div class="extras-row"><label>к-4 пары</label><input type="range" id="x-p4" min="1" max="8" value="2"><span class="val" id="x-out-p4">2</span></div>
+    <div class="extras-row"><label>к-5</label><input type="range" id="x-n5" min="1" max="12" value="3"><span class="val" id="x-out-n5">3</span></div>
+    <div class="extras-row"><label>к-6</label><input type="range" id="x-n6" min="1" max="12" value="3"><span class="val" id="x-out-n6">3</span></div>
+    <div class="extras-row"><label>к-7</label><input type="range" id="x-n7" min="1" max="12" value="3"><span class="val" id="x-out-n7">3</span></div>
+    <button type="button" id="extras-apply" onclick="applyExtras()">Готово</button>
+    <button type="button" id="extras-reset" onclick="resetNpcDefaults()">По умолчанию (3 / пары 2)</button>
   </div>
 </div>
 
 <script>
-/** Ширина и высота поля в клетках (прямоугольник). */
+const LS_NPC = 'kolobok2brata_npc_counts';
+const NPC_KEYS = ['n1', 'n2', 'n3', 'p4', 'n5', 'n6', 'n7'];
+const DEFAULT_NPC = { n1: 3, n2: 3, n3: 3, p4: 2, n5: 3, n6: 3, n7: 3 };
+const SLIDER_MAP = { n1: 'x-n1', n2: 'x-n2', n3: 'x-n3', p4: 'x-p4', n5: 'x-n5', n6: 'x-n6', n7: 'x-n7' };
+const OUT_MAP = { n1: 'x-out-n1', n2: 'x-out-n2', n3: 'x-out-n3', p4: 'x-out-p4', n5: 'x-out-n5', n6: 'x-out-n6', n7: 'x-out-n7' };
+
+let npcCounts = { ...DEFAULT_NPC };
+let startStage = 1;
+let currentStage = 1;
+let campaignDone = false;
+
 let GW = 18, GH = 14;
 let grid = [];
 let wallPct = 14;
 let CELL = 40;
 let gameMode = 'competition';
-/** Левый игрок A — старт (0,0); правый B — (GW-1, 0). */
 let posA = { x: 0, y: 0 };
 let posB = { x: 0, y: 0 };
-/** Конкуренция: 'A' | 'B'. Кооперация: 'coop'. */
+let lvlA = 1;
+let lvlB = 1;
+let aliveA = true;
+let aliveB = true;
 let gameWinner = null;
-/** Салют: 'left' | 'right' | 'center' и время старта (performance.now). */
 let saluteAnim = null;
 
+/** @type {{x:number,y:number,lv:number}[]} */
+let tokens = [];
+let tokensInitialByLv = {};
+
+const TOKEN_STYLE = {
+  1: { f: '#7F77DD', s: '#3C3489' },
+  2: { f: '#E24B4A', s: '#791F1F' },
+  3: { f: '#639922', s: '#27500A' },
+  4: { f: '#378ADD', s: '#0C447C' },
+  5: { f: '#BA7517', s: '#633806' },
+  6: { f: '#9B6BB8', s: '#4a1a6b' },
+  7: { f: '#14b8a6', s: '#0f766e' },
+};
+
 function gel(id) { return document.getElementById(id); }
+
+function loadNpcCounts() {
+  try {
+    const o = JSON.parse(localStorage.getItem(LS_NPC) || 'null');
+    if (o && typeof o === 'object') {
+      for (const k of NPC_KEYS) {
+        const max = k === 'p4' ? 8 : 12;
+        const v = parseInt(o[k], 10);
+        if (!isNaN(v) && v >= 1 && v <= max) npcCounts[k] = v;
+      }
+    }
+  } catch (e) {}
+}
+function saveNpcCounts() {
+  try { localStorage.setItem(LS_NPC, JSON.stringify(npcCounts)); } catch (e) {}
+}
+
+function syncExtrasUi() {
+  for (const k of NPC_KEYS) {
+    const el = gel(SLIDER_MAP[k]);
+    const o = gel(OUT_MAP[k]);
+    const max = k === 'p4' ? 8 : 12;
+    let v = npcCounts[k];
+    if (v < 1) v = 1;
+    if (v > max) v = max;
+    npcCounts[k] = v;
+    if (el) el.value = String(v);
+    if (o) o.textContent = String(v);
+  }
+}
+
+function bindExtrasSliders() {
+  for (const k of NPC_KEYS) {
+    const el = gel(SLIDER_MAP[k]);
+    if (!el) continue;
+    el.addEventListener('input', function () {
+      const max = k === 'p4' ? 8 : 12;
+      let n = parseInt(this.value, 10);
+      if (isNaN(n) || n < 1) n = 1;
+      if (n > max) n = max;
+      npcCounts[k] = n;
+      const o = gel(OUT_MAP[k]);
+      if (o) o.textContent = String(n);
+      saveNpcCounts();
+    });
+  }
+}
+
+function showExtras() {
+  syncExtrasUi();
+  gel('extras-modal').classList.add('open');
+}
+function hideExtras() {
+  gel('extras-modal').classList.remove('open');
+}
+function applyExtras() {
+  for (const k of NPC_KEYS) {
+    const el = gel(SLIDER_MAP[k]);
+    if (el) npcCounts[k] = parseInt(el.value, 10) || npcCounts[k];
+  }
+  saveNpcCounts();
+  hideExtras();
+  runGenerate();
+}
+function resetNpcDefaults() {
+  npcCounts = { ...DEFAULT_NPC };
+  saveNpcCounts();
+  syncExtrasUi();
+}
+
+function selectStartStage(n) {
+  startStage = n;
+  currentStage = n;
+  campaignDone = false;
+  gameWinner = null;
+  const L = Math.min(8, Math.max(1, n));
+  lvlA = lvlB = L;
+  aliveA = aliveB = true;
+  document.querySelectorAll('.stage-sel').forEach((b) => {
+    b.classList.toggle('active', parseInt(b.getAttribute('data-st'), 10) === n);
+  });
+  updateLiveStage();
+  updateSidePanels();
+  updateNpcBar();
+  updateGameStatus();
+}
+
+function updateLiveStage() {
+  const el = gel('live-stage');
+  if (!el) return;
+  if (campaignDone) el.textContent = 'Кампания завершена — нажмите «Сгенерировать» заново';
+  else el.textContent = 'Этап ' + currentStage + ' из 8 · старт был с ' + startStage;
+}
+
+function updateSidePanels() {
+  const pa = gel('panel-a-lvl');
+  const pb = gel('panel-b-lvl');
+  if (pa) pa.textContent = aliveA ? String(lvlA) : '💀';
+  if (pb) pb.textContent = aliveB ? String(lvlB) : '💀';
+}
+
+function countTokensByLv() {
+  const c = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
+  for (const t of tokens) {
+    if (t.lv >= 1 && t.lv <= 7) c[t.lv]++;
+  }
+  return c;
+}
+
+function updateNpcBar() {
+  const bar = gel('npc-panels-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  if (currentStage < 2) {
+    const sp = document.createElement('span');
+    sp.className = 'npc-hint';
+    sp.style.margin = '0';
+    sp.textContent = 'Этап 1: без фишек, у обоих уровень 1 — бегите к FIN.';
+    bar.appendChild(sp);
+    return;
+  }
+  const rem = countTokensByLv();
+  for (let lv = 1; lv <= Math.min(7, currentStage - 1 + 0); lv++) {
+    if (currentStage < lv + 1) continue;
+    const init = tokensInitialByLv[lv] || 0;
+    if (init <= 0) continue;
+    const r = rem[lv] || 0;
+    const st = TOKEN_STYLE[lv] || TOKEN_STYLE[1];
+    const chip = document.createElement('span');
+    chip.className = 'npc-chip' + (r === 0 ? ' done' : '');
+    chip.style.borderColor = st.s;
+    chip.style.background = st.f + '22';
+    chip.style.color = '#eee';
+    chip.textContent = 'к-' + lv + ': ' + r + '/' + init;
+    bar.appendChild(chip);
+  }
+}
+
+function buildDemandList(st) {
+  const d = [];
+  if (st >= 2) for (let i = 0; i < npcCounts.n1; i++) d.push(1);
+  if (st >= 3) for (let i = 0; i < npcCounts.n2; i++) d.push(2);
+  if (st >= 4) for (let i = 0; i < npcCounts.n3; i++) d.push(3);
+  if (st >= 5) for (let j = 0; j < npcCounts.p4; j++) { d.push(4); d.push(4); }
+  if (st >= 6) for (let i = 0; i < npcCounts.n5; i++) d.push(5);
+  if (st >= 7) for (let i = 0; i < npcCounts.n6; i++) d.push(6);
+  if (st >= 8) for (let i = 0; i < npcCounts.n7; i++) d.push(7);
+  return d;
+}
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+}
+
+function freeCellsForTokens() {
+  const [fx, fy] = finishCell();
+  const res = [];
+  for (let y = 0; y < GH; y++) {
+    for (let x = 0; x < GW; x++) {
+      if (grid[y][x] !== 0) continue;
+      if ((x === 0 && y === 0) || (x === GW - 1 && y === 0) || (x === fx && y === fy)) continue;
+      res.push([x, y]);
+    }
+  }
+  return res;
+}
+
+function tryPlaceTokensForCurrentStage() {
+  tokens = [];
+  tokensInitialByLv = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
+  const demand = buildDemandList(currentStage);
+  if (demand.length === 0) return true;
+  const cells = freeCellsForTokens();
+  shuffle(cells);
+  if (cells.length < demand.length) return false;
+  shuffle(demand);
+  for (let i = 0; i < demand.length; i++) {
+    const lv = demand[i];
+    const [x, y] = cells[i];
+    tokens.push({ x, y, lv });
+    tokensInitialByLv[lv]++;
+  }
+  return true;
+}
+
+function tokenIndexAt(x, y) {
+  return tokens.findIndex((t) => t.x === x && t.y === y);
+}
+
+function tryAbsorbAt(who) {
+  const pos = who === 'A' ? posA : posB;
+  const lv = who === 'A' ? lvlA : lvlB;
+  const i = tokenIndexAt(pos.x, pos.y);
+  if (i < 0) return;
+  const t = tokens[i];
+  if (t.lv > lv) {
+    if (who === 'A') { aliveA = false; } else { aliveB = false; }
+    return;
+  }
+  tokens.splice(i, 1);
+  if (lv > 1) {
+    if (who === 'A') lvlA = lv - 1; else lvlB = lv - 1;
+  }
+}
+
+function cellWalkableForPlayer(x, y, lv) {
+  if (grid[y][x] === 1) return false;
+  const ti = tokenIndexAt(x, y);
+  if (ti < 0) return true;
+  return tokens[ti].lv <= lv;
+}
+
+function hasReachableAbsorb(px, py, lv) {
+  if (lv <= 1) return true;
+  let any = false;
+  for (const t of tokens) {
+    if (t.lv <= lv) { any = true; break; }
+  }
+  if (!any) return false;
+  const v = Array.from({ length: GH }, () => new Array(GW).fill(false));
+  const q = [[px, py]];
+  v[py][px] = true;
+  while (q.length) {
+    const [x, y] = q.shift();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= GW || ny < 0 || ny >= GH || v[ny][nx]) continue;
+      if (!cellWalkableForPlayer(nx, ny, lv)) continue;
+      v[ny][nx] = true;
+      q.push([nx, ny]);
+    }
+  }
+  for (const t of tokens) {
+    if (t.lv <= lv && v[t.y][t.x]) return true;
+  }
+  return false;
+}
+
+function canReachFinFrom(px, py) {
+  const [fx, fy] = finishCell();
+  const v = Array.from({ length: GH }, () => new Array(GW).fill(false));
+  const q = [[px, py]];
+  v[py][px] = true;
+  while (q.length) {
+    const [x, y] = q.shift();
+    if (x === fx && y === fy) return true;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= GW || ny < 0 || ny >= GH || v[ny][nx]) continue;
+      if (!cellWalkableForPlayer(nx, ny, 1)) continue;
+      v[ny][nx] = true;
+      q.push([nx, ny]);
+    }
+  }
+  return false;
+}
+
+function cannotEverWin(who) {
+  if (who === 'A' ? !aliveA : !aliveB) return true;
+  const pos = who === 'A' ? posA : posB;
+  const lv = who === 'A' ? lvlA : lvlB;
+  if (lv > 1) return !hasReachableAbsorb(pos.x, pos.y, lv);
+  return !canReachFinFrom(pos.x, pos.y);
+}
+
+function resolveEndgame() {
+  const [fx, fy] = finishCell();
+  if (gameWinner) return;
+
+  if (gameMode === 'cooperation') {
+    if (aliveA && aliveB && lvlA === 1 && lvlB === 1
+        && posA.x === fx && posA.y === fy && posB.x === fx && posB.y === fy) {
+      gameWinner = 'coop';
+      startSalute('center');
+      updateGameStatus();
+      setTimeout(scheduleAfterStageWin, 1600);
+      return;
+    }
+    if (!aliveA || !aliveB || cannotEverWin('A') || cannotEverWin('B')) {
+      gameWinner = 'cooplose';
+      startSalute('center');
+      updateGameStatus();
+      updateSidePanels();
+      draw();
+    }
+    return;
+  }
+
+  if (aliveA && lvlA === 1 && posA.x === fx && posA.y === fy) {
+    gameWinner = 'A';
+    startSalute('left');
+    updateGameStatus();
+    setTimeout(scheduleAfterStageWin, 1600);
+    return;
+  }
+  if (aliveB && lvlB === 1 && posB.x === fx && posB.y === fy) {
+    gameWinner = 'B';
+    startSalute('right');
+    updateGameStatus();
+    setTimeout(scheduleAfterStageWin, 1600);
+    return;
+  }
+
+  if ((!aliveA && !aliveB) || (cannotEverWin('A') && cannotEverWin('B'))) {
+    gameWinner = 'draw';
+    startSalute('center');
+    updateGameStatus();
+    updateSidePanels();
+    draw();
+  }
+}
 
 function resetActors() {
   posA = { x: 0, y: 0 };
   posB = { x: Math.max(0, GW - 1), y: 0 };
+  const L = Math.min(8, Math.max(1, currentStage));
+  lvlA = lvlB = L;
+  aliveA = aliveB = true;
   gameWinner = null;
   saluteAnim = null;
   updateGameStatus();
+  updateSidePanels();
+}
+
+function scheduleAfterStageWin() {
+  saluteAnim = null;
+  if (currentStage >= 8) {
+    campaignDone = true;
+    gameWinner = 'campaign';
+    startSalute('center');
+    updateLiveStage();
+    updateGameStatus();
+    updateNpcBar();
+    draw();
+    return;
+  }
+  currentStage++;
+  gameWinner = null;
+  layoutBoard();
+  genGridWithTokens();
+  updateLiveStage();
+  updateSidePanels();
+  updateNpcBar();
+  updateGameStatus();
+  draw();
 }
 
 function updateGameStatus() {
   const el = gel('game-status');
   if (!el) return;
-  if (gameWinner === 'A') el.textContent = 'Победа: быстрее игрок A — салют слева!';
-  else if (gameWinner === 'B') el.textContent = 'Победа: быстрее игрок B — салют справа!';
-  else if (gameWinner === 'coop') el.textContent = 'Оба на финише! Салют посередине!';
-  else el.textContent = '';
+  if (gameWinner === 'campaign') {
+    el.textContent = 'Все этапы пройдены (с ' + startStage + ' по 8)! 🎉 Нажмите «Сгенерировать» для новой кампании.';
+    return;
+  }
+  if (gameWinner === 'cooplose') {
+    el.textContent = 'Кооперация: проигрыш (гибель или нельзя дойти до уровня 1 / финиша).';
+    return;
+  }
+  if (gameWinner === 'draw') {
+    el.textContent = 'Ничья: оба выбыли или у обоих нет возможности дойти до 1.';
+    return;
+  }
+  if (gameWinner === 'A') el.textContent = 'Этап ' + currentStage + ': победа A (уровень 1 на FIN)!';
+  else if (gameWinner === 'B') el.textContent = 'Этап ' + currentStage + ': победа B (уровень 1 на FIN)!';
+  else if (gameWinner === 'coop') el.textContent = 'Этап ' + currentStage + ': кооперация — оба на 1 и на FIN!';
+  else if (currentStage >= 2) el.textContent = 'Доведите уровень до 1 (фишки помогают, всех съедать не нужно), затем FIN.';
+  else el.textContent = 'Этап 1: у обоих уровень 1 — доберитесь до FIN.';
 }
 
 function startSalute(kind) {
@@ -228,7 +924,9 @@ function drawSalute(ctx, pw, ph, kind, elapsedMs) {
 }
 
 function tryMove(who, dx, dy) {
-  if (gameWinner) return;
+  if (gameWinner || campaignDone) return;
+  if (who === 'A' && !aliveA) return;
+  if (who === 'B' && !aliveB) return;
   const pos = who === 'A' ? posA : posB;
   const other = who === 'A' ? posB : posA;
   const nx = pos.x + dx;
@@ -242,26 +940,15 @@ function tryMove(who, dx, dy) {
   }
   pos.x = nx;
   pos.y = ny;
-  if (gameMode === 'competition') {
-    if (pos.x === fx && pos.y === fy) {
-      gameWinner = who;
-      startSalute(who === 'A' ? 'left' : 'right');
-      updateGameStatus();
-    }
-  } else {
-    const aFin = posA.x === fx && posA.y === fy;
-    const bFin = posB.x === fx && posB.y === fy;
-    if (aFin && bFin) {
-      gameWinner = 'coop';
-      startSalute('center');
-      updateGameStatus();
-    }
-  }
+  tryAbsorbAt(who);
+  updateSidePanels();
+  updateNpcBar();
+  resolveEndgame();
   draw();
 }
 
 function onKeyDown(e) {
-  if (gameWinner) return;
+  if (gameWinner || campaignDone) return;
   const code = e.code;
   const k = e.key;
   let handled = false;
@@ -372,13 +1059,13 @@ function genGridValidForTryPct(tryPct) {
   return gridReachabilityOk();
 }
 
-function genGrid() {
+function genGridWallsOnly() {
   let tryPct = wallPct;
   for (let down = 0; down < 50; down++) {
     for (let att = 0; att < 320; att++) {
       if (genGridValidForTryPct(tryPct)) {
         resetActors();
-        return;
+        return true;
       }
     }
     if (tryPct <= 0) break;
@@ -386,6 +1073,22 @@ function genGrid() {
   }
   grid = Array.from({ length: GH }, () => new Array(GW).fill(0));
   resetActors();
+  return true;
+}
+
+function genGridWithTokens() {
+  for (let outer = 0; outer < 200; outer++) {
+    genGridWallsOnly();
+    for (let t = 0; t < 90; t++) {
+      if (tryPlaceTokensForCurrentStage()) {
+        updateNpcBar();
+        return;
+      }
+    }
+  }
+  tokens = [];
+  tokensInitialByLv = {};
+  updateNpcBar();
 }
 
 function boardWrapInnerSize() {
@@ -401,11 +1104,13 @@ function boardWrapInnerSize() {
   if (availW < 80 || availH < 80) {
     const titleBar = gel('game-title-bar');
     const panel = gel('launch-panel');
-    const tw = titleBar.offsetHeight || 44;
-    const ph = panel.offsetHeight || 120;
-    const side = 12 + pl + pr;
+    const npcw = gel('npc-panels-wrap');
+    const tw = (titleBar && titleBar.offsetHeight) || 44;
+    const ph = (panel && panel.offsetHeight) || 120;
+    const nh = (npcw && npcw.offsetHeight) || 48;
+    const side = 12 + pl + pr + 100;
     availW = Math.max(0, Math.floor(window.innerWidth - side));
-    availH = Math.max(0, Math.floor(window.innerHeight - tw - ph - pt - pb - 8));
+    availH = Math.max(0, Math.floor(window.innerHeight - tw - ph - nh - pt - pb - 24));
   }
   return { availW, availH };
 }
@@ -446,6 +1151,24 @@ function layoutBoard() {
   gel('grid-out').textContent = GW + '×' + GH + ' кл.';
 }
 
+function drawTokenInCell(ctx, cx, cy, lv) {
+  const st = TOKEN_STYLE[lv] || TOKEN_STYLE[1];
+  const pad = Math.max(2, CELL * 0.12);
+  const r = Math.max(3, (CELL - pad * 2) * 0.35);
+  ctx.beginPath();
+  ctx.arc(cx + CELL / 2, cy + CELL / 2, r, 0, Math.PI * 2);
+  ctx.fillStyle = st.f;
+  ctx.fill();
+  ctx.strokeStyle = st.s;
+  ctx.lineWidth = 1.25;
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font = `800 ${Math.max(7, CELL * 0.28)}px system-ui,sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(lv), cx + CELL / 2, cy + CELL / 2 + 0.5);
+}
+
 function draw() {
   const cv = gel('c');
   const ctx = cv.getContext('2d');
@@ -455,8 +1178,11 @@ function draw() {
   cv.height = ph;
   ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, pw, ph);
+
   const onA = (x, y) => posA.x === x && posA.y === y;
   const onB = (x, y) => posB.x === x && posB.y === y;
+  const tokHere = (x, y) => tokens.some((t) => t.x === x && t.y === y);
+
   for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
     const cx = x * CELL, cy = y * CELL;
     if (grid[y][x] === 1) {
@@ -476,45 +1202,102 @@ function draw() {
     } else {
       ctx.fillStyle = (x + y) % 2 === 0 ? '#1a1a1a' : '#161616';
       ctx.fillRect(cx, cy, CELL, CELL);
+      if (x === 0) {
+        ctx.fillStyle = 'rgba(26,35,126,0.14)';
+        ctx.fillRect(cx, cy, CELL, CELL);
+      } else if (x === GW - 1) {
+        ctx.fillStyle = 'rgba(74,20,140,0.14)';
+        ctx.fillRect(cx, cy, CELL, CELL);
+      }
       ctx.strokeStyle = '#2a2a2a';
       ctx.lineWidth = 0.5;
       ctx.strokeRect(cx + 0.25, cy + 0.25, CELL - 0.5, CELL - 0.5);
     }
+    if (tokHere(x, y)) {
+      const t = tokens.find((u) => u.x === x && u.y === y);
+      if (t) drawTokenInCell(ctx, cx, cy, t.lv);
+    }
     const aHere = onA(x, y);
     const bHere = onB(x, y);
     if (aHere && bHere) {
-      ctx.fillStyle = 'rgba(26,35,126,0.55)';
-      ctx.fillRect(cx, cy, CELL / 2, CELL);
-      ctx.fillStyle = 'rgba(74,20,140,0.55)';
-      ctx.fillRect(cx + CELL / 2, cy, CELL / 2, CELL);
-      ctx.fillStyle = '#fff';
-      ctx.font = `700 ${Math.max(8, CELL * 0.28)}px system-ui,sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('A', cx + CELL / 4, cy + CELL / 2);
-      ctx.fillText('B', cx + (3 * CELL) / 4, cy + CELL / 2);
+      if (aliveA && aliveB) {
+        ctx.fillStyle = 'rgba(26,35,126,0.55)';
+        ctx.fillRect(cx, cy, CELL / 2, CELL);
+        ctx.fillStyle = 'rgba(74,20,140,0.55)';
+        ctx.fillRect(cx + CELL / 2, cy, CELL / 2, CELL);
+        ctx.fillStyle = '#fff';
+        ctx.font = `700 ${Math.max(8, CELL * 0.28)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('A', cx + CELL / 4, cy + CELL / 2);
+        ctx.fillText('B', cx + (3 * CELL) / 4, cy + CELL / 2);
+      } else if (aliveA) {
+        ctx.fillStyle = '#1a237e';
+        ctx.fillRect(cx, cy, CELL, CELL);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('A', cx + CELL / 2, cy + CELL / 2);
+      } else if (aliveB) {
+        ctx.fillStyle = '#4a148c';
+        ctx.fillRect(cx, cy, CELL, CELL);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('B', cx + CELL / 2, cy + CELL / 2);
+      } else {
+        ctx.fillStyle = '#333';
+        ctx.fillRect(cx, cy, CELL, CELL);
+        ctx.fillStyle = '#666';
+        ctx.font = `600 ${Math.max(7, CELL * 0.22)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✕', cx + CELL / 2, cy + CELL / 2);
+      }
     } else if (aHere) {
-      ctx.fillStyle = '#1a237e';
-      ctx.fillRect(cx, cy, CELL, CELL);
-      ctx.strokeStyle = '#7986cb';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1);
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('A', cx + CELL / 2, cy + CELL / 2);
+      if (!aliveA) {
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(cx, cy, CELL, CELL);
+        ctx.fillStyle = '#555';
+        ctx.font = `600 ${Math.max(8, CELL * 0.3)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('A', cx + CELL / 2, cy + CELL / 2);
+      } else {
+        ctx.fillStyle = '#1a237e';
+        ctx.fillRect(cx, cy, CELL, CELL);
+        ctx.strokeStyle = '#7986cb';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('A', cx + CELL / 2, cy + CELL / 2);
+      }
     } else if (bHere) {
-      ctx.fillStyle = '#4a148c';
-      ctx.fillRect(cx, cy, CELL, CELL);
-      ctx.strokeStyle = '#e1bee7';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1);
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('B', cx + CELL / 2, cy + CELL / 2);
+      if (!aliveB) {
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(cx, cy, CELL, CELL);
+        ctx.fillStyle = '#555';
+        ctx.font = `600 ${Math.max(8, CELL * 0.3)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('B', cx + CELL / 2, cy + CELL / 2);
+      } else {
+        ctx.fillStyle = '#4a148c';
+        ctx.fillRect(cx, cy, CELL, CELL);
+        ctx.strokeStyle = '#e1bee7';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('B', cx + CELL / 2, cy + CELL / 2);
+      }
     } else if (isFin) {
       ctx.fillStyle = '#4caf50';
       ctx.font = `600 ${Math.max(6, CELL * 0.26)}px system-ui,sans-serif`;
@@ -535,8 +1318,15 @@ function draw() {
 function runGenerate() {
   wallPct = parseInt(gel('wall-slider').value, 10);
   gel('wall-out').textContent = wallPct + '%';
+  currentStage = startStage;
+  campaignDone = false;
+  gameWinner = null;
   layoutBoard();
-  genGrid();
+  genGridWithTokens();
+  updateLiveStage();
+  updateSidePanels();
+  updateNpcBar();
+  updateGameStatus();
   draw();
 }
 
@@ -548,26 +1338,22 @@ gel('start-btn').onclick = runGenerate;
 
 window.addEventListener('resize', () => {
   layoutBoard();
-  genGrid();
+  genGridWithTokens();
   draw();
 });
 
 function fullRelayout() {
   layoutBoard();
-  genGrid();
+  genGridWithTokens();
   draw();
 }
 
+loadNpcCounts();
+syncExtrasUi();
+bindExtrasSliders();
+selectStartStage(1);
 fullRelayout();
 requestAnimationFrame(fullRelayout);
 window.addEventListener('load', () => requestAnimationFrame(fullRelayout));
 document.addEventListener('keydown', onKeyDown);
 gel('c').addEventListener('click', function () { this.focus({ preventScroll: true }); });
-</script>
-</body>
-</html>
-</think>
-
-
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-StrReplace

@@ -280,6 +280,28 @@ body.modal-open { overflow: hidden; }
   cursor: pointer;
 }
 .parents-ok:active { filter: brightness(1.05); }
+.card-video { border-color: #2a4a6a; }
+.card-video h2 { color: #7ec8e3; }
+.video-wrap {
+  width: 100%;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid #333;
+}
+.video-wrap video {
+  display: block;
+  width: 100%;
+  max-height: min(56vh, 520px);
+  vertical-align: middle;
+}
+.video-foot {
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 0 !important;
+  line-height: 1.4;
+}
 </style>
 </head>
 <body>
@@ -296,6 +318,20 @@ body.modal-open { overflow: hidden; }
 
   <h1>Колобок — игры</h1>
   <p class="lead">Откройте в браузере или сохраните HTML на устройство.</p>
+
+  <!-- Видео: game.webm (~80 МБ) в корне репозитория рядом с index.html. GitHub обычно принимает файлы до 100 МБ. -->
+  <article class="card card-video">
+    <h2>Видео: малая игра</h2>
+    <p>Обсуждение и примеры прохождения «Колобок и его команда». Файл <strong>game.webm</strong> на сервере.</p>
+    <div class="video-wrap">
+      <video controls playsinline preload="metadata"
+        aria-label="Видео: Колобок и его команда">
+        <source src="game.webm" type="video/webm">
+        <a href="game.webm">Скачать видео (game.webm)</a> — если браузер не воспроизводит WebM.
+      </video>
+    </div>
+    <p class="video-foot">WebM отлично идёт в Chrome, Firefox, Edge. В старом Safari на части iPhone/iPad может не заиграть — тогда добавьте копию в .mp4 вторым &lt;source&gt; или выложите ролик на YouTube.</p>
+  </article>
 
   <article class="card">
     <h2>Колобок и его команда</h2>
