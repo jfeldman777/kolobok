@@ -110,6 +110,12 @@ html, body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+.title-team-inline {
+  display: inline;
+  font: inherit;
+  font-weight: 800;
+  color: rgba(220, 200, 155, 0.98);
+}
 .title-mode-btn {
   display: inline;
   margin: 0;
@@ -737,7 +743,7 @@ html, body {
     <div class="title-row">
       <button type="button" id="menu-open-btn" class="menu-open-btn" aria-label="Настройки и пуск">☰</button>
       <div class="title-block">
-        <span class="title-main">Два брата-колобка <button type="button" class="title-mode-btn" id="title-mode" aria-label="Переключить режим игры">(Конкуренция)</button></span>
+        <span class="title-main">Два брата-колобка <span class="title-team-inline">каждый набирает себе команду </span><button type="button" class="title-mode-btn" id="title-mode" aria-label="Переключить режим игры">(Конкуренция)</button></span>
       </div>
       <span class="menu-open-spacer" aria-hidden="true"></span>
     </div>
@@ -747,13 +753,13 @@ html, body {
       <div id="comp-track-b" class="comp-track comp-track-b" aria-label="Этапы конкуренции, игрок B: белый — выиграл, чёрный — проиграл"></div>
     </div>
     <div class="title-players-row">
-      <div class="title-penal-group title-penal-group-a" aria-label="Игрок A">
+      <div class="title-penal-group title-penal-group-a" aria-label="Игрок A: пенал с цифрами силы (образно — школьная коробочка для мелочей)">
         <span class="title-penal-letter">A</span>
-        <span id="panel-a-lvl" class="player-penal player-penal-a">1</span>
+        <span id="panel-a-lvl" class="player-penal player-penal-a" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя A">1</span>
       </div>
       <span id="live-stage">Этап 1 из 8</span>
-      <div class="title-penal-group title-penal-group-b" aria-label="Игрок B">
-        <span id="panel-b-lvl" class="player-penal player-penal-b">1</span>
+      <div class="title-penal-group title-penal-group-b" aria-label="Игрок B: пенал с цифрами силы (образно — школьная коробочка для мелочей)">
+        <span id="panel-b-lvl" class="player-penal player-penal-b" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя B">1</span>
         <span class="title-penal-letter">B</span>
       </div>
     </div>
@@ -779,7 +785,7 @@ html, body {
       </div>
       <div class="mode-toggle">
         <button type="button" class="mode-btn active" id="mode-competition" onclick="setGameMode('competition')">1) Конкуренция</button>
-        <button type="button" class="mode-btn" id="mode-cooperation" onclick="setGameMode('cooperation')">2) Кооперация</button>
+        <button type="button" class="mode-btn" id="mode-cooperation" onclick="setGameMode('cooperation')">2) Кооперация — команда</button>
       </div>
       <div id="cell-row">
         <label for="cell-slider">Размер клетки (0 — авто)</label>
@@ -803,13 +809,15 @@ html, body {
       <h1 id="rules-title">Правила</h1>
       <p class="sub">
         Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки.
-        <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила, без исключений для отдельных цифр: сравниваются максимумы множеств цифр сторон (у игрока: якорь этапа + <b>текущий уровень</b> + кооптированные; у фишки: уровень на поле + кооптированные, напр. «32» → 3 и 2). Если максимумы <b>равны</b> — насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего, <b>пенали сливаются</b>: объединяются множества цифр (игроку: новый текущий уровень = максимум объединения, кооптированные — остальные цифры по убыванию, якорь этапа сохраняется; у фишки — одна фишка, как при коопте двух NPC). Иначе <b>гибнет старший</b>.
+        <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила, без исключений для отдельных цифр: сравниваются максимумы множеств цифр сторон (у игрока: якорь этапа + <b>текущий уровень</b> + кооптированные; у фишки: уровень на поле + кооптированные, напр. «32» → 3 и 2). Если максимумы <b>равны</b> — насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего, <b>пеналы сливаются</b>: объединяются множества цифр (игроку: новый текущий уровень = максимум объединения, кооптированные — остальные цифры по убыванию, якорь этапа сохраняется; у фишки — одна фишка, как при коопте двух NPC). Иначе <b>гибнет старший</b>.
       </p>
       <p class="sub">
-        <b>Кооперация:</b> этап засчитывается только когда <b>оба</b> на FIN с уровнем 1 (NPC не обязаны). <b>Погиб один</b> — любая клавиша, тот же этап заново. Проигрыш вдвоём — если <b>оба</b> не могут выиграть.
-        <b>Конкуренция:</b> этап за первым на FIN с уровнем 1 — <b>игра и NPC сразу замирают</b>, затем переход на следующий этап; <b>оба</b> получают новое поле (проигравший на этапе воскрешается). Пока в кооперации второй не на FIN с ур. 1 — этап не засчитан, игра продолжается. В первой строке шапки у A и B — шарики по завершённым этапам: <b>белый</b> = победа на этапе, <b>чёрный</b> = поражение. Переключение конкуренция ↔ кооперация: откат к <b>выбранному стартовому этапу</b>, новое поле, шарики конкуренции сбрасываются (в кооперации строки шариков нет). <b>Ничья:</b> оба мертвы или нет пути до 1 и FIN.
+        <b>Кооперация:</b> <b>каждый набирает себе команду</b> (поглощает фишки по правилам встречи, пенал как у «Колобок и его команда»); победа, когда <b>оба</b> на FIN и у <b>каждого</b> в пенале есть <b>1</b>, а <b>максимум цифр = номеру этапа</b> (этап 1 — «1»; этап 2 — как «21»; полностью к одной «1» снижать не обязательно). <b>Всех персонажей на поле собирать не нужно.</b> Оба на FIN одновременно (ход на FIN вдвоём). <b>Погиб один</b> — любая клавиша, тот же этап заново. Проигрыш вдвоём — если <b>оба</b> не могут выиграть.
+        <b>Конкуренция:</b> тоже <b>каждый набирает себе команду</b>, но этап за первым на FIN, у кого в пенале есть <b>1</b> и <b>максимум цифр = номеру этапа</b> (этап 1 — пенал «1»; этап 2 — например «21»; полностью к одной «1» снижать не обязательно) — <b>игра и NPC сразу замирают</b>, салют, затем переход на следующий этап; <b>оба</b> получают новое поле (проигравший на этапе воскрешается). Пока в кооперации у второго нет цели на FIN — этап не засчитан, игра продолжается. В первой строке шапки у A и B — шарики по завершённым этапам: <b>белый</b> = победа на этапе, <b>чёрный</b> = поражение. Переключение конкуренция ↔ кооперация: откат к <b>выбранному стартовому этапу</b>, новое поле, шарики конкуренции сбрасываются (в кооперации строки шариков нет).         <b>Ничья</b> (только конкуренция): оба мертвы или у обоих живых нет пути к победе на этапе. Нажмите любую клавишу — тот же этап с новым полём.
+        <b>Салют</b> на поле только при приходе на FIN с победой: в <b>кооперации</b> — когда <b>оба</b> на FIN с целью этапа в пенале (есть 1, макс. цифра = номеру этапа); в <b>конкуренции</b> — когда <b>один</b> первым на FIN с той же целью (при ничьей и кооп‑проигрыше без победы на FIN салюта нет).
       </p>
       <p class="sub">
+        <b>Пенал</b> — это, как в школе, <b>прямоугольная коробочка</b>, в которой ученик держит мелкие вещи (ластик, точилку, ручки…). В игре у героя и у фишки «пенал» — такой же по смыслу <b>прямоугольник с цифрами</b> силы: в «коробочку» складываются текущая сила и кооптированные цифры.
         Над полем — пенал на каждую живую фишку. <b>Погибший</b> (игрок или NPC): его пенал убирается с места отображения и появляется <b>серой плашкой</b> в полосе под панелями над полем (цифры по убыванию, как во встрече). В шапке у живых — пеналы A / B тем же правилом; у погибшего игрока цветной пенал скрыт. По бокам — метки A / B.
       </p>
       <p class="sub" style="color:#a89868">После «Пуск» <b>кликните по чёрному полю</b>, затем клавиши.</p>
@@ -823,7 +831,7 @@ html, body {
       </div>
     </aside>
     <div id="center-stack">
-      <div id="panels-bar" aria-label="Панели персонажей на поле"></div>
+      <div id="panels-bar" aria-label="Пеналы персонажей на поле — прямоугольники с цифрами, как школьный пенал"></div>
       <div id="dead-panels-bar" aria-label="Погибшие персонажи"></div>
       <div id="board-wrap">
         <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
@@ -868,7 +876,7 @@ let currentStage = 1;
 let campaignDone = false;
 /** Последний этап кампании (1–8). */
 const MAX_CAMPAIGN_STAGE = 8;
-/** Счётчик тиков анимации: чередование цифр только в шарах на поле (не в пеналях). */
+/** Счётчик тиков анимации: чередование цифр только в шарах на поле (не в пеналах). */
 let npcDigitAnimFrame = 0;
 /** Интервал между тиками мигания (мс); HOLD_STEPS тиков на одну цифру. */
 const NPC_DIGIT_BLINK_MS = 220;
@@ -889,8 +897,10 @@ let aliveA = true;
 let aliveB = true;
 let gameWinner = null;
 let saluteAnim = null;
-/** Кооперация: один погиб — ждём любую клавишу, затем тот же этап заново */
+/** Кооп-рестарт: один погиб — ждём клавишу. Победа: оба на FIN и playerMeetsStageFinGoal(A/B); NPC на поле полностью не обязаны. */
 let coopDeathAwaitKey = false;
+/** Конкуренция: ничья — ждём клавишу, тот же этап с новым полем */
+let drawAwaitKey = false;
 
 /** Уровни съеденных фишек (кооптация) */
 let absorbedA = [];
@@ -1022,9 +1032,12 @@ function updateTitleMode() {
   el.setAttribute(
     'aria-label',
     gameMode === 'cooperation'
-      ? 'Сейчас кооперация. Нажмите, чтобы включить конкуренцию'
-      : 'Сейчас конкуренция. Нажмите, чтобы включить кооперацию'
+      ? 'Сейчас кооперация: каждый набирает себе команду. Нажмите, чтобы включить конкуренцию'
+      : 'Сейчас конкуренция: каждый набирает себе команду. Нажмите, чтобы включить кооперацию'
   );
+  document.title = gameMode === 'cooperation'
+    ? 'Два брата-колобка — каждый себе команду (кооперация)'
+    : 'Два брата-колобка — каждый себе команду (конкуренция)';
 }
 
 function loadNpcCounts() {
@@ -1102,6 +1115,7 @@ function selectStartStage(n) {
   campaignDone = false;
   gameWinner = null;
   coopDeathAwaitKey = false;
+  drawAwaitKey = false;
   compStageWinners = [];
   const L = Math.min(8, Math.max(1, n));
   lvlA = lvlB = L;
@@ -1271,6 +1285,7 @@ function drawPanels() {
     el.className = 'panel';
     el.style.cssText = 'background:' + c.bg + ';border-color:' + c.border + ';color:' + c.text;
     el.textContent = npcTokenPanelText(t);
+    el.title = 'Пенал фишки — прямоугольник с цифрами силы (образно школьная коробочка для ластика, точилки…)';
     bar.appendChild(el);
   }
 }
@@ -1575,7 +1590,7 @@ function npcCanOrthogonalSwapPass(a, b) {
   return r === npcMovementRank(b) && npcIsPureLv(a, r) && npcIsPureLv(b, r);
 }
 
-/** Чистая 5 (пеналь только «5», без съеденных) может занять клетку чистой 4 для коопта 5+4→54. */
+/** Чистая 5 (пенал только «5», без съеденных) может занять клетку чистой 4 для коопта 5+4→54. */
 function npcMergeK5K4Landing(k5, fourTok) {
   return npcIsPureLv(k5, 5) && npcIsPureLv(fourTok, 4)
     && (!k5.npcAbsorbed || k5.npcAbsorbed.length === 0);
@@ -1594,7 +1609,7 @@ function npcMergeK4K3Landing(fourTok, threeTok) {
     && (!fourTok.npcAbsorbed || fourTok.npcAbsorbed.length === 0);
 }
 
-/** Чистая 3 и чистая 5 (у обеих пеналь одна цифра) на одной клетке — пятёрка погибает (серый пенал). */
+/** Чистая 3 и чистая 5 (у обеих в пенале одна цифра) на одной клетке — пятёрка погибает (серый пенал). */
 function npcPure3Pure5FiveDies(k5Tok, k3Tok) {
   return npcIsPureLv(k5Tok, 5) && npcIsPureLv(k3Tok, 3)
     && (!k5Tok.npcAbsorbed || k5Tok.npcAbsorbed.length === 0);
@@ -2138,7 +2153,7 @@ function resolveTwoNpcsMeet(a, b) {
 
 /** Все пары фишек на одной клетке (к‑4 и к‑5, …) — после ходов, не только к‑6. */
 function resolveNpcsOnSameCells() {
-  if (gameWinner || coopDeathAwaitKey) return;
+  if (gameWinner || coopDeathAwaitKey || drawAwaitKey) return;
   for (let g = 0; g < 64; g++) {
     let found = false;
     for (let i = 0; i < tokens.length; i++) {
@@ -2334,7 +2349,7 @@ function stepRandomNpcMove(t) {
 }
 
 function stepAllNpcs() {
-  if (gameWinner || coopDeathAwaitKey) return;
+  if (gameWinner || coopDeathAwaitKey || drawAwaitKey) return;
   const singles = tokens.filter((t) => !t.p4 && npcMovementRank(t) >= 2);
   const moves = [];
   for (const p of k4Pairs) moves.push({ kind: 'p4', p });
@@ -2407,7 +2422,7 @@ function stopNpcStepTimer() {
 }
 
 function npcWorldStepFromTimer() {
-  if (gameWinner || coopDeathAwaitKey) return;
+  if (gameWinner || coopDeathAwaitKey || drawAwaitKey) return;
   if (gel('menu-modal')?.classList.contains('open')) return;
   if (gel('rules-modal')?.classList.contains('open')) return;
   if (gel('extras-modal')?.classList.contains('open')) return;
@@ -2421,7 +2436,7 @@ function npcWorldStepFromTimer() {
     }
   }
   stepAllNpcs();
-  if (coopDeathAwaitKey) {
+  if (coopDeathAwaitKey || drawAwaitKey) {
     updateSidePanels();
     drawPanels();
     updateGameStatus();
@@ -2462,7 +2477,7 @@ function playerPanelText(who) {
   return formatDigitSetSortedMeet(playerDigitSet(who));
 }
 
-/** Все цифры пеналя NPC: уровень на поле (lv) + кооптированные (npcAbsorbed); у «чистой» фишки только lv. */
+/** Все цифры пенала NPC: уровень на поле (lv) + кооптированные (npcAbsorbed); у «чистой» фишки только lv. */
 function npcTokenDigitSet(t) {
   const s = new Set();
   if (t.lv >= 1 && t.lv <= 8) s.add(t.lv);
@@ -2491,7 +2506,7 @@ function npcMovementRank(t) {
   return maxOfDigitSet(npcTokenDigitSet(t));
 }
 
-/** Подпись пеналя фишки: lv как ведущая цифра + остальные из коопта (напр. «3», «43», «54»). Мигание только на шаре — npcTokenDisplayLabel. */
+/** Подпись пенала фишки: lv как ведущая цифра + остальные из коопта (напр. «3», «43», «54»). Мигание только на шаре — npcTokenDisplayLabel. */
 function npcTokenPanelText(t) {
   const abs = t.npcAbsorbed && t.npcAbsorbed.length ? t.npcAbsorbed.map(String).join('') : '';
   return String(t.lv) + abs;
@@ -2512,7 +2527,7 @@ function npcTokenDisplayLabel(t) {
 }
 
 function hasMultiDigitBlinkNeed() {
-  if (gameWinner || coopDeathAwaitKey) return false;
+  if (gameWinner || coopDeathAwaitKey || drawAwaitKey) return false;
   for (let i = 0; i < tokens.length; i++) {
     if (npcTokenDigitSeqDescending(tokens[i]).length > 1) return true;
   }
@@ -2521,7 +2536,7 @@ function hasMultiDigitBlinkNeed() {
 
 /**
  * «Чистая» фишка уровня lv: в пенале одна цифра силы (уровень на поле = lv), в npcAbsorbed ещё ничего нет.
- * Подпись пеналя на поле/в панели — просто эта цифра (напр. «3»); после коопта появятся и другие цифры.
+ * Подпись пенала на поле/в панели — просто эта цифра (напр. «3»); после коопта появятся и другие цифры.
  */
 function npcIsPureLv(t, lv) {
   const s = npcTokenDigitSet(t);
@@ -2549,8 +2564,15 @@ function maxOfDigitSet(s) {
   return m;
 }
 
+/** Цель этапа на FIN (кооп и конкуренция): в пенале есть 1, макс. цифра = номеру этапа (этап 1 → «1»; этап 2 → «21»). */
+function playerMeetsStageFinGoal(who) {
+  const s = playerDigitSet(who);
+  if (!s.has(1)) return false;
+  return maxOfDigitSet(s) === Math.min(8, Math.max(1, currentStage));
+}
+
 /**
- * Встреча двух сторон по множествам цифр пеналя:
+ * Встреча двух сторон по множествам цифр пенала:
  * 1) Одинаковый максимум — насквозь; 2) иначе есть пара ±1 между младшим и старшим наборами — старший поглощает младшего;
  * 3) иначе — младший убивает старшего.
  * Условие п.2 (одна цифра из «старшего» набора и одна из «младшего», |a−b|===1):
@@ -2707,9 +2729,25 @@ function canReachFinFrom(px, py) {
   return false;
 }
 
+/** Конкуренция: после ничьей — тот же этап, новое поле. */
+function restartStageAfterDraw() {
+  drawAwaitKey = false;
+  gameWinner = null;
+  saluteAnim = null;
+  layoutBoard();
+  genGridWithTokens();
+  updateLiveStage();
+  updateSidePanels();
+  drawPanels();
+  updateGameStatus();
+  draw();
+  startNpcStepTimer();
+}
+
 /** В кооперации после гибели одного — тот же этап, новое поле (кампания не срывается). */
 function restartCoopStageFromDeath() {
   coopDeathAwaitKey = false;
+  drawAwaitKey = false;
   gameWinner = null;
   saluteAnim = null;
   layoutBoard();
@@ -2725,8 +2763,11 @@ function restartCoopStageFromDeath() {
 function cannotEverWin(who) {
   if (who === 'A' ? !aliveA : !aliveB) return true;
   const pos = who === 'A' ? posA : posB;
-  const lv = who === 'A' ? lvlA : lvlB;
-  if (lv > 1) return !hasReachableAbsorb(pos.x, pos.y, lv);
+  if (playerMeetsStageFinGoal(who)) {
+    return !canReachFinFrom(pos.x, pos.y);
+  }
+  const mx = maxOfDigitSet(playerDigitSet(who));
+  if (mx > 1) return !hasReachableAbsorb(pos.x, pos.y, mx);
   return !canReachFinFrom(pos.x, pos.y);
 }
 
@@ -2735,7 +2776,8 @@ function resolveEndgame() {
   if (gameWinner) return;
 
   if (gameMode === 'cooperation') {
-    if (aliveA && aliveB && lvlA === 1 && lvlB === 1
+    /* Кооп-победа: оба достигли цели этапа в пенале и оба на FIN (напр. этап 2 — у каждого «21»). */
+    if (aliveA && aliveB && playerMeetsStageFinGoal('A') && playerMeetsStageFinGoal('B')
         && posA.x === fx && posA.y === fy && posB.x === fx && posB.y === fy) {
       gameWinner = 'coop';
       stopNpcStepTimer();
@@ -2747,7 +2789,7 @@ function resolveEndgame() {
     if (cannotEverWin('A') && cannotEverWin('B')) {
       gameWinner = 'cooplose';
       stopNpcStepTimer();
-      startSalute('center');
+      saluteAnim = null;
       updateGameStatus();
       updateSidePanels();
       draw();
@@ -2755,7 +2797,7 @@ function resolveEndgame() {
     return;
   }
 
-  if (aliveA && lvlA === 1 && posA.x === fx && posA.y === fy) {
+  if (aliveA && playerMeetsStageFinGoal('A') && posA.x === fx && posA.y === fy) {
     gameWinner = 'A';
     stopNpcStepTimer();
     startSalute('left');
@@ -2763,7 +2805,7 @@ function resolveEndgame() {
     setTimeout(scheduleAfterStageWin, 1600);
     return;
   }
-  if (aliveB && lvlB === 1 && posB.x === fx && posB.y === fy) {
+  if (aliveB && playerMeetsStageFinGoal('B') && posB.x === fx && posB.y === fy) {
     gameWinner = 'B';
     stopNpcStepTimer();
     startSalute('right');
@@ -2774,8 +2816,9 @@ function resolveEndgame() {
 
   if ((!aliveA && !aliveB) || (cannotEverWin('A') && cannotEverWin('B'))) {
     gameWinner = 'draw';
+    drawAwaitKey = true;
     stopNpcStepTimer();
-    startSalute('center');
+    saluteAnim = null;
     updateGameStatus();
     updateSidePanels();
     draw();
@@ -2796,6 +2839,7 @@ function resetActors() {
   if (!campaignDone) gameWinner = null;
   saluteAnim = null;
   coopDeathAwaitKey = false;
+  drawAwaitKey = false;
   updateGameStatus();
   updateSidePanels();
 }
@@ -2803,12 +2847,13 @@ function resetActors() {
 function scheduleAfterStageWin() {
   saluteAnim = null;
   coopDeathAwaitKey = false;
+  drawAwaitKey = false;
   const prevWinner = gameWinner;
   if (currentStage >= MAX_CAMPAIGN_STAGE) {
     if (gameMode === 'competition' && (prevWinner === 'A' || prevWinner === 'B')) compStageWinners.push(prevWinner);
     campaignDone = true;
     gameWinner = 'campaign';
-    startSalute('center');
+    if (prevWinner !== 'coop') startSalute('center');
     updateLiveStage();
     updateGameStatus();
     drawPanels();
@@ -2840,32 +2885,32 @@ function updateGameStatus() {
     return;
   }
   if (gameWinner === 'cooplose') {
-    el.textContent = 'Кооперация: оба не могут дойти до уровня 1 и FIN — проигрыш вдвоём.';
+    el.textContent = 'Команда не сложилась: оба не могут выполнить цель этапа в пенале и попасть на FIN — проигрыш вдвоём.';
     return;
   }
   if (gameWinner === 'draw') {
-    el.textContent = 'Ничья: оба выбыли или у обоих (в конкуренции — у оставшихся) нет пути до 1 и FIN.';
+    el.textContent = 'Выиграть невозможно. Нажмите любую клавишу — начнём этап с начала.';
     return;
   }
   if (gameWinner === 'A') {
     el.textContent = gameMode === 'competition'
       ? 'Этап ' + currentStage + ': победа A — белый шар у A, чёрный у B; оба на следующий этап.'
-      : 'Этап ' + currentStage + ': победа A (уровень 1 на FIN)!';
+      : 'Этап ' + currentStage + ': победа A — цель этапа на FIN!';
   } else if (gameWinner === 'B') {
     el.textContent = gameMode === 'competition'
       ? 'Этап ' + currentStage + ': победа B — белый шар у B, чёрный у A; оба на следующий этап.'
-      : 'Этап ' + currentStage + ': победа B (уровень 1 на FIN)!';
-  } else if (gameWinner === 'coop') el.textContent = 'Этап ' + currentStage + ': кооперация — оба на 1 и на FIN!';
-  else if (currentStage === 1) el.textContent = 'Этап 1: только A и B (ур. 1) — FIN. NPC нет.';
-  else if (currentStage === 2) el.textContent = 'Этап 2: к‑1 в углах стен, не ходят. Кооптация ±1 или гибель старшего; цель — ур. 1 и FIN.';
+      : 'Этап ' + currentStage + ': победа B — цель этапа на FIN!';
+  } else if (gameWinner === 'coop') el.textContent = 'Этап ' + currentStage + ': кооперация — оба на FIN с целью этапа в пенале!';
+  else if (currentStage === 1) el.textContent = 'Этап 1: только A и B (ур. 1) — FIN. NPC нет. Конкуренция: на FIN пенал «1».';
+  else if (currentStage === 2) el.textContent = 'Этап 2: к‑1 в углах стен, не ходят. Кооптация ±1 или гибель старшего. На FIN цель этапа: пенал с 1 и макс. 2 (напр. «21») — в кооперации у обоих, в конкуренции у первого.';
   else if (currentStage === 3) el.textContent = 'Этап 3: + к‑2 (территория, в 2× медленнее).';
   else if (currentStage === 4) el.textContent = 'Этап 4: + к‑3 (туда‑сюду по прямой).';
   else if (currentStage === 5) el.textContent = 'Этап 5: + к‑4 парами по параллельным рядам (общий разворот).';
   else if (currentStage === 6) el.textContent = 'Этап 6: + к‑5 (шаг на 1 или прыжок через одну стену).';
   else if (currentStage === 7) el.textContent = 'Этап 7: тор (верх–низ и лево–право сшиты). + к‑6 — король, ходит после к‑2…к‑5, старается не погибнуть и скооптировать.';
   else if (currentStage === 8) el.textContent = 'Этап 8: как 7 + к‑7 ходит по полу и стенам. Ортососедство на торе с к‑7 в стене — встреча: вытащить на пол и скооптировать по правилам.';
-  else if (currentStage >= 2) el.textContent = 'Кооптация при разных максимумах и паре цифр ±1; иначе гибнет старший. Доведите уровень до 1, затем FIN (не всех NPC обязательно).';
-  else el.textContent = 'Этап 1: у обоих уровень 1 — доберитесь до FIN.';
+  else if (currentStage >= 2) el.textContent = 'Кооптация ±1 между пеналами; иначе гибнет старший. На FIN — цель этапа в пенале (есть 1, макс. цифра = этап); всех фишек собирать не обязательно.';
+  else el.textContent = 'Этап 1: у обоих «1» в пенале — доберитесь до FIN.';
 }
 
 function startSalute(kind) {
@@ -2911,7 +2956,7 @@ function drawSalute(ctx, pw, ph, kind, elapsedMs) {
 }
 
 function tryMove(who, dx, dy) {
-  if (gameWinner || coopDeathAwaitKey) return;
+  if (gameWinner || coopDeathAwaitKey || drawAwaitKey) return;
   if (who === 'A' && !aliveA) return;
   if (who === 'B' && !aliveB) return;
   const pos = who === 'A' ? posA : posB;
@@ -2980,6 +3025,11 @@ function onKeyDown(e) {
     restartCoopStageFromDeath();
     return;
   }
+  if (drawAwaitKey) {
+    e.preventDefault();
+    restartStageAfterDraw();
+    return;
+  }
   if (gameWinner) return;
   const code = e.code;
   const k = e.key;
@@ -3041,6 +3091,7 @@ function setGameMode(m) {
   updateTitleMode();
   compStageWinners = [];
   coopDeathAwaitKey = false;
+  drawAwaitKey = false;
   saluteAnim = null;
   gameWinner = null;
   campaignDone = false;
@@ -3414,6 +3465,18 @@ function draw() {
     ctx.font = `${Math.max(12, CELL * 0.26)}px system-ui,sans-serif`;
     ctx.fillText('Нажмите любую клавишу — то же поле этапа заново.', pw / 2, ph * 0.56);
   }
+  if (drawAwaitKey) {
+    ctx.fillStyle = 'rgba(45, 42, 38, 0.78)';
+    ctx.fillRect(0, 0, pw, ph);
+    ctx.fillStyle = 'rgba(255,255,255,0.93)';
+    ctx.font = `bold ${Math.max(15, CELL * 0.42)}px system-ui,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Выиграть невозможно.', pw / 2, ph * 0.38);
+    ctx.fillStyle = 'rgba(232,200,160,0.95)';
+    ctx.font = `${Math.max(12, CELL * 0.28)}px system-ui,sans-serif`;
+    ctx.fillText('Нажмите любую клавишу — начнём этап с начала.', pw / 2, ph * 0.52);
+  }
   if (saluteAnim) {
     const t = performance.now() - saluteAnim.t0;
     if (t < 2800) {
@@ -3432,6 +3495,7 @@ function runGenerate() {
   gameWinner = null;
   saluteAnim = null;
   coopDeathAwaitKey = false;
+  drawAwaitKey = false;
   compStageWinners = [];
   layoutBoard();
   genGridWithTokens();
@@ -3501,7 +3565,7 @@ requestAnimationFrame(fullRelayout);
 window.addEventListener('load', () => requestAnimationFrame(fullRelayout));
 startNpcStepTimer();
 setInterval(function () {
-  if (gameWinner || coopDeathAwaitKey || !hasMultiDigitBlinkNeed()) return;
+  if (gameWinner || coopDeathAwaitKey || drawAwaitKey || !hasMultiDigitBlinkNeed()) return;
   npcDigitAnimFrame = (npcDigitAnimFrame + 1) % 1000;
   try {
     draw();
