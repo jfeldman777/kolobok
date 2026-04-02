@@ -22,50 +22,200 @@ html, body {
 }
 #game-title-bar {
   flex-shrink: 0;
-  text-align: center;
-  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: calc(6px + env(safe-area-inset-top, 0px)) 10px 6px;
   background: linear-gradient(180deg, #1f1a12 0%, #141414 100%);
   border-bottom: 2px solid #E8A020;
-  font-size: clamp(1.05rem, 4.2vw, 1.55rem);
-  font-weight: 900;
-  color: #E8A020;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding-top: calc(6px + env(safe-area-inset-top, 0px));
 }
-#live-stage {
-  display: block;
-  font-size: 12px;
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.title-players-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(232, 160, 32, 0.22);
+}
+.title-penal-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  max-width: 42%;
+}
+.title-penal-group-b {
+  flex-direction: row;
+}
+.title-penal-letter {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.title-penal-group-a .title-penal-letter {
+  color: #9fa8da;
+}
+.title-penal-group-b .title-penal-letter {
+  color: #e1bee7;
+}
+#game-title-bar #live-stage {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  margin-top: 0;
+  font-size: 10px;
   font-weight: 700;
   color: #9a8060;
   letter-spacing: 0.04em;
-  margin-top: 4px;
+  line-height: 1.2;
 }
-#launch-panel {
-  flex-shrink: 0;
-  padding: 10px 12px;
+.menu-open-btn {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #555;
+  background: #2a2a2a;
+  color: #E8A020;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.menu-open-btn:active { filter: brightness(1.15); }
+.menu-open-spacer {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+}
+.title-block {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+.title-main {
+  display: block;
+  font-size: clamp(0.95rem, 3.6vw, 1.35rem);
+  font-weight: 900;
+  color: #E8A020;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.title-mode-btn {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 800;
+  color: #d4a84a;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  cursor: pointer;
+  border-bottom: 1px dashed rgba(232, 160, 32, 0.35);
+}
+.title-mode-btn:hover {
+  color: #E8A020;
+  border-bottom-color: rgba(232, 160, 32, 0.65);
+}
+.title-mode-btn:focus-visible {
+  outline: 2px solid #E8A020;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+#menu-stage-hint {
+  width: 100%;
+  font-size: 11px;
+  color: #777;
+  line-height: 1.4;
+  margin: -4px 0 4px;
+}
+#game-status.menu-game-status {
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a08050;
+  line-height: 1.35;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  background: #252018;
+  border-radius: 8px;
+  border: 1px solid #3a3228;
+}
+#menu-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 4800;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+#menu-modal.open { display: flex; }
+#menu-panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(92vh, 720px);
+  overflow-y: auto;
+  padding: 14px 14px 16px;
   background: #1a1a1a;
-  border-bottom: 1px solid #333;
+  border: 1px solid #444;
+  border-radius: 14px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 14px;
 }
-#launch-panel h1 {
-  font-size: clamp(0.85rem, 2.2vw, 0.95rem);
+#menu-panel h1 {
+  font-size: clamp(0.9rem, 2.4vw, 1rem);
   font-weight: 700;
-  color: #888;
+  color: #aaa;
   letter-spacing: 0.02em;
   width: 100%;
   max-width: 100%;
 }
-#launch-panel .sub {
+#menu-panel h1.menu-settings-heading {
+  margin-top: -4px;
+  margin-bottom: 2px;
+  font-size: clamp(0.78rem, 2vw, 0.88rem);
+  color: #888;
+}
+#menu-panel .sub {
   font-size: 11px;
   color: #666;
   font-weight: 500;
   width: 100%;
   margin-top: -6px;
 }
+#menu-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: #ccc;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+}
+#menu-close:active { background: #444; }
 .stage-row {
   display: flex;
   align-items: center;
@@ -116,23 +266,29 @@ html, body {
   opacity: 0.45;
   cursor: not-allowed;
 }
-#wall-row {
+#wall-row, #cell-row {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
   color: #aaa;
+  width: 100%;
 }
-#wall-row input[type=range] {
+#wall-row input[type=range],
+#cell-row input[type=range] {
   width: min(160px, 35vw);
+  flex: 1;
+  max-width: 220px;
   accent-color: #E8A020;
 }
-#wall-out, #grid-out {
+#wall-out, #grid-out, #cell-out {
   font-weight: 700;
   color: #fff;
   min-width: 36px;
 }
 #extras-open {
+  width: 100%;
+  flex: 0 0 100%;
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid #6a5a28;
@@ -144,16 +300,93 @@ html, body {
 }
 #extras-open:active { filter: brightness(1.12); }
 #start-btn {
-  padding: 10px 18px;
+  width: 100%;
+  flex: 0 0 100%;
+  padding: 12px 18px;
   border-radius: 10px;
   border: 1px solid #2e6bb8;
   background: #1565c0;
   color: #fff;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 #start-btn:active { filter: brightness(1.12); }
+#rules-open {
+  width: 100%;
+  flex: 0 0 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #4a5a6a;
+  background: #222830;
+  color: #9eb8d4;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#rules-open:active { filter: brightness(1.12); }
+#rules-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 4900;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+#rules-modal.open { display: flex; }
+#rules-panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(92vh, 760px);
+  overflow-y: auto;
+  padding: 14px 14px 16px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 14px;
+}
+#rules-panel h1 {
+  font-size: clamp(1rem, 2.6vw, 1.15rem);
+  font-weight: 700;
+  color: #c8b898;
+  letter-spacing: 0.02em;
+  margin: 0 36px 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+}
+#rules-panel .sub {
+  font-size: 12px;
+  color: #9a9a9a;
+  font-weight: 500;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+#rules-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: #ccc;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+}
+#rules-close:active { background: #444; }
+.menu-grid-out {
+  width: 100%;
+  flex: 0 0 100%;
+  min-width: 0;
+  font-size: 12px;
+  color: #888;
+}
 
 #play-row {
   flex: 1;
@@ -164,8 +397,8 @@ html, body {
   width: 100%;
 }
 .side-panel {
-  flex: 0 0 48px;
-  min-width: 44px;
+  flex: 0 0 36px;
+  min-width: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,32 +419,65 @@ html, body {
   align-items: stretch;
   background: #0a0a0a;
 }
-.side-panel-a { box-shadow: inset 4px 0 0 rgba(26, 35, 126, 0.45); }
-.side-panel-b { box-shadow: inset -4px 0 0 rgba(74, 20, 140, 0.45); }
+.side-panel-a {
+  background: linear-gradient(90deg, rgba(26, 35, 126, 0.35) 0%, #141414 55%);
+  box-shadow: inset 4px 0 0 rgba(121, 134, 203, 0.85);
+}
+.side-panel-b {
+  background: linear-gradient(270deg, rgba(74, 20, 140, 0.38) 0%, #141414 55%);
+  box-shadow: inset -4px 0 0 rgba(225, 190, 231, 0.55);
+}
 .side-panel-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   text-align: center;
 }
 .side-marker {
-  font-size: 14px;
+  font-size: clamp(16px, 4.2vw, 20px);
   font-weight: 900;
-  color: #E8A020;
+  letter-spacing: 0.06em;
 }
-.side-dots {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  line-height: 1.2;
-  padding: 4px 6px;
-  border-radius: 6px;
-  border: 1.5px solid #E8A020;
-  background: #1e1000;
-  color: #E8A020;
-  max-width: 44px;
-  word-break: break-all;
+.side-panel-a .side-marker { color: #9fa8da; text-shadow: 0 0 12px rgba(121, 134, 203, 0.5); }
+.side-panel-b .side-marker { color: #e1bee7; text-shadow: 0 0 12px rgba(206, 147, 216, 0.4); }
+/* Пеналы игроков в шапке: строка цифр (уровень + кооптированные) */
+.player-penal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  min-width: 1.75em;
+  max-width: min(200px, 38vw);
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: clamp(11px, 2.9vw, 14px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  border: 1.5px solid;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.player-penal::-webkit-scrollbar {
+  display: none;
+}
+.player-penal-a {
+  border-color: #7986cb;
+  background: #15182e;
+  color: #e8eaf6;
+  box-shadow: 0 0 0 1px rgba(26, 35, 126, 0.45);
+}
+.player-penal-b {
+  border-color: #ce93d8;
+  background: #251528;
+  color: #f3e5f5;
+  box-shadow: 0 0 0 1px rgba(74, 20, 140, 0.4);
+}
+/* Погибший игрок: цветной пенал в шапке скрыт — подпись только в серой полосе погибших */
+.player-penal.player-penal-gone {
+  display: none !important;
 }
 #board-wrap {
   flex: 1;
@@ -230,44 +496,81 @@ html, body {
   background: #0a0a0a;
 }
 
-#npc-panels-wrap {
-  flex-shrink: 0;
-  background: #121212;
-  border-bottom: 1px solid #2a2a2a;
-  padding: 6px 10px 8px;
-  max-height: min(20vh, 140px);
-  overflow-x: auto;
-  overflow-y: hidden;
-  text-align: center;
-}
-#npc-panels-wrap .npc-hint {
-  font-size: 10px;
-  color: #666;
-  margin-bottom: 6px;
-  line-height: 1.35;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-}
-#npc-panels-bar {
+/* Панели — точная копия блока из kolobok_2026.html (#panels-bar, .panel, .panel-dead) */
+#panels-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 3px 6px;
+  background: #0d0d0d;
+  flex-shrink: 0;
+  height: 28px;
   align-items: center;
-  justify-content: center;
+  scrollbar-width: none;
 }
-.npc-chip {
+#panels-bar::-webkit-scrollbar {
+  display: none;
+}
+.panel {
   display: inline-flex;
   align-items: center;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 6px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 4px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   border: 1.5px solid;
   white-space: nowrap;
+  flex-shrink: 0;
 }
-.npc-chip.done { opacity: 0.35; }
+.panel.done {
+  opacity: 0.4;
+}
+.panel-dead {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid #444;
+  background: #1a1a1a;
+  color: #555;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Пенал погибших (убитые игроки и фишки — не кооптация) */
+#dead-panels-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 6px;
+  background: #141414;
+  border-top: 1px solid #2e2e2e;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 0;
+}
+#dead-panels-bar:empty {
+  display: none;
+}
+.penal-dead-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #4a4a4a;
+  background: linear-gradient(180deg, #353535 0%, #2a2a2a 100%);
+  color: #b0b0b0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 #extras-modal {
   display: none;
@@ -388,64 +691,99 @@ html, body {
 <body>
 <div id="app">
   <div id="game-title-bar">
-    Два брата-колобка
-    <span id="live-stage">Этап 1 · с 1 по 8</span>
+    <div class="title-row">
+      <button type="button" id="menu-open-btn" class="menu-open-btn" aria-label="Настройки и пуск">☰</button>
+      <div class="title-block">
+        <span class="title-main">Два брата-колобка <button type="button" class="title-mode-btn" id="title-mode" aria-label="Переключить режим игры">(Конкуренция)</button></span>
+      </div>
+      <span class="menu-open-spacer" aria-hidden="true"></span>
+    </div>
+    <div class="title-players-row">
+      <div class="title-penal-group title-penal-group-a" aria-label="Игрок A">
+        <span class="title-penal-letter">A</span>
+        <span id="panel-a-lvl" class="player-penal player-penal-a">1</span>
+      </div>
+      <span id="live-stage">Этап 1 из 8</span>
+      <div class="title-penal-group title-penal-group-b" aria-label="Игрок B">
+        <span id="panel-b-lvl" class="player-penal player-penal-b">1</span>
+        <span class="title-penal-letter">B</span>
+      </div>
+    </div>
   </div>
-  <div id="launch-panel">
-    <h1>Два игрока · одно поле · 8 этапов</h1>
-    <p class="sub">
-      Старт: A слева, B справа; финиш — центр низа. <b>A:</b> WASD. <b>B:</b> стрелки.
-      На этапах 2–8 на поле появляются персонажи (фишки) — <b>общие для обоих</b>: подбирает тот, кто наступил на клетку.
-      У каждого игрока уровень = номер этапа; заход на фишку: если <b>уровень фишки &gt; ваш уровень</b> — гибель. Иначе фишка съедается, ваш уровень уменьшается на 1 (минимум 1).
-      Цель — <b>довести свой уровень до 1</b> и попасть на FIN. <b>Съедать всех персонажей на поле не нужно</b> — лишние фишки можно оставить (но они могут мешать ходить). <b>Кооперация</b>: победа, только если оба живы, оба на 1 и оба на FIN; если кто-то погиб или не может дойти до 1 — <b>проигрыш вдвоём</b>.
-      <b>Конкуренция</b>: кто первым пришёл на FIN с уровнем 1; <b>ничья</b>, если оба погибли или у обоих нет возможности дойти до 1. По бокам — текущий уровень A/B; посередине — фишки на поле.
-    </p>
-    <span id="game-status" style="font-size:13px;color:#E8A020;font-weight:800;width:100%;min-height:1.2em"></span>
-    <div class="stage-row">
-      <label>Стартовый этап</label>
-      <button type="button" class="stage-sel active" data-st="1" onclick="selectStartStage(1)">1</button>
-      <button type="button" class="stage-sel" data-st="2" onclick="selectStartStage(2)">2</button>
-      <button type="button" class="stage-sel" data-st="3" onclick="selectStartStage(3)">3</button>
-      <button type="button" class="stage-sel" data-st="4" onclick="selectStartStage(4)">4</button>
-      <button type="button" class="stage-sel" data-st="5" onclick="selectStartStage(5)">5</button>
-      <button type="button" class="stage-sel" data-st="6" onclick="selectStartStage(6)">6</button>
-      <button type="button" class="stage-sel" data-st="7" onclick="selectStartStage(7)">7</button>
-      <button type="button" class="stage-sel" data-st="8" onclick="selectStartStage(8)">8</button>
+
+  <div id="menu-modal" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <div id="menu-panel">
+      <button type="button" id="menu-close" aria-label="Закрыть меню">×</button>
+      <button type="button" id="start-btn" title="Сгенерировать поле заново">Пуск</button>
+      <h1 id="menu-title" class="menu-settings-heading">Настройки</h1>
+      <p id="menu-stage-hint"></p>
+      <p id="game-status" class="menu-game-status" role="status"></p>
+      <div class="stage-row">
+        <label>Стартовый этап</label>
+        <button type="button" class="stage-sel active" data-st="1" onclick="selectStartStage(1)">1</button>
+        <button type="button" class="stage-sel" data-st="2" onclick="selectStartStage(2)">2</button>
+        <button type="button" class="stage-sel" data-st="3" onclick="selectStartStage(3)">3</button>
+        <button type="button" class="stage-sel" data-st="4" onclick="selectStartStage(4)">4</button>
+        <button type="button" class="stage-sel" data-st="5" onclick="selectStartStage(5)">5</button>
+        <button type="button" class="stage-sel" data-st="6" onclick="selectStartStage(6)">6</button>
+        <button type="button" class="stage-sel" data-st="7" onclick="selectStartStage(7)">7</button>
+        <button type="button" class="stage-sel" data-st="8" onclick="selectStartStage(8)">8</button>
+      </div>
+      <div class="mode-toggle">
+        <button type="button" class="mode-btn active" id="mode-competition" onclick="setGameMode('competition')">1) Конкуренция</button>
+        <button type="button" class="mode-btn" id="mode-cooperation" onclick="setGameMode('cooperation')">2) Кооперация</button>
+      </div>
+      <div id="cell-row">
+        <label for="cell-slider">Размер клетки (0 — авто)</label>
+        <input type="range" id="cell-slider" min="0" max="72" value="0" step="2">
+        <span id="cell-out">авто</span>
+      </div>
+      <div id="wall-row">
+        <label for="wall-slider">Стены</label>
+        <input type="range" id="wall-slider" min="5" max="28" value="14" step="1">
+        <span id="wall-out">14%</span>
+      </div>
+      <span id="grid-out" class="menu-grid-out"></span>
+      <button type="button" id="extras-open" onclick="showExtras()">Число персонажей (к‑1 … к‑7)…</button>
+      <button type="button" id="rules-open">Правила игры</button>
     </div>
-    <div class="mode-toggle">
-      <button type="button" class="mode-btn active" id="mode-competition" onclick="setGameMode('competition')">1) Конкуренция</button>
-      <button type="button" class="mode-btn" id="mode-cooperation" onclick="setGameMode('cooperation')">2) Кооперация</button>
+  </div>
+
+  <div id="rules-modal" role="dialog" aria-modal="true" aria-labelledby="rules-title">
+    <div id="rules-panel">
+      <button type="button" id="rules-close" aria-label="Закрыть правила">×</button>
+      <h1 id="rules-title">Правила</h1>
+      <p class="sub">
+        Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки.
+        <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила, без исключений для отдельных цифр: сравниваются максимумы множеств цифр сторон (у игрока: якорь этапа + <b>текущий уровень</b> + кооптированные; у фишки: уровень на поле + кооптированные, напр. «32» → 3 и 2). Если максимумы <b>равны</b> — насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего, <b>пенали сливаются</b>: объединяются множества цифр (игроку: новый текущий уровень = максимум объединения, кооптированные — остальные цифры по убыванию, якорь этапа сохраняется; у фишки — одна фишка, как при коопте двух NPC). Иначе <b>гибнет старший</b>.
+      </p>
+      <p class="sub">
+        <b>Кооперация:</b> победа — оба с уровнем 1 на FIN (всех персонажей присоединять не обязательно). <b>Погиб один</b> — нажмите <b>любую клавишу</b>, чтобы заново начать <b>тот же этап</b> (новое поле). Проигрыш вдвоём — только если <b>оба</b> не могут выиграть.
+        <b>Конкуренция:</b> кто первым на FIN с уровнем 1. Если один погиб — второй продолжает (дойти с «командой» до 1 и до FIN или погибнуть). <b>Ничья:</b> оба мертвы или у обоих нет пути до 1 и FIN.
+      </p>
+      <p class="sub">
+        Над полем — пенал на каждую живую фишку. <b>Погибший</b> (игрок или NPC): его пенал убирается с места отображения и появляется <b>серой плашкой</b> в полосе под панелями над полем (цифры по убыванию, как во встрече). В шапке у живых — пеналы A / B тем же правилом; у погибшего игрока цветной пенал скрыт. По бокам — метки A / B.
+      </p>
+      <p class="sub" style="color:#a89868">После «Пуск» <b>кликните по чёрному полю</b>, затем клавиши.</p>
     </div>
-    <div id="wall-row">
-      <label for="wall-slider">Стены</label>
-      <input type="range" id="wall-slider" min="5" max="28" value="14" step="1">
-      <span id="wall-out">14%</span>
-    </div>
-    <span id="grid-out" style="font-size:12px;color:#888;min-width:auto"></span>
-    <button type="button" id="extras-open" onclick="showExtras()">+ Число персонажей (к-1 … к-7)</button>
-    <button type="button" id="start-btn">Сгенерировать поле</button>
   </div>
 
   <div id="play-row">
-    <aside id="panel-a" class="side-panel side-panel-a" aria-label="Панель игрока A">
+    <aside id="panel-a" class="side-panel side-panel-a" aria-label="Сторона игрока A">
       <div class="side-panel-inner">
         <span class="side-marker">A</span>
-        <span id="panel-a-lvl" class="side-dots">1</span>
       </div>
     </aside>
     <div id="center-stack">
-      <div id="npc-panels-wrap">
-        <p class="npc-hint"><b>Общие фишки</b> (с этапа 2): цифра ≤ вашего уровня — можно съесть (−1 к уровню); выше — гибель. Счётчик «осталось» справочный — <b>очищать поле полностью не обязательно</b>:</p>
-        <div id="npc-panels-bar"></div>
-      </div>
+      <div id="panels-bar" aria-label="Панели персонажей на поле"></div>
+      <div id="dead-panels-bar" aria-label="Погибшие персонажи"></div>
       <div id="board-wrap">
         <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
       </div>
     </div>
-    <aside id="panel-b" class="side-panel side-panel-b" aria-label="Панель игрока B">
+    <aside id="panel-b" class="side-panel side-panel-b" aria-label="Сторона игрока B">
       <div class="side-panel-inner">
         <span class="side-marker">B</span>
-        <span id="panel-b-lvl" class="side-dots">1</span>
       </div>
     </aside>
   </div>
@@ -470,6 +808,7 @@ html, body {
 
 <script>
 const LS_NPC = 'kolobok2brata_npc_counts';
+const LS_CELL = 'kolobok2brata_cell_slider';
 const NPC_KEYS = ['n1', 'n2', 'n3', 'p4', 'n5', 'n6', 'n7'];
 const DEFAULT_NPC = { n1: 3, n2: 3, n3: 3, p4: 2, n5: 3, n6: 3, n7: 3 };
 const SLIDER_MAP = { n1: 'x-n1', n2: 'x-n2', n3: 'x-n3', p4: 'x-p4', n5: 'x-n5', n6: 'x-n6', n7: 'x-n7' };
@@ -479,6 +818,13 @@ let npcCounts = { ...DEFAULT_NPC };
 let startStage = 1;
 let currentStage = 1;
 let campaignDone = false;
+/** Последний этап кампании (1–8). */
+const MAX_CAMPAIGN_STAGE = 8;
+/** Счётчик тиков анимации: чередование цифр только в шарах на поле (не в пеналях). */
+let npcDigitAnimFrame = 0;
+/** Интервал между тиками мигания (мс); HOLD_STEPS тиков на одну цифру. */
+const NPC_DIGIT_BLINK_MS = 220;
+const NPC_DIGIT_BLINK_HOLD_STEPS = 3;
 
 let GW = 18, GH = 14;
 let grid = [];
@@ -493,10 +839,44 @@ let aliveA = true;
 let aliveB = true;
 let gameWinner = null;
 let saluteAnim = null;
+/** Кооперация: один погиб — ждём любую клавишу, затем тот же этап заново */
+let coopDeathAwaitKey = false;
 
-/** @type {{x:number,y:number,lv:number}[]} */
+/** Уровни съеденных фишек (кооптация) */
+let absorbedA = [];
+let absorbedB = [];
+/** Уровень игрока на начале текущего этапа — якорь пенала (этап 2 → «2», после коопта «1» → «21») */
+let anchorA = 1;
+let anchorB = 1;
+
+/** Погибшие в текущей партии (порядок гибели); сброс при новом поле */
+let deadPenalChips = [];
+/** Подпись для оверлея коопа: цифры игрока и фишки в момент гибели */
+let coopDeathMeetSummary = '';
+
+/** @type {{x:number,y:number,lv:number,k2Sid?:number,d3x?:number,d3y?:number,d4x?:number,d4y?:number,p4?:object,npcAbsorbed?:number[]}[]} */
 let tokens = [];
 let tokensInitialByLv = {};
+/** к-4: пары на параллельных рядах; общий pos и dir — разворот у упора у обоих сразу */
+let k4Pairs = [];
+/** к-2: клетка "x,y" → владелец k2Sid; закрашивание и запрет для чужих к-2 */
+let k2Territory = {};
+/** +1 за каждую фазу NPC по таймеру; к-2 ходит только на чётных тиках (в 2× медленнее остальных NPC) */
+let npcTickCount = 0;
+/** Интервал шага всех NPC (мс); не привязан к ходам игрока */
+const NPC_STEP_INTERVAL_MS = 450;
+let npcStepTimerId = null;
+
+const K2_TERRITORY_TINTS = [
+  'hsla(0,   82%, 52%, 0.34)',
+  'hsla(32,  95%, 52%, 0.32)',
+  'hsla(305, 72%, 56%, 0.32)',
+  'hsla(48,  90%, 50%, 0.30)',
+  'hsla(268, 62%, 58%, 0.30)',
+  'hsla(15,  88%, 54%, 0.32)',
+  'hsla(348, 78%, 52%, 0.32)',
+  'hsla(188, 58%, 46%, 0.28)',
+];
 
 const TOKEN_STYLE = {
   1: { f: '#7F77DD', s: '#3C3489' },
@@ -508,7 +888,94 @@ const TOKEN_STYLE = {
   7: { f: '#14b8a6', s: '#0f766e' },
 };
 
+/** Панели над полем — те же цвета, что в kolobok_2026.html */
+const PANEL_COLORS = {
+  1: { bg: '#1a1040', border: '#7F77DD', text: '#AFA9EC' },
+  2: { bg: '#2a0808', border: '#E24B4A', text: '#F09595' },
+  3: { bg: '#0e2004', border: '#639922', text: '#C0DD97' },
+  4: { bg: '#041428', border: '#378ADD', text: '#85B7EB' },
+  5: { bg: '#1e0e00', border: '#BA7517', text: '#FAC775' },
+  6: { bg: '#2a1040', border: '#9B6BB8', text: '#E8D4F5' },
+  7: { bg: '#042f2e', border: '#14b8a6', text: '#5eead4' },
+};
+
 function gel(id) { return document.getElementById(id); }
+
+function getCellSliderRaw() {
+  const el = gel('cell-slider');
+  if (!el) return 0;
+  const v = parseInt(el.value, 10);
+  return isNaN(v) ? 0 : v;
+}
+
+/** @returns {number} 0 = автоподбор, иначе желаемый размер клетки px (16–88) */
+function getCellSizePreference() {
+  const raw = getCellSliderRaw();
+  if (raw <= 0) return 0;
+  return Math.min(88, Math.max(16, raw));
+}
+
+function syncCellOut() {
+  const out = gel('cell-out');
+  if (!out) return;
+  const raw = getCellSliderRaw();
+  out.textContent = raw <= 0 ? 'авто' : getCellSizePreference() + ' px';
+}
+
+function loadCellPref() {
+  try {
+    const el = gel('cell-slider');
+    if (!el) return;
+    const v = parseInt(localStorage.getItem(LS_CELL), 10);
+    if (isNaN(v) || v < 0 || v > 88) return;
+    el.value = String(v);
+  } catch (e) {}
+}
+
+function saveCellPref() {
+  try { localStorage.setItem(LS_CELL, String(getCellSliderRaw())); } catch (e) {}
+}
+
+function openGameMenu() {
+  const m = gel('menu-modal');
+  if (!m) return;
+  m.classList.add('open');
+  const btn = gel('menu-close');
+  if (btn) requestAnimationFrame(() => btn.focus());
+}
+function closeGameMenu() {
+  const m = gel('menu-modal');
+  if (m) m.classList.remove('open');
+  closeRules();
+  const ob = gel('menu-open-btn');
+  if (ob) ob.focus();
+}
+
+function openRules() {
+  const m = gel('rules-modal');
+  if (!m) return;
+  m.classList.add('open');
+  const btn = gel('rules-close');
+  if (btn) requestAnimationFrame(() => btn.focus());
+}
+function closeRules() {
+  const m = gel('rules-modal');
+  if (!m || !m.classList.contains('open')) return;
+  m.classList.remove('open');
+  if (gel('menu-modal')?.classList.contains('open')) gel('rules-open')?.focus();
+}
+
+function updateTitleMode() {
+  const el = gel('title-mode');
+  if (!el) return;
+  el.textContent = gameMode === 'cooperation' ? '(Кооперация)' : '(Конкуренция)';
+  el.setAttribute(
+    'aria-label',
+    gameMode === 'cooperation'
+      ? 'Сейчас кооперация. Нажмите, чтобы включить конкуренцию'
+      : 'Сейчас конкуренция. Нажмите, чтобы включить кооперацию'
+  );
+}
 
 function loadNpcCounts() {
   try {
@@ -584,66 +1051,139 @@ function selectStartStage(n) {
   currentStage = n;
   campaignDone = false;
   gameWinner = null;
+  coopDeathAwaitKey = false;
   const L = Math.min(8, Math.max(1, n));
   lvlA = lvlB = L;
   aliveA = aliveB = true;
+  absorbedA = [];
+  absorbedB = [];
+  anchorA = anchorB = L;
   document.querySelectorAll('.stage-sel').forEach((b) => {
     b.classList.toggle('active', parseInt(b.getAttribute('data-st'), 10) === n);
   });
   updateLiveStage();
   updateSidePanels();
-  updateNpcBar();
+  drawPanels();
   updateGameStatus();
 }
 
 function updateLiveStage() {
   const el = gel('live-stage');
-  if (!el) return;
-  if (campaignDone) el.textContent = 'Кампания завершена — нажмите «Сгенерировать» заново';
-  else el.textContent = 'Этап ' + currentStage + ' из 8 · старт был с ' + startStage;
+  const hint = gel('menu-stage-hint');
+  if (el) {
+    if (campaignDone) el.textContent = 'Кампания завершена';
+    else el.textContent = 'Этап ' + currentStage + ' из ' + MAX_CAMPAIGN_STAGE;
+  }
+  if (hint) {
+    if (campaignDone) {
+      hint.textContent = 'Нажмите «Пуск», чтобы начать новую кампанию.';
+    } else {
+      hint.textContent = 'Старт с этапа ' + startStage + '. Кампания: этапы 1–' + MAX_CAMPAIGN_STAGE + ' (кнопки 1–8 — уровень старта и состав NPC).';
+    }
+  }
+}
+
+function formatDigitSetSortedMeet(set) {
+  return Array.from(set).filter((d) => d >= 1 && d <= 8).sort((a, b) => b - a).join('');
+}
+
+function formatPlayerDeadLabel(who) {
+  return (who === 'A' ? 'A·' : 'B·') + formatDigitSetSortedMeet(playerDigitSet(who));
+}
+
+/** Погибший игрок и фишка: числа сторон (по убыванию), для пенала и оверлея */
+function formatPlayerKilledVersusNpc(who, npcTok) {
+  const p = formatDigitSetSortedMeet(playerDigitSet(who));
+  const n = formatDigitSetSortedMeet(npcTokenDigitSet(npcTok));
+  return (who === 'A' ? 'A·' : 'B·') + p + ' — ' + n;
+}
+
+function recordPlayerKilled(who, npcTok) {
+  if (who === 'A') {
+    if (!aliveA) return;
+  } else {
+    if (!aliveB) return;
+  }
+  let label;
+  if (npcTok != null) {
+    label = formatPlayerKilledVersusNpc(who, npcTok);
+    const p = formatDigitSetSortedMeet(playerDigitSet(who));
+    const n = formatDigitSetSortedMeet(npcTokenDigitSet(npcTok));
+    coopDeathMeetSummary = 'Игрок ' + who + ': ' + p + ' · фишка: ' + n;
+  } else {
+    label = formatPlayerDeadLabel(who);
+  }
+  deadPenalChips.push(label);
+}
+
+function recordNpcKilled(t) {
+  deadPenalChips.push(formatDigitSetSortedMeet(npcTokenDigitSet(t)));
+}
+
+function updateDeadPenalsBar() {
+  const bar = gel('dead-panels-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  for (const label of deadPenalChips) {
+    const el = document.createElement('span');
+    el.className = 'penal-dead-chip';
+    el.textContent = label;
+    bar.appendChild(el);
+  }
 }
 
 function updateSidePanels() {
   const pa = gel('panel-a-lvl');
   const pb = gel('panel-b-lvl');
-  if (pa) pa.textContent = aliveA ? String(lvlA) : '💀';
-  if (pb) pb.textContent = aliveB ? String(lvlB) : '💀';
-}
-
-function countTokensByLv() {
-  const c = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
-  for (const t of tokens) {
-    if (t.lv >= 1 && t.lv <= 7) c[t.lv]++;
+  if (pa) {
+    if (!aliveA) {
+      pa.textContent = '';
+      pa.className = 'player-penal player-penal-a player-penal-gone';
+      pa.setAttribute('aria-hidden', 'true');
+      pa.removeAttribute('style');
+    } else {
+      pa.className = 'player-penal player-penal-a';
+      pa.removeAttribute('aria-hidden');
+      pa.textContent = playerPanelText('A');
+    }
   }
-  return c;
+  if (pb) {
+    if (!aliveB) {
+      pb.textContent = '';
+      pb.className = 'player-penal player-penal-b player-penal-gone';
+      pb.setAttribute('aria-hidden', 'true');
+      pb.removeAttribute('style');
+    } else {
+      pb.className = 'player-penal player-penal-b';
+      pb.removeAttribute('aria-hidden');
+      pb.textContent = playerPanelText('B');
+    }
+  }
+  updateDeadPenalsBar();
 }
 
-function updateNpcBar() {
-  const bar = gel('npc-panels-bar');
+/**
+ * Панели над полем — как drawPanels() в kolobok_2026.html:
+ * у каждого живого персонажа на поле свой .panel; порядок по «силе» (уровень по убыванию).
+ * У фишки уровень и при коопте 4+5 — подпись вроде «54».
+ */
+function drawPanels() {
+  const bar = gel('panels-bar');
   if (!bar) return;
   bar.innerHTML = '';
-  if (currentStage < 2) {
-    const sp = document.createElement('span');
-    sp.className = 'npc-hint';
-    sp.style.margin = '0';
-    sp.textContent = 'Этап 1: без фишек, у обоих уровень 1 — бегите к FIN.';
-    bar.appendChild(sp);
-    return;
-  }
-  const rem = countTokensByLv();
-  for (let lv = 1; lv <= Math.min(7, currentStage - 1 + 0); lv++) {
-    if (currentStage < lv + 1) continue;
-    const init = tokensInitialByLv[lv] || 0;
-    if (init <= 0) continue;
-    const r = rem[lv] || 0;
-    const st = TOKEN_STYLE[lv] || TOKEN_STYLE[1];
-    const chip = document.createElement('span');
-    chip.className = 'npc-chip' + (r === 0 ? ' done' : '');
-    chip.style.borderColor = st.s;
-    chip.style.background = st.f + '22';
-    chip.style.color = '#eee';
-    chip.textContent = 'к-' + lv + ': ' + r + '/' + init;
-    bar.appendChild(chip);
+  if (currentStage < 2) return;
+
+  const allOnField = tokens.filter((t) => t.lv >= 1 && t.lv <= 7).slice();
+  allOnField.sort((a, b) => maxOfDigitSet(npcTokenDigitSet(b)) - maxOfDigitSet(npcTokenDigitSet(a)));
+
+  for (const t of allOnField) {
+    const maxD = maxOfDigitSet(npcTokenDigitSet(t));
+    const c = PANEL_COLORS[maxD] || PANEL_COLORS[1];
+    const el = document.createElement('span');
+    el.className = 'panel';
+    el.style.cssText = 'background:' + c.bg + ';border-color:' + c.border + ';color:' + c.text;
+    el.textContent = npcTokenPanelText(t);
+    bar.appendChild(el);
   }
 }
 
@@ -652,11 +1192,15 @@ function buildDemandList(st) {
   if (st >= 2) for (let i = 0; i < npcCounts.n1; i++) d.push(1);
   if (st >= 3) for (let i = 0; i < npcCounts.n2; i++) d.push(2);
   if (st >= 4) for (let i = 0; i < npcCounts.n3; i++) d.push(3);
-  if (st >= 5) for (let j = 0; j < npcCounts.p4; j++) { d.push(4); d.push(4); }
   if (st >= 6) for (let i = 0; i < npcCounts.n5; i++) d.push(5);
   if (st >= 7) for (let i = 0; i < npcCounts.n6; i++) d.push(6);
   if (st >= 8) for (let i = 0; i < npcCounts.n7; i++) d.push(7);
   return d;
+}
+
+/** Сколько клеток под NPC нужно этапу (список demand + двойки к‑4, они не в demand). */
+function expectedNpcSlotCount(st) {
+  return buildDemandList(st).length + (st >= 5 ? npcCounts.p4 * 2 : 0);
 }
 
 function shuffle(a) {
@@ -679,73 +1223,1349 @@ function freeCellsForTokens() {
   return res;
 }
 
+/** К‑7 на этапах 7–8: размещение на клетке-стене (кроме стартов/FIN). */
+function wallCellsForK7Token() {
+  const [fx, fy] = finishCell();
+  const res = [];
+  for (let y = 0; y < GH; y++) {
+    for (let x = 0; x < GW; x++) {
+      if (grid[y][x] !== 1) continue;
+      if ((x === 0 && y === 0) || (x === GW - 1 && y === 0) || (x === fx && y === fy)) continue;
+      res.push([x, y]);
+    }
+  }
+  return res;
+}
+
+function gridWallAt(x, y) {
+  if (x < 0 || x >= GW || y < 0 || y >= GH) return false;
+  return grid[y][x] === 1;
+}
+
+/** Пол в «углу» лабиринта: две перпендикулярные соседние стороны — стены (к‑1 сидит там). */
+function isWallCornerCell(x, y) {
+  if (grid[y][x] !== 0) return false;
+  const u = gridWallAt(x, y - 1);
+  const d = gridWallAt(x, y + 1);
+  const l = gridWallAt(x - 1, y);
+  const r = gridWallAt(x + 1, y);
+  return (u && r) || (u && l) || (d && r) || (d && l);
+}
+
+function wallCornerCellsForTokens() {
+  const [fx, fy] = finishCell();
+  const res = [];
+  for (let y = 0; y < GH; y++) {
+    for (let x = 0; x < GW; x++) {
+      if (!isWallCornerCell(x, y)) continue;
+      if ((x === 0 && y === 0) || (x === GW - 1 && y === 0) || (x === fx && y === fy)) continue;
+      res.push([x, y]);
+    }
+  }
+  return res;
+}
+
 function tryPlaceTokensForCurrentStage() {
   tokens = [];
+  k4Pairs = [];
+  k2Territory = {};
+  npcTickCount = 0;
+  let nextK2Sid = 0;
   tokensInitialByLv = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
-  const demand = buildDemandList(currentStage);
-  if (demand.length === 0) return true;
+  const nP4 = currentStage >= 5 ? npcCounts.p4 : 0;
+  const slotsP4 = nP4 * 2;
+  let demand = buildDemandList(currentStage);
   const cells = freeCellsForTokens();
+  if (cells.length === 0) return false;
+  if (demand.length === 0 && slotsP4 === 0) return true;
+
+  const k1count = demand.filter((lv) => lv === 1).length;
+  let others = demand.filter((lv) => lv !== 1);
+  shuffle(others);
+  const need = k1count + others.length + slotsP4;
+  if (need > cells.length) {
+    const maxOthers = cells.length - k1count - slotsP4;
+    if (maxOthers < 0) return false;
+    others = others.slice(0, maxOthers);
+  }
+
+  const used = new Set();
+  const corners = wallCornerCellsForTokens();
+  shuffle(corners);
   shuffle(cells);
-  if (cells.length < demand.length) return false;
-  shuffle(demand);
-  for (let i = 0; i < demand.length; i++) {
-    const lv = demand[i];
-    const [x, y] = cells[i];
-    tokens.push({ x, y, lv });
+
+  function takeFrom(list) {
+    for (const [x, y] of list) {
+      const key = x + ',' + y;
+      if (used.has(key)) continue;
+      used.add(key);
+      return [x, y];
+    }
+    return null;
+  }
+
+  for (let i = 0; i < k1count; i++) {
+    let c = takeFrom(corners);
+    if (!c) c = takeFrom(cells);
+    if (!c) return false;
+    tokens.push({ x: c[0], y: c[1], lv: 1 });
+    tokensInitialByLv[1]++;
+  }
+
+  const [fx0, fy0] = finishCell();
+  function occBlocked(x, y) {
+    if ((x === 0 && y === 0) || (x === GW - 1 && y === 0) || (x === fx0 && y === fy0)) return true;
+    return used.has(x + ',' + y);
+  }
+
+  for (let jp = 0; jp < nP4; jp++) {
+    const pc = [];
+    for (let row = 0; row < GH - 1; row++) {
+      const xs = [];
+      for (let x = 0; x < GW; x++) {
+        if (grid[row][x] === 0 && grid[row + 1][x] === 0) xs.push(x);
+      }
+      if (xs.length >= 2) pc.push({ horiz: true, line1: row, line2: row + 1, fp: xs });
+    }
+    for (let col = 0; col < GW - 1; col++) {
+      const ys = [];
+      for (let y = 0; y < GH; y++) {
+        if (grid[y][col] === 0 && grid[y][col + 1] === 0) ys.push(y);
+      }
+      if (ys.length >= 2) pc.push({ horiz: false, line1: col, line2: col + 1, fp: ys });
+    }
+    shuffle(pc);
+    let placed = false;
+    for (const p of pc) {
+      const freeSet = new Set(p.fp);
+      const av = p.fp.filter((pos) => {
+        const [x1, y1] = p.horiz ? [pos, p.line1] : [p.line1, pos];
+        const [x2, y2] = p.horiz ? [pos, p.line2] : [p.line2, pos];
+        return !occBlocked(x1, y1) && !occBlocked(x2, y2);
+      });
+      const av2 = av.filter((pos) => freeSet.has(pos + 1) || freeSet.has(pos - 1));
+      if (!av2.length) continue;
+      const sp = av2[(Math.random() * av2.length) | 0];
+      const [x1, y1] = p.horiz ? [sp, p.line1] : [p.line1, sp];
+      const [x2, y2] = p.horiz ? [sp, p.line2] : [p.line2, sp];
+      used.add(x1 + ',' + y1);
+      used.add(x2 + ',' + y2);
+      const pair = {
+        horiz: p.horiz,
+        line1: p.line1,
+        line2: p.line2,
+        pos: sp,
+        dir: Math.random() < 0.5 ? 1 : -1,
+        freeSet,
+        a: null,
+        b: null,
+      };
+      const ta = { x: x1, y: y1, lv: 4, p4: pair };
+      const tb = { x: x2, y: y2, lv: 4, p4: pair };
+      pair.a = ta;
+      pair.b = tb;
+      if (p.horiz) {
+        ta.d4x = pair.dir;
+        ta.d4y = 0;
+        tb.d4x = pair.dir;
+        tb.d4y = 0;
+      } else {
+        ta.d4x = 0;
+        ta.d4y = pair.dir;
+        tb.d4x = 0;
+        tb.d4y = pair.dir;
+      }
+      tokens.push(ta, tb);
+      k4Pairs.push(pair);
+      tokensInitialByLv[4] += 2;
+      placed = true;
+      break;
+    }
+    if (!placed) return false;
+  }
+
+  for (const lv of others) {
+    if (lv === 7 && currentStage >= 7) {
+      const walls = wallCellsForK7Token();
+      shuffle(walls);
+      let c = null;
+      for (const [wx, wy] of walls) {
+        const key = wx + ',' + wy;
+        if (used.has(key)) continue;
+        used.add(key);
+        c = [wx, wy];
+        break;
+      }
+      if (!c) {
+        c = takeFrom(cells);
+        if (!c) return false;
+        tokens.push({ x: c[0], y: c[1], lv: 7 });
+      } else {
+        tokens.push({ x: c[0], y: c[1], lv: 7 });
+      }
+      tokensInitialByLv[7]++;
+      continue;
+    }
+    const c = takeFrom(cells);
+    if (!c) return false;
+    if (lv === 2) {
+      const sid = nextK2Sid++;
+      tokens.push({ x: c[0], y: c[1], lv, k2Sid: sid });
+      k2Territory[c[0] + ',' + c[1]] = sid;
+    } else if (lv === 3) {
+      const orth = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      let d3x = 1, d3y = 0;
+      let found = false;
+      for (const [ddx, ddy] of orth) {
+        const nx = c[0] + ddx, ny = c[1] + ddy;
+        if (nx < 0 || nx >= GW || ny < 0 || ny >= GH || grid[ny][nx] !== 0) continue;
+        d3x = ddx;
+        d3y = ddy;
+        found = true;
+        break;
+      }
+      if (!found) {
+        d3x = orth[0][0];
+        d3y = orth[0][1];
+      }
+      tokens.push({ x: c[0], y: c[1], lv: 3, d3x, d3y });
+    } else {
+      tokens.push({ x: c[0], y: c[1], lv });
+    }
     tokensInitialByLv[lv]++;
   }
   return true;
+}
+
+function clearK2TerritorySid(sid) {
+  for (const k of Object.keys(k2Territory)) {
+    if (k2Territory[k] === sid) delete k2Territory[k];
+  }
+}
+
+function k2SidStillAlive(sid) {
+  return tokens.some((t) => t.lv === 2 && t.k2Sid === sid);
+}
+
+/** Убирает клетки чужой территории к‑2, если этой двойки уже нет на поле (кооптировали и т.п.). */
+function pruneK2TerritoryOrphans() {
+  for (const k of Object.keys(k2Territory)) {
+    const sid = k2Territory[k];
+    if (!k2SidStillAlive(sid)) delete k2Territory[k];
+  }
+}
+
+function resolveNpcsMeetPlayers() {
+  for (const who of ['A', 'B']) {
+    if (who === 'A' && !aliveA) continue;
+    if (who === 'B' && !aliveB) continue;
+    const pos = who === 'A' ? posA : posB;
+    if (tokenIndexAt(pos.x, pos.y) < 0) continue;
+    resolveTokenMeet(who);
+    if (gameMode === 'cooperation' && (!aliveA || !aliveB)) {
+      coopDeathAwaitKey = true;
+      return;
+    }
+  }
+}
+
+/** Две «одинаковые» чистые фишки взаимно проходят сквозь клетку друг друга — обмен позициями. */
+function npcCanPassThroughSamePureLv(a, b) {
+  return npcIsPureLv(a, a.lv) && npcIsPureLv(b, b.lv) && a.lv === b.lv;
+}
+
+/**
+ * Обмен при ортососедстве: две чистые одного lv, или две чистые с одним и тем же рангом силы.
+ * Раньше любое равенство ранга (2 и «21» оба ранг 2) давало проскок — чистая к‑2 «отражалась» от 21; теперь 21 не обменивается с чистой 2, к‑2 может выбрать другое направление (обход).
+ */
+function npcCanOrthogonalSwapPass(a, b) {
+  if (a.lv === 2 && b.lv === 2 && a.k2Sid !== undefined && b.k2Sid !== undefined && a.k2Sid !== b.k2Sid) {
+    return false;
+  }
+  if (npcCanPassThroughSamePureLv(a, b)) return true;
+  const r = npcMovementRank(a);
+  return r === npcMovementRank(b) && npcIsPureLv(a, r) && npcIsPureLv(b, r);
+}
+
+/** Чистая 5 (пеналь только «5», без съеденных) может занять клетку чистой 4 для коопта 5+4→54. */
+function npcMergeK5K4Landing(k5, fourTok) {
+  return npcIsPureLv(k5, 5) && npcIsPureLv(fourTok, 4)
+    && (!k5.npcAbsorbed || k5.npcAbsorbed.length === 0);
+}
+
+/** Чистая 5 может встать на клетку с к‑6 (ранг 6): затем resolveTwoNpcsMeet — коопт 6+5→65, шестёрка не понижается. */
+function npcK5CanLandOnRank6Cell(k5, occupant) {
+  if (!npcIsPureLv(k5, 5)) return false;
+  if (npcMovementRank(occupant) !== 6) return false;
+  return hasCooptAdjPair(npcTokenDigitSet(occupant), npcTokenDigitSet(k5));
+}
+
+/** На клетке чистая 4; чистая 3 заходит — коопт 4+3→43. */
+function npcMergeK4K3Landing(fourTok, threeTok) {
+  return npcIsPureLv(fourTok, 4) && npcIsPureLv(threeTok, 3)
+    && (!fourTok.npcAbsorbed || fourTok.npcAbsorbed.length === 0);
+}
+
+/** Чистая 3 и чистая 5 (у обеих пеналь одна цифра) на одной клетке — пятёрка погибает (серый пенал). */
+function npcPure3Pure5FiveDies(k5Tok, k3Tok) {
+  return npcIsPureLv(k5Tok, 5) && npcIsPureLv(k3Tok, 3)
+    && (!k5Tok.npcAbsorbed || k5Tok.npcAbsorbed.length === 0);
+}
+
+/** Фишка вида 54+ (ур. 5 и в пенале есть 4). */
+function npcK5Has4InPenal(t) {
+  return t.lv === 5 && t.npcAbsorbed && t.npcAbsorbed.includes(4);
+}
+
+/** Фишка вида 32+ (ур. 3 и в пенале есть 2). */
+function npcK3Has2InPenal(t) {
+  return t.lv === 3 && t.npcAbsorbed && t.npcAbsorbed.includes(2);
+}
+
+/** Чистая 3 заходит на «54» — дальше resolveTwoNpcsMeet: коопт 3 в пенал 5 (напр. 543). */
+function npcMergeK54K3Landing(fivePlusTok, threeTok) {
+  return npcK5Has4InPenal(fivePlusTok) && npcIsPureLv(threeTok, 3);
+}
+
+/** «54» приземляется на чистую 3 (canK5Land); чистая 5+3 обрабатывается npcPure3Pure5FiveDies. */
+function npcK54LandsOnPure3(k5Tok, occupantK3) {
+  return npcK5Has4InPenal(k5Tok) && npcIsPureLv(occupantK3, 3);
+}
+
+/** Пара «54» + чистая 4: первый аргумент — фишка 54+, второй — чистая 4 (коопт → подпись 544). */
+function npc54CooptsPure4Meet(fiftyFourTok, pureFourTok) {
+  return npcK5Has4InPenal(fiftyFourTok) && npcIsPureLv(pureFourTok, 4);
+}
+
+/** Чистая к-5 и чистая к-1 на одной клетке — пятёрка погибает (серый пенал). */
+function npcPure5Pure1FiveDies(fiveTok, oneTok) {
+  return npcIsPureLv(fiveTok, 5) && npcIsPureLv(oneTok, 1);
+}
+
+/** Клетка с чистой 1; «32» заходит — коопт 1 в пенал (resolveTwoNpcsMeet). */
+function npcMergeK32K1Landing(oneTok, k32Tok) {
+  return npcIsPureLv(oneTok, 1) && npcK3Has2InPenal(k32Tok);
+}
+
+/** Клетка с чистой 1; чистая к‑2 заходит — коопт → подпись 21 (resolveTwoNpcsMeet). */
+function npcMergeK21Landing(oneTok, pureTwoTok) {
+  return npcIsPureLv(oneTok, 1) && npcIsPureLv(pureTwoTok, 2) && pureTwoTok.k2Sid !== undefined;
+}
+
+/** Клетка с чистой 1; чистая 3 заходит — тройка погибает (resolveTwoNpcsMeet). */
+function npcPure3Pure1ThreeDiesOnMeet(oneTok, threeTok) {
+  return npcIsPureLv(oneTok, 1) && npcIsPureLv(threeTok, 3)
+    && (!threeTok.npcAbsorbed || threeTok.npcAbsorbed.length === 0);
+}
+
+/** Чистая к-4 и чистая к-2 на одной клетке — четвёрка погибает (resolveTwoNpcsMeet). */
+function npcPure2Pure4FourDiesOnMeet(fourTok, twoTok) {
+  return npcIsPureLv(fourTok, 4) && npcIsPureLv(twoTok, 2);
+}
+
+/** Пеналь тройки одна цифра «3»; чистая 2 заходит на клетку — коопт 3+2→32 (resolveTwoNpcsMeet). */
+function npcMergeK3K2Landing(threeTok, twoTok) {
+  return npcIsPureLv(threeTok, 3) && npcIsPureLv(twoTok, 2)
+    && (!threeTok.npcAbsorbed || threeTok.npcAbsorbed.length === 0);
+}
+
+function npcSwapPositions(a, b) {
+  const ax = a.x, ay = a.y, bx = b.x, by = b.y;
+  delete k2Territory[ax + ',' + ay];
+  delete k2Territory[bx + ',' + by];
+  a.x = bx; a.y = by;
+  b.x = ax; b.y = ay;
+  if (a.lv === 2 && a.k2Sid !== undefined) k2Territory[a.x + ',' + a.y] = a.k2Sid;
+  if (b.lv === 2 && b.k2Sid !== undefined) k2Territory[b.x + ',' + b.y] = b.k2Sid;
+}
+
+/** Если две одинаковые чистые всё же на одной клетке — развести вторую в свободный ортососед. */
+function npcElasticSeparateSameLv(a, b) {
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  shuffle(dirs);
+  for (const [dx, dy] of dirs) {
+    let nx = a.x + dx, ny = a.y + dy;
+    if (useTorus()) [nx, ny] = torusXY(nx, ny);
+    else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+    if (grid[ny][nx] !== 0) continue;
+    if (tokenIndexAt(nx, ny) >= 0) continue;
+    if (aliveA && posA.x === nx && posA.y === ny) continue;
+    if (aliveB && posB.x === nx && posB.y === ny) continue;
+    b.x = nx;
+    b.y = ny;
+    if (b.lv === 2 && b.k2Sid !== undefined) k2Territory[nx + ',' + ny] = b.k2Sid;
+    if (a.lv === 2 && a.k2Sid !== undefined) k2Territory[a.x + ',' + a.y] = a.k2Sid;
+    return;
+  }
+}
+
+function stepK2Move(t) {
+  if (npcMovementRank(t) !== 2 || t.lv !== 2 || t.k2Sid === undefined) return false;
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  shuffle(dirs);
+  /** Расширение: незакрашенный пол; своя закраска — в ownOnly. Чужая к‑2 закраска — клетка недоступна. */
+  const capture = [];
+  /** Только уже своя закраска. */
+  const ownOnly = [];
+  for (const [dx, dy] of dirs) {
+    let nx = t.x + dx, ny = t.y + dy;
+    if (useTorus()) [nx, ny] = torusXY(nx, ny);
+    else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+    if (grid[ny][nx] === 1) continue;
+    const ti = tokenIndexAt(nx, ny);
+    if (ti >= 0 && tokens[ti] !== t) {
+      const o = tokens[ti];
+      if (npcCanOrthogonalSwapPass(t, o)) {
+        npcSwapPositions(t, o);
+        return true;
+      }
+      if (npcMergeK3K2Landing(o, t)) {
+        delete k2Territory[t.x + ',' + t.y];
+        t.x = nx;
+        t.y = ny;
+        return true;
+      }
+      if (npcPure2Pure4FourDiesOnMeet(o, t)) {
+        delete k2Territory[t.x + ',' + t.y];
+        t.x = nx;
+        t.y = ny;
+        return true;
+      }
+      if (npcMergeK21Landing(o, t)) {
+        delete k2Territory[t.x + ',' + t.y];
+        t.x = nx;
+        t.y = ny;
+        k2Territory[nx + ',' + ny] = t.k2Sid;
+        return true;
+      }
+      continue;
+    }
+    const ow = k2Territory[nx + ',' + ny];
+    if (ow !== undefined && ow !== t.k2Sid) continue;
+    if (ow === t.k2Sid) ownOnly.push([nx, ny]);
+    else capture.push([nx, ny]);
+  }
+  const pool = capture.length ? capture : ownOnly;
+  if (!pool.length) return false;
+  const [nx, ny] = pool[(Math.random() * pool.length) | 0];
+  t.x = nx;
+  t.y = ny;
+  k2Territory[nx + ',' + ny] = t.k2Sid;
+  return true;
+}
+
+/** к-3: один шаг по прямой; у стены/края/другой фишки — разворот и движение в обратную сторону. На клетку с игроком заходит. */
+function cellBlocksK3Axis(nx, ny, selfTok) {
+  let wx = nx, wy = ny;
+  if (useTorus()) [wx, wy] = torusXY(nx, ny);
+  else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) return true;
+  if (grid[wy][wx] === 1) return true;
+  const ti = tokenIndexAt(wx, wy);
+  if (ti >= 0 && tokens[ti] !== selfTok) {
+    const o = tokens[ti];
+    if (npcCanOrthogonalSwapPass(selfTok, o)) return false;
+    if (npcMergeK4K3Landing(o, selfTok)) return false;
+    if (npcMergeK54K3Landing(o, selfTok)) return false;
+    if (npcMergeK3K2Landing(selfTok, o)) return false;
+    if (npcPure3Pure5FiveDies(o, selfTok)) return false;
+    if (npcMergeK32K1Landing(o, selfTok)) return false;
+    if (npcPure3Pure1ThreeDiesOnMeet(o, selfTok)) return false;
+    return true;
+  }
+  return false;
+}
+
+/** Блок для патруля к-4 по фиксированной оси (как коридор пары). */
+function cellBlocksK4Patrol(nx, ny, selfTok) {
+  let wx = nx, wy = ny;
+  if (useTorus()) [wx, wy] = torusXY(nx, ny);
+  else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) return true;
+  if (grid[wy][wx] === 1) return true;
+  const ti = tokenIndexAt(wx, wy);
+  if (ti >= 0 && tokens[ti] !== selfTok) {
+    const o = tokens[ti];
+    if (npcCanOrthogonalSwapPass(selfTok, o)) return false;
+    if (npcMergeK4K3Landing(selfTok, o)) return false;
+    if (npcPure2Pure4FourDiesOnMeet(o, selfTok)) return false;
+    if (npcMergeK5K4Landing(o, selfTok)) return false;
+    if (npc54CooptsPure4Meet(o, selfTok)) return false;
+    return true;
+  }
+  return false;
+}
+
+function ensureK4PatrolAxis(t) {
+  if (t.d4x !== undefined && t.d4y !== undefined) return;
+  const orth = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  for (const [ddx, ddy] of orth) {
+    let nx = t.x + ddx, ny = t.y + ddy;
+    if (useTorus()) [nx, ny] = torusXY(nx, ny);
+    else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+    if (grid[ny][nx] !== 0) continue;
+    t.d4x = ddx;
+    t.d4y = ddy;
+    return;
+  }
+  t.d4x = 1;
+  t.d4y = 0;
+}
+
+/** Одиночная к-4 (или 43…): только вдоль оси размещения/коридора, разворот у упора — как к-3. */
+function stepK4PatrolMove(t) {
+  if (npcMovementRank(t) !== 4) return false;
+  ensureK4PatrolAxis(t);
+  let nx = t.x + t.d4x, ny = t.y + t.d4y;
+  if (cellBlocksK4Patrol(nx, ny, t)) {
+    t.d4x = -t.d4x;
+    t.d4y = -t.d4y;
+    nx = t.x + t.d4x;
+    ny = t.y + t.d4y;
+    if (cellBlocksK4Patrol(nx, ny, t)) return false;
+  }
+  if (useTorus()) [nx, ny] = torusXY(nx, ny);
+  else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) return false;
+  const ti4 = tokenIndexAt(nx, ny);
+  if (ti4 >= 0 && tokens[ti4] !== t) {
+    const o = tokens[ti4];
+    if (npcCanOrthogonalSwapPass(t, o)) npcSwapPositions(t, o);
+    else if (npcMergeK4K3Landing(t, o)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npcPure2Pure4FourDiesOnMeet(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npcMergeK5K4Landing(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npc54CooptsPure4Meet(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else return false;
+  } else {
+    t.x = nx;
+    t.y = ny;
+  }
+  return true;
+}
+
+function ensureK3PatrolAxis(t) {
+  if (t.d3x !== undefined && t.d3y !== undefined) return;
+  const orth = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  for (const [ddx, ddy] of orth) {
+    let nx = t.x + ddx, ny = t.y + ddy;
+    if (useTorus()) [nx, ny] = torusXY(nx, ny);
+    else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+    if (grid[ny][nx] !== 0) continue;
+    t.d3x = ddx;
+    t.d3y = ddy;
+    return;
+  }
+  t.d3x = 1;
+  t.d3y = 0;
+}
+
+function stepK3PatrolMove(t) {
+  if (npcMovementRank(t) !== 3) return false;
+  ensureK3PatrolAxis(t);
+  let nx = t.x + t.d3x, ny = t.y + t.d3y;
+  if (cellBlocksK3Axis(nx, ny, t)) {
+    t.d3x = -t.d3x;
+    t.d3y = -t.d3y;
+    nx = t.x + t.d3x;
+    ny = t.y + t.d3y;
+    if (cellBlocksK3Axis(nx, ny, t)) return false;
+  }
+  if (useTorus()) [nx, ny] = torusXY(nx, ny);
+  else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) return false;
+  const ti3 = tokenIndexAt(nx, ny);
+  if (ti3 >= 0 && tokens[ti3] !== t) {
+    const o = tokens[ti3];
+    if (npcCanOrthogonalSwapPass(t, o)) npcSwapPositions(t, o);
+    else if (npcMergeK4K3Landing(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npcMergeK54K3Landing(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npcMergeK3K2Landing(t, o)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npcPure3Pure5FiveDies(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npcMergeK32K1Landing(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else if (npcPure3Pure1ThreeDiesOnMeet(o, t)) {
+      t.x = nx;
+      t.y = ny;
+    } else return false;
+  } else {
+    t.x = nx;
+    t.y = ny;
+  }
+  return true;
+}
+
+function k4PairCellsAt(pair, posVal) {
+  if (pair.horiz) return [[posVal, pair.line1], [posVal, pair.line2]];
+  return [[pair.line1, posVal], [pair.line2, posVal]];
+}
+
+function cellBlocksK4Move(x, y, ta, tb) {
+  let wx = x, wy = y;
+  if (useTorus()) [wx, wy] = torusXY(x, y);
+  else if (x < 0 || x >= GW || y < 0 || y >= GH) return true;
+  if (grid[wy][wx] === 1) return true;
+  const ti = tokenIndexAt(wx, wy);
+  if (ti < 0) return false;
+  const o = tokens[ti];
+  if (o === ta || o === tb) return false;
+  if (npcMergeK5K4Landing(o, ta) || npcMergeK5K4Landing(o, tb)) return false;
+  if (npc54CooptsPure4Meet(o, ta) || npc54CooptsPure4Meet(o, tb)) return false;
+  if (npcMergeK4K3Landing(ta, o) || npcMergeK4K3Landing(tb, o)) return false;
+  if (npcPure2Pure4FourDiesOnMeet(ta, o) || npcPure2Pure4FourDiesOnMeet(tb, o)) return false;
+  return true;
+}
+
+function k4BlockedAt(pair, posVal) {
+  const [c1, c2] = k4PairCellsAt(pair, posVal);
+  return cellBlocksK4Move(c1[0], c1[1], pair.a, pair.b)
+    || cellBlocksK4Move(c2[0], c2[1], pair.a, pair.b);
+}
+
+/** Пара к-4: один шаг по оси коридора; у упора dir инвертируется — оба ряда синхронно. */
+function stepK4Pair(pair) {
+  if (!tokens.includes(pair.a) || !tokens.includes(pair.b)) return false;
+  const limit = pair.horiz ? GW : GH;
+  function wrapAlong(raw) {
+    if (useTorus()) return pair.horiz ? ((raw % GW) + GW) % GW : ((raw % GH) + GH) % GH;
+    return raw;
+  }
+  const raw1 = pair.pos + pair.dir;
+  let np = wrapAlong(raw1);
+  const ob1 = !useTorus() && (raw1 < 0 || raw1 >= limit);
+  let bl = ob1 || !pair.freeSet.has(np) || k4BlockedAt(pair, np);
+  if (bl) {
+    pair.dir = -pair.dir;
+    const raw2 = pair.pos + pair.dir;
+    np = wrapAlong(raw2);
+    const ob2 = !useTorus() && (raw2 < 0 || raw2 >= limit);
+    if (ob2 || !pair.freeSet.has(np) || k4BlockedAt(pair, np)) return false;
+    pair.pos = np;
+  } else {
+    pair.pos = np;
+  }
+  if (pair.horiz) {
+    pair.a.x = pair.pos;
+    pair.a.y = pair.line1;
+    pair.b.x = pair.pos;
+    pair.b.y = pair.line2;
+  } else {
+    pair.a.x = pair.line1;
+    pair.a.y = pair.pos;
+    pair.b.x = pair.line2;
+    pair.b.y = pair.pos;
+  }
+  if (pair.horiz) {
+    pair.a.d4x = pair.dir;
+    pair.a.d4y = 0;
+    pair.b.d4x = pair.dir;
+    pair.b.d4y = 0;
+  } else {
+    pair.a.d4x = 0;
+    pair.a.d4y = pair.dir;
+    pair.b.d4x = 0;
+    pair.b.d4y = pair.dir;
+  }
+  return true;
+}
+
+function pruneK4Pairs() {
+  k4Pairs = k4Pairs.filter((pair) => {
+    const aOk = tokens.includes(pair.a);
+    const bOk = tokens.includes(pair.b);
+    if (aOk && bOk) return true;
+    if (aOk && !bOk) {
+      if (pair.horiz) {
+        pair.a.d4x = pair.dir;
+        pair.a.d4y = 0;
+      } else {
+        pair.a.d4x = 0;
+        pair.a.d4y = pair.dir;
+      }
+      delete pair.a.p4;
+    }
+    if (bOk && !aOk) {
+      if (pair.horiz) {
+        pair.b.d4x = pair.dir;
+        pair.b.d4y = 0;
+      } else {
+        pair.b.d4x = 0;
+        pair.b.d4y = pair.dir;
+      }
+      delete pair.b.p4;
+    }
+    return false;
+  });
+}
+
+/** Можно ли встать на пол (в т.ч. на клетку с игроком); другая фишка — занято. */
+function canK5Land(x, y, selfT) {
+  let wx = x, wy = y;
+  if (useTorus()) [wx, wy] = torusXY(x, y);
+  else if (x < 0 || x >= GW || y < 0 || y >= GH) return false;
+  if (grid[wy][wx] !== 0) return false;
+  const ti = tokenIndexAt(wx, wy);
+  if (ti >= 0 && tokens[ti] !== selfT) {
+    const o = tokens[ti];
+    if (npcCanOrthogonalSwapPass(selfT, o)) return true;
+    if (npcMergeK5K4Landing(selfT, o)) return true;
+    if (npcK5CanLandOnRank6Cell(selfT, o)) return true;
+    if (npcPure3Pure5FiveDies(selfT, o)) return true;
+    if (npcK54LandsOnPure3(selfT, o)) return true;
+    if (npc54CooptsPure4Meet(selfT, o)) return true;
+    if (npcPure5Pure1FiveDies(selfT, o)) return true;
+    return false;
+  }
+  return true;
+}
+
+/** к-5: шаг на 1 клетку (←↑↓→); если сосед — стена, прыжок на клетку за стеной (если пол и свободно). */
+function stepK5Move(t) {
+  if (npcMovementRank(t) !== 5) return false;
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  shuffle(dirs);
+  for (const [dx, dy] of dirs) {
+    const x1 = t.x + dx, y1 = t.y + dy;
+    const x2 = t.x + 2 * dx, y2 = t.y + 2 * dy;
+    let wx1 = x1, wy1 = y1, wx2 = x2, wy2 = y2;
+    if (useTorus()) {
+      [wx1, wy1] = torusXY(x1, y1);
+      [wx2, wy2] = torusXY(x2, y2);
+    } else if (x1 < 0 || x1 >= GW || y1 < 0 || y1 >= GH) continue;
+
+    if (grid[wy1][wx1] === 0) {
+      if (canK5Land(x1, y1, t)) {
+        const ti5 = tokenIndexAt(wx1, wy1);
+        if (ti5 >= 0 && tokens[ti5] !== t) {
+          const o = tokens[ti5];
+          if (npcCanOrthogonalSwapPass(t, o)) npcSwapPositions(t, o);
+          else if (npcMergeK5K4Landing(t, o)) {
+            t.x = wx1;
+            t.y = wy1;
+          } else if (npcPure3Pure5FiveDies(t, o)) {
+            t.x = wx1;
+            t.y = wy1;
+          } else if (npcK54LandsOnPure3(t, o)) {
+            t.x = wx1;
+            t.y = wy1;
+          } else if (npc54CooptsPure4Meet(t, o)) {
+            t.x = wx1;
+            t.y = wy1;
+          } else if (npcPure5Pure1FiveDies(t, o)) {
+            t.x = wx1;
+            t.y = wy1;
+          } else {
+            t.x = wx1;
+            t.y = wy1;
+          }
+        } else {
+          t.x = wx1;
+          t.y = wy1;
+        }
+        return true;
+      }
+      continue;
+    }
+    if (grid[wy1][wx1] === 1) {
+      if (canK5Land(x2, y2, t)) {
+        const ti5b = tokenIndexAt(wx2, wy2);
+        if (ti5b >= 0 && tokens[ti5b] !== t) {
+          const o = tokens[ti5b];
+          if (npcCanOrthogonalSwapPass(t, o)) npcSwapPositions(t, o);
+          else if (npcMergeK5K4Landing(t, o)) {
+            t.x = wx2;
+            t.y = wy2;
+          } else if (npcPure3Pure5FiveDies(t, o)) {
+            t.x = wx2;
+            t.y = wy2;
+          } else if (npcK54LandsOnPure3(t, o)) {
+            t.x = wx2;
+            t.y = wy2;
+          } else if (npc54CooptsPure4Meet(t, o)) {
+            t.x = wx2;
+            t.y = wy2;
+          } else if (npcPure5Pure1FiveDies(t, o)) {
+            t.x = wx2;
+            t.y = wy2;
+          } else {
+            t.x = wx2;
+            t.y = wy2;
+          }
+        } else {
+          t.x = wx2;
+          t.y = wy2;
+        }
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** Столкновение двух NPC: только общие три правила встречи; коопт — объединение множеств цифр в одну фишку. */
+function resolveTwoNpcsMeet(a, b) {
+  if (!tokens.includes(a) || !tokens.includes(b) || a === b) return;
+  if (a.x !== b.x || a.y !== b.y) return;
+  const setA = npcTokenDigitSet(a);
+  const setB = npcTokenDigitSet(b);
+  const maxA = maxOfDigitSet(setA);
+  const maxB = maxOfDigitSet(setB);
+  if (maxA === maxB) {
+    if (npcCanOrthogonalSwapPass(a, b)) npcElasticSeparateSameLv(a, b);
+    pruneK2TerritoryOrphans();
+    return;
+  }
+  const senior = maxA > maxB ? a : b;
+  const junior = maxA > maxB ? b : a;
+  const setS = npcTokenDigitSet(senior);
+  const setJ = npcTokenDigitSet(junior);
+  const canCoopt = hasCooptAdjPair(setS, setJ);
+  const jidx = tokens.indexOf(junior);
+  if (jidx < 0) return;
+  if (canCoopt) {
+    tokens.splice(jidx, 1);
+    npcMergeSeniorAbsorbsJunior(senior, junior);
+  } else {
+    const sidx = tokens.indexOf(senior);
+    if (sidx < 0) return;
+    if (senior.lv === 2 && senior.k2Sid !== undefined) clearK2TerritorySid(senior.k2Sid);
+    recordNpcKilled(senior);
+    tokens.splice(sidx, 1);
+  }
+  pruneK4Pairs();
+  pruneK2TerritoryOrphans();
+}
+
+/** Все пары фишек на одной клетке (к‑4 и к‑5, …) — после ходов, не только к‑6. */
+function resolveNpcsOnSameCells() {
+  if (gameWinner || coopDeathAwaitKey) return;
+  for (let g = 0; g < 64; g++) {
+    let found = false;
+    for (let i = 0; i < tokens.length; i++) {
+      for (let j = i + 1; j < tokens.length; j++) {
+        const a = tokens[i], b = tokens[j];
+        if (a.x !== b.x || a.y !== b.y) continue;
+        resolveTwoNpcsMeet(a, b);
+        if (coopDeathAwaitKey) return;
+        found = true;
+        break;
+      }
+      if (found) break;
+    }
+    if (!found) return;
+  }
+}
+
+function digitSetForK6Meet(ent) {
+  if (ent.kind === 'p') return playerDigitSet(ent.who);
+  return npcTokenDigitSet(ent.tok);
+}
+
+function entitiesAtCellForK6(x, y, ignoreK6) {
+  const res = [];
+  if (aliveA && posA.x === x && posA.y === y) res.push({ kind: 'p', who: 'A' });
+  if (aliveB && posB.x === x && posB.y === y) res.push({ kind: 'p', who: 'B' });
+  for (const tok of tokens) {
+    if (tok === ignoreK6) continue;
+    if (tok.x === x && tok.y === y) res.push({ kind: 't', tok });
+  }
+  return res;
+}
+
+/** Выживет ли к‑6 после гипотетической встречи с игроком / фишкой (как meet в kolobok_2026). */
+function k6SurvivesMeetVs(k6tok, ent) {
+  const setKfull = npcTokenDigitSet(k6tok);
+  const maxK = maxOfDigitSet(setKfull);
+  const setO = digitSetForK6Meet(ent);
+  const maxO = maxOfDigitSet(setO);
+  if (maxK === maxO) return true;
+  const setK = setKfull;
+  const k6IsSenior = maxK > maxO;
+  const setSenior = k6IsSenior ? setK : setO;
+  const setJunior = k6IsSenior ? setO : setK;
+  if (hasCooptAdjPair(setSenior, setJunior)) return k6IsSenior;
+  return !k6IsSenior;
+}
+
+function k6CooptsOnCell(k6, nx, ny) {
+  for (const e of entitiesAtCellForK6(nx, ny, k6)) {
+    const setK = npcTokenDigitSet(k6);
+    const setO = digitSetForK6Meet(e);
+    if (maxOfDigitSet(setK) > maxOfDigitSet(setO) && hasCooptAdjPair(setK, setO)) return true;
+  }
+  return false;
+}
+
+function cellUnsafeForK6(k6, nx, ny) {
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    if (dx === 0 && dy === 0) continue;
+    let ex = nx + dx, ey = ny + dy;
+    if (useTorus()) [ex, ey] = torusXY(ex, ey);
+    else if (ex < 0 || ex >= GW || ey < 0 || ey >= GH) continue;
+    for (const e of entitiesAtCellForK6(ex, ey, k6)) {
+      if (!k6SurvivesMeetVs(k6, e)) return true;
+    }
+  }
+  return false;
+}
+
+/** к‑6: король (8 направлений), ходит после к‑2…к‑5 (видит их новые позиции). Безопасные / кооптация / риск. */
+function stepK6KingAI(t) {
+  if (npcMovementRank(t) !== 6) return false;
+  const moves = [];
+  for (const [dx, dy] of KING_DIRS) {
+    let nx = t.x + dx, ny = t.y + dy;
+    if (useTorus()) [nx, ny] = torusXY(nx, ny);
+    else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+    if (grid[ny][nx] === 1) continue;
+    moves.push([nx, ny]);
+  }
+  if (!moves.length) return false;
+  const coopt = [], safe = [], risky = [];
+  for (const [nx, ny] of moves) {
+    const occ = entitiesAtCellForK6(nx, ny, t);
+    let dead = false;
+    for (const o of occ) {
+      if (!k6SurvivesMeetVs(t, o)) {
+        dead = true;
+        break;
+      }
+    }
+    if (dead) continue;
+    if (occ.length && k6CooptsOnCell(t, nx, ny)) coopt.push([nx, ny]);
+    else if (occ.length) risky.push([nx, ny]);
+    else if (!cellUnsafeForK6(t, nx, ny)) safe.push([nx, ny]);
+    else risky.push([nx, ny]);
+  }
+  let pick = null;
+  if (coopt.length) pick = coopt[(Math.random() * coopt.length) | 0];
+  else if (safe.length) pick = safe[(Math.random() * safe.length) | 0];
+  else if (risky.length) pick = risky[(Math.random() * risky.length) | 0];
+  else pick = moves[(Math.random() * moves.length) | 0];
+  const nx6 = pick[0], ny6 = pick[1];
+  const ti6 = tokenIndexAt(nx6, ny6);
+  if (ti6 >= 0 && tokens[ti6] !== t) {
+    const o = tokens[ti6];
+    if (npcCanOrthogonalSwapPass(t, o)) npcSwapPositions(t, o);
+    else {
+      t.x = nx6;
+      t.y = ny6;
+    }
+  } else {
+    t.x = nx6;
+    t.y = ny6;
+  }
+  for (const o of tokens) {
+    if (o === t) continue;
+    if (o.x === t.x && o.y === t.y) resolveTwoNpcsMeet(t, o);
+  }
+  return true;
+}
+
+function cellWalkableK7(nx, ny) {
+  return grid[ny][nx] === 0 || grid[ny][nx] === 1;
+}
+
+/** к‑7: как король, **пол и стена**; на этапе 7–8 со склейкой краёв. */
+function stepK7Move(t) {
+  if (npcMovementRank(t) !== 7) return false;
+  const dirs = KING_DIRS.slice();
+  shuffle(dirs);
+  for (const [dx, dy] of dirs) {
+    let nx = t.x + dx, ny = t.y + dy;
+    if (useTorus()) [nx, ny] = torusXY(nx, ny);
+    else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+    if (!cellWalkableK7(nx, ny)) continue;
+    const ti = tokenIndexAt(nx, ny);
+    if (ti >= 0 && tokens[ti] !== t) {
+      const o = tokens[ti];
+      if (npcCanOrthogonalSwapPass(t, o)) {
+        npcSwapPositions(t, o);
+        return true;
+      }
+      continue;
+    }
+    t.x = nx;
+    t.y = ny;
+    return true;
+  }
+  return false;
+}
+
+/** Случайный ортогональный шаг (не к‑2…к‑5, к‑6, к‑7 — у них свои правила). */
+function stepRandomNpcMove(t) {
+  const r = npcMovementRank(t);
+  if (r <= 2 || r === 3 || r === 4 || r === 5 || r === 6 || r === 7) return false;
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  shuffle(dirs);
+  const empty = [];
+  const withPlayer = [];
+  for (const [dx, dy] of dirs) {
+    let nx = t.x + dx, ny = t.y + dy;
+    if (useTorus()) [nx, ny] = torusXY(nx, ny);
+    else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+    if (grid[ny][nx] === 1) continue;
+    const tir = tokenIndexAt(nx, ny);
+    if (tir >= 0) {
+      const o = tokens[tir];
+      if (npcCanOrthogonalSwapPass(t, o)) {
+        npcSwapPositions(t, o);
+        return true;
+      }
+      if (npcPure2Pure4FourDiesOnMeet(t, o)) {
+        t.x = nx;
+        t.y = ny;
+        return true;
+      }
+      continue;
+    }
+    const pa = aliveA && posA.x === nx && posA.y === ny;
+    const pb = aliveB && posB.x === nx && posB.y === ny;
+    if (pa || pb) withPlayer.push([nx, ny]);
+    else empty.push([nx, ny]);
+  }
+  let pick = null;
+  if (empty.length) pick = empty[(Math.random() * empty.length) | 0];
+  else if (withPlayer.length) pick = withPlayer[(Math.random() * withPlayer.length) | 0];
+  if (!pick) return false;
+  t.x = pick[0];
+  t.y = pick[1];
+  return true;
+}
+
+function stepAllNpcs() {
+  if (gameWinner || coopDeathAwaitKey) return;
+  const singles = tokens.filter((t) => !t.p4 && npcMovementRank(t) >= 2);
+  const moves = [];
+  for (const p of k4Pairs) moves.push({ kind: 'p4', p });
+  for (const t of singles) moves.push({ kind: 's', t });
+  if (!moves.length) return;
+  npcTickCount++;
+  const phase1 = [];
+  const phaseK6 = [];
+  const phaseK7 = [];
+  for (const m of moves) {
+    if (m.kind === 'p4') phase1.push(m);
+    else if (npcMovementRank(m.t) === 6) phaseK6.push(m);
+    else if (npcMovementRank(m.t) === 7) phaseK7.push(m);
+    else phase1.push(m);
+  }
+  shuffle(phase1);
+  shuffle(phaseK6);
+  shuffle(phaseK7);
+  function doMeetAfter(moved) {
+    if (moved) {
+      resolveNpcsMeetPlayers();
+      resolveNpcsOnSameCells();
+    }
+  }
+  for (const m of phase1) {
+    let moved = false;
+    if (m.kind === 'p4') moved = stepK4Pair(m.p);
+    else {
+      const t = m.t;
+      const r = npcMovementRank(t);
+      if (r === 2) {
+        if (npcTickCount % 2 === 0) moved = stepK2Move(t);
+      } else if (r === 3) moved = stepK3PatrolMove(t);
+      else if (r === 4) moved = stepK4PatrolMove(t);
+      else if (r === 5) moved = stepK5Move(t);
+      else moved = stepRandomNpcMove(t);
+    }
+    doMeetAfter(moved);
+    if (coopDeathAwaitKey) return;
+  }
+  for (const m of phaseK6) {
+    const moved = stepK6KingAI(m.t);
+    doMeetAfter(moved);
+    if (coopDeathAwaitKey) return;
+  }
+  for (const m of phaseK7) {
+    const moved = stepK7Move(m.t);
+    doMeetAfter(moved);
+    if (coopDeathAwaitKey) return;
+  }
+}
+
+function npcWorldStepFromTimer() {
+  if (gameWinner || coopDeathAwaitKey) return;
+  if (gel('menu-modal')?.classList.contains('open')) return;
+  if (gel('rules-modal')?.classList.contains('open')) return;
+  if (gel('extras-modal')?.classList.contains('open')) return;
+  stepAllNpcs();
+  if (coopDeathAwaitKey) {
+    updateSidePanels();
+    drawPanels();
+    updateGameStatus();
+    draw();
+    return;
+  }
+  if ((!aliveA || !aliveB) && coopDeathMeetSummary) updateGameStatus();
+  updateSidePanels();
+  drawPanels();
+  resolveEndgame();
+  draw();
+}
+
+function startNpcStepTimer() {
+  if (npcStepTimerId != null) return;
+  npcStepTimerId = setInterval(npcWorldStepFromTimer, NPC_STEP_INTERVAL_MS);
 }
 
 function tokenIndexAt(x, y) {
   return tokens.findIndex((t) => t.x === x && t.y === y);
 }
 
-function tryAbsorbAt(who) {
-  const pos = who === 'A' ? posA : posB;
+function playerDigitSet(who) {
+  const s = new Set();
+  const anchor = who === 'A' ? anchorA : anchorB;
   const lv = who === 'A' ? lvlA : lvlB;
-  const i = tokenIndexAt(pos.x, pos.y);
-  if (i < 0) return;
-  const t = tokens[i];
-  if (t.lv > lv) {
-    if (who === 'A') { aliveA = false; } else { aliveB = false; }
-    return;
+  const abs = who === 'A' ? absorbedA : absorbedB;
+  s.add(anchor);
+  s.add(lv);
+  for (const d of abs) {
+    if (d >= 1 && d <= 8) s.add(d);
   }
-  tokens.splice(i, 1);
-  if (lv > 1) {
-    if (who === 'A') lvlA = lv - 1; else lvlB = lv - 1;
+  return s;
+}
+
+/** Пенал в шапке: то же множество цифр, что и при встрече (без дубля «66», если якорь и текущий уровень оба 6). Нулей в пенале нет. */
+function playerPanelText(who) {
+  return formatDigitSetSortedMeet(playerDigitSet(who));
+}
+
+/** Все цифры пеналя NPC: уровень на поле (lv) + кооптированные (npcAbsorbed); у «чистой» фишки только lv. */
+function npcTokenDigitSet(t) {
+  const s = new Set();
+  if (t.lv >= 1 && t.lv <= 8) s.add(t.lv);
+  if (t.npcAbsorbed) for (const d of t.npcAbsorbed) if (d >= 1 && d <= 8) s.add(d);
+  return s;
+}
+
+/** После кооптации NPC: объединение цифр обеих фишек; lv = максимум, остальные по убыванию в npcAbsorbed. */
+function npcMergeSeniorAbsorbsJunior(senior, junior) {
+  if (junior.lv === 2 && junior.k2Sid !== undefined) clearK2TerritorySid(junior.k2Sid);
+  const u = new Set(npcTokenDigitSet(senior));
+  for (const d of npcTokenDigitSet(junior)) u.add(d);
+  const mx = maxOfDigitSet(u);
+  const rest = Array.from(u).filter((d) => d !== mx).sort((a, b) => b - a);
+  senior.lv = mx;
+  if (rest.length) senior.npcAbsorbed = rest;
+  else delete senior.npcAbsorbed;
+  if (senior.k2Sid !== undefined && mx > 2) {
+    clearK2TerritorySid(senior.k2Sid);
+    delete senior.k2Sid;
+  }
+}
+
+/** Старшая цифра набора фишки — законы движения как у этой «силы» (43 → как 4, не как 3). */
+function npcMovementRank(t) {
+  return maxOfDigitSet(npcTokenDigitSet(t));
+}
+
+/** Подпись пеналя фишки: lv как ведущая цифра + остальные из коопта (напр. «3», «43», «54»). Мигание только на шаре — npcTokenDisplayLabel. */
+function npcTokenPanelText(t) {
+  const abs = t.npcAbsorbed && t.npcAbsorbed.length ? t.npcAbsorbed.map(String).join('') : '';
+  return String(t.lv) + abs;
+}
+
+function npcTokenDigitSeqDescending(t) {
+  const s = npcTokenDigitSet(t);
+  return Array.from(s).filter((d) => d >= 1 && d <= 8).sort((a, b) => b - a);
+}
+
+/** Только на поле (canvas): при нескольких цифрах — по очереди 4, 3, 4, 3… В панелях используй npcTokenPanelText. */
+function npcTokenDisplayLabel(t) {
+  const seq = npcTokenDigitSeqDescending(t);
+  if (seq.length <= 1) return String(t.lv);
+  const off = ((t.x | 0) * 7 + (t.y | 0) * 13) % 97;
+  const idx = Math.floor((npcDigitAnimFrame + off) / NPC_DIGIT_BLINK_HOLD_STEPS) % seq.length;
+  return String(seq[idx]);
+}
+
+function hasMultiDigitBlinkNeed() {
+  if (gameWinner || coopDeathAwaitKey) return false;
+  for (let i = 0; i < tokens.length; i++) {
+    if (npcTokenDigitSeqDescending(tokens[i]).length > 1) return true;
+  }
+  return false;
+}
+
+/**
+ * «Чистая» фишка уровня lv: в пенале одна цифра силы (уровень на поле = lv), в npcAbsorbed ещё ничего нет.
+ * Подпись пеналя на поле/в панели — просто эта цифра (напр. «3»); после коопта появятся и другие цифры.
+ */
+function npcIsPureLv(t, lv) {
+  const s = npcTokenDigitSet(t);
+  return s.size === 1 && t.lv === lv && maxOfDigitSet(s) === lv;
+}
+
+/** Старший игрок съел фишку: объединение пеналей (как у двух NPC) — множество цифр = union; lv = максимум, остальное по убыванию в absorbed; якорь этапа не трогаем. */
+function mergePlayerPenalFromNpcToken(who, t) {
+  const u = new Set(playerDigitSet(who));
+  for (const d of npcTokenDigitSet(t)) u.add(d);
+  const mx = maxOfDigitSet(u);
+  const rest = Array.from(u).filter((d) => d !== mx).sort((a, b) => b - a);
+  if (who === 'A') {
+    lvlA = mx;
+    absorbedA = rest;
+  } else {
+    lvlB = mx;
+    absorbedB = rest;
+  }
+}
+
+function maxOfDigitSet(s) {
+  let m = 0;
+  s.forEach((v) => { if (v > m) m = v; });
+  return m;
+}
+
+/**
+ * Встреча двух сторон по множествам цифр пеналя:
+ * 1) Одинаковый максимум — насквозь; 2) иначе есть пара ±1 между младшим и старшим наборами — старший поглощает младшего;
+ * 3) иначе — младший убивает старшего.
+ * Условие п.2 (одна цифра из «старшего» набора и одна из «младшего», |a−b|===1):
+ */
+function hasCooptAdjPair(setSenior, setJunior) {
+  for (const a of setSenior) {
+    for (const b of setJunior) {
+      if (Math.abs(a - b) === 1) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Встреча игрока с фишкой на клетке — общие три правила встречи (см. комментарий над hasCooptAdjPair).
+ * @returns {boolean} была ли на клетке фишка
+ */
+function resolveTokenMeet(who) {
+  const pos = who === 'A' ? posA : posB;
+  const i = tokenIndexAt(pos.x, pos.y);
+  if (i < 0) return false;
+  const t = tokens[i];
+  const setP = playerDigitSet(who);
+  const setT = npcTokenDigitSet(t);
+  const maxP = maxOfDigitSet(setP);
+  const maxT = maxOfDigitSet(setT);
+  if (maxP === maxT) return true;
+  const playerIsSenior = maxP > maxT;
+  const setSenior = playerIsSenior ? setP : setT;
+  const setJunior = playerIsSenior ? setT : setP;
+  const canCoopt = hasCooptAdjPair(setSenior, setJunior);
+  if (canCoopt) {
+    if (playerIsSenior) {
+      if (t.lv === 2 && t.k2Sid !== undefined) clearK2TerritorySid(t.k2Sid);
+      tokens.splice(i, 1);
+      mergePlayerPenalFromNpcToken(who, t);
+    } else {
+      recordPlayerKilled(who, t);
+      if (who === 'A') aliveA = false; else aliveB = false;
+    }
+  } else {
+    if (playerIsSenior) {
+      recordPlayerKilled(who, t);
+      if (who === 'A') aliveA = false; else aliveB = false;
+    } else {
+      if (t.lv === 2 && t.k2Sid !== undefined) clearK2TerritorySid(t.k2Sid);
+      recordNpcKilled(t);
+      tokens.splice(i, 1);
+    }
+  }
+  pruneK4Pairs();
+  pruneK2TerritoryOrphans();
+  return true;
+}
+
+/** Встреча игрока с фишкой t (к‑7 из стены: ортососедство на торе), без общей клетки — те же три правила встречи, что и у resolveTokenMeet. */
+function resolveTokenMeetWithToken(who, t) {
+  const i = tokens.indexOf(t);
+  if (i < 0) return false;
+  const setP = playerDigitSet(who);
+  const setT = npcTokenDigitSet(t);
+  const maxP = maxOfDigitSet(setP);
+  const maxT = maxOfDigitSet(setT);
+  if (maxP === maxT) return true;
+  const playerIsSenior = maxP > maxT;
+  const setSenior = playerIsSenior ? setP : setT;
+  const setJunior = playerIsSenior ? setT : setP;
+  const canCoopt = hasCooptAdjPair(setSenior, setJunior);
+  if (canCoopt) {
+    if (playerIsSenior) {
+      if (t.lv === 2 && t.k2Sid !== undefined) clearK2TerritorySid(t.k2Sid);
+      tokens.splice(i, 1);
+      mergePlayerPenalFromNpcToken(who, t);
+    } else {
+      recordPlayerKilled(who, t);
+      if (who === 'A') aliveA = false; else aliveB = false;
+    }
+  } else {
+    if (playerIsSenior) {
+      recordPlayerKilled(who, t);
+      if (who === 'A') aliveA = false; else aliveB = false;
+    } else {
+      if (t.lv === 2 && t.k2Sid !== undefined) clearK2TerritorySid(t.k2Sid);
+      recordNpcKilled(t);
+      tokens.splice(i, 1);
+    }
+  }
+  pruneK4Pairs();
+  pruneK2TerritoryOrphans();
+  return true;
+}
+
+function tryPullK7FromWall(who) {
+  if (currentStage !== 8) return;
+  if (who === 'A' && !aliveA) return;
+  if (who === 'B' && !aliveB) return;
+  const pos = who === 'A' ? posA : posB;
+  if (grid[pos.y][pos.x] !== 0) return;
+  for (const t of tokens) {
+    if (t.lv !== 7) continue;
+    if (grid[t.y][t.x] !== 1) continue;
+    if (!torusOrthAdjacent(pos.x, pos.y, t.x, t.y)) continue;
+    resolveTokenMeetWithToken(who, t);
+    return;
   }
 }
 
 function cellWalkableForPlayer(x, y, lv) {
-  if (grid[y][x] === 1) return false;
-  const ti = tokenIndexAt(x, y);
-  if (ti < 0) return true;
-  return tokens[ti].lv <= lv;
+  return grid[y][x] === 0;
 }
 
 function hasReachableAbsorb(px, py, lv) {
   if (lv <= 1) return true;
-  let any = false;
-  for (const t of tokens) {
-    if (t.lv <= lv) { any = true; break; }
-  }
-  if (!any) return false;
+  if (tokens.length === 0) return false;
   const v = Array.from({ length: GH }, () => new Array(GW).fill(false));
   const q = [[px, py]];
   v[py][px] = true;
   while (q.length) {
     const [x, y] = q.shift();
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const nx = x + dx, ny = y + dy;
-      if (nx < 0 || nx >= GW || ny < 0 || ny >= GH || v[ny][nx]) continue;
+      let nx = x + dx, ny = y + dy;
+      if (useTorus()) [nx, ny] = torusXY(nx, ny);
+      else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+      if (v[ny][nx]) continue;
       if (!cellWalkableForPlayer(nx, ny, lv)) continue;
       v[ny][nx] = true;
       q.push([nx, ny]);
     }
   }
   for (const t of tokens) {
-    if (t.lv <= lv && v[t.y][t.x]) return true;
+    if (v[t.y][t.x]) return true;
   }
   return false;
 }
@@ -759,14 +2579,30 @@ function canReachFinFrom(px, py) {
     const [x, y] = q.shift();
     if (x === fx && y === fy) return true;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const nx = x + dx, ny = y + dy;
-      if (nx < 0 || nx >= GW || ny < 0 || ny >= GH || v[ny][nx]) continue;
-      if (!cellWalkableForPlayer(nx, ny, 1)) continue;
+      let nx = x + dx, ny = y + dy;
+      if (useTorus()) [nx, ny] = torusXY(nx, ny);
+      else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+      if (v[ny][nx]) continue;
+      if (grid[ny][nx] !== 0) continue;
       v[ny][nx] = true;
       q.push([nx, ny]);
     }
   }
   return false;
+}
+
+/** В кооперации после гибели одного — тот же этап, новое поле (кампания не срывается). */
+function restartCoopStageFromDeath() {
+  coopDeathAwaitKey = false;
+  gameWinner = null;
+  saluteAnim = null;
+  layoutBoard();
+  genGridWithTokens();
+  updateLiveStage();
+  updateSidePanels();
+  drawPanels();
+  updateGameStatus();
+  draw();
 }
 
 function cannotEverWin(who) {
@@ -790,7 +2626,7 @@ function resolveEndgame() {
       setTimeout(scheduleAfterStageWin, 1600);
       return;
     }
-    if (!aliveA || !aliveB || cannotEverWin('A') || cannotEverWin('B')) {
+    if (cannotEverWin('A') && cannotEverWin('B')) {
       gameWinner = 'cooplose';
       startSalute('center');
       updateGameStatus();
@@ -830,21 +2666,28 @@ function resetActors() {
   const L = Math.min(8, Math.max(1, currentStage));
   lvlA = lvlB = L;
   aliveA = aliveB = true;
-  gameWinner = null;
+  absorbedA = [];
+  absorbedB = [];
+  anchorA = anchorB = L;
+  deadPenalChips = [];
+  coopDeathMeetSummary = '';
+  if (!campaignDone) gameWinner = null;
   saluteAnim = null;
+  coopDeathAwaitKey = false;
   updateGameStatus();
   updateSidePanels();
 }
 
 function scheduleAfterStageWin() {
   saluteAnim = null;
-  if (currentStage >= 8) {
+  coopDeathAwaitKey = false;
+  if (currentStage >= MAX_CAMPAIGN_STAGE) {
     campaignDone = true;
     gameWinner = 'campaign';
     startSalute('center');
     updateLiveStage();
     updateGameStatus();
-    updateNpcBar();
+    drawPanels();
     draw();
     return;
   }
@@ -854,7 +2697,7 @@ function scheduleAfterStageWin() {
   genGridWithTokens();
   updateLiveStage();
   updateSidePanels();
-  updateNpcBar();
+  drawPanels();
   updateGameStatus();
   draw();
 }
@@ -862,22 +2705,34 @@ function scheduleAfterStageWin() {
 function updateGameStatus() {
   const el = gel('game-status');
   if (!el) return;
+  if (!gameWinner && coopDeathMeetSummary && (!aliveA || !aliveB)) {
+    el.textContent = 'Гибель: ' + coopDeathMeetSummary;
+    return;
+  }
   if (gameWinner === 'campaign') {
-    el.textContent = 'Все этапы пройдены (с ' + startStage + ' по 8)! 🎉 Нажмите «Сгенерировать» для новой кампании.';
+    el.textContent = 'Этапы 1–' + MAX_CAMPAIGN_STAGE + ' пройдены (старт с ' + startStage + ')! 🎉 Нажмите «Пуск» для новой кампании.';
     return;
   }
   if (gameWinner === 'cooplose') {
-    el.textContent = 'Кооперация: проигрыш (гибель или нельзя дойти до уровня 1 / финиша).';
+    el.textContent = 'Кооперация: оба не могут дойти до уровня 1 и FIN — проигрыш вдвоём.';
     return;
   }
   if (gameWinner === 'draw') {
-    el.textContent = 'Ничья: оба выбыли или у обоих нет возможности дойти до 1.';
+    el.textContent = 'Ничья: оба выбыли или у обоих (в конкуренции — у оставшихся) нет пути до 1 и FIN.';
     return;
   }
   if (gameWinner === 'A') el.textContent = 'Этап ' + currentStage + ': победа A (уровень 1 на FIN)!';
   else if (gameWinner === 'B') el.textContent = 'Этап ' + currentStage + ': победа B (уровень 1 на FIN)!';
   else if (gameWinner === 'coop') el.textContent = 'Этап ' + currentStage + ': кооперация — оба на 1 и на FIN!';
-  else if (currentStage >= 2) el.textContent = 'Доведите уровень до 1 (фишки помогают, всех съедать не нужно), затем FIN.';
+  else if (currentStage === 1) el.textContent = 'Этап 1: только A и B (ур. 1) — FIN. NPC нет.';
+  else if (currentStage === 2) el.textContent = 'Этап 2: к‑1 в углах стен, не ходят. Кооптация ±1 или гибель старшего; цель — ур. 1 и FIN.';
+  else if (currentStage === 3) el.textContent = 'Этап 3: + к‑2 (территория, в 2× медленнее).';
+  else if (currentStage === 4) el.textContent = 'Этап 4: + к‑3 (туда‑сюду по прямой).';
+  else if (currentStage === 5) el.textContent = 'Этап 5: + к‑4 парами по параллельным рядам (общий разворот).';
+  else if (currentStage === 6) el.textContent = 'Этап 6: + к‑5 (шаг на 1 или прыжок через одну стену).';
+  else if (currentStage === 7) el.textContent = 'Этап 7: тор (верх–низ и лево–право сшиты). + к‑6 — король, ходит после к‑2…к‑5, старается не погибнуть и скооптировать.';
+  else if (currentStage === 8) el.textContent = 'Этап 8: как 7 + к‑7 ходит по полу и стенам. Ортососедство на торе с к‑7 в стене — встреча: вытащить на пол и скооптировать по правилам.';
+  else if (currentStage >= 2) el.textContent = 'Кооптация при разных максимумах и паре цифр ±1; иначе гибнет старший. Доведите уровень до 1, затем FIN (не всех NPC обязательно).';
   else el.textContent = 'Этап 1: у обоих уровень 1 — доберитесь до FIN.';
 }
 
@@ -924,14 +2779,15 @@ function drawSalute(ctx, pw, ph, kind, elapsedMs) {
 }
 
 function tryMove(who, dx, dy) {
-  if (gameWinner || campaignDone) return;
+  if (gameWinner || coopDeathAwaitKey) return;
   if (who === 'A' && !aliveA) return;
   if (who === 'B' && !aliveB) return;
   const pos = who === 'A' ? posA : posB;
   const other = who === 'A' ? posB : posA;
-  const nx = pos.x + dx;
-  const ny = pos.y + dy;
-  if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) return;
+  let nx = pos.x + dx;
+  let ny = pos.y + dy;
+  if (useTorus()) [nx, ny] = torusXY(nx, ny);
+  else if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) return;
   if (grid[ny][nx] === 1) return;
   const [fx, fy] = finishCell();
   const finCell = nx === fx && ny === fy;
@@ -940,15 +2796,59 @@ function tryMove(who, dx, dy) {
   }
   pos.x = nx;
   pos.y = ny;
-  tryAbsorbAt(who);
+  resolveTokenMeet(who);
+  if (gameMode === 'cooperation' && (!aliveA || !aliveB)) {
+    coopDeathAwaitKey = true;
+    updateSidePanels();
+    drawPanels();
+    updateGameStatus();
+    draw();
+    return;
+  }
+  tryPullK7FromWall('A');
+  tryPullK7FromWall('B');
+  if (gameMode === 'cooperation' && (!aliveA || !aliveB)) {
+    coopDeathAwaitKey = true;
+    updateSidePanels();
+    drawPanels();
+    updateGameStatus();
+    draw();
+    return;
+  }
   updateSidePanels();
-  updateNpcBar();
+  drawPanels();
   resolveEndgame();
   draw();
 }
 
 function onKeyDown(e) {
-  if (gameWinner || campaignDone) return;
+  if (gel('extras-modal')?.classList.contains('open')) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      hideExtras();
+    }
+    return;
+  }
+  if (gel('rules-modal')?.classList.contains('open')) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeRules();
+    }
+    return;
+  }
+  if (gel('menu-modal')?.classList.contains('open')) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeGameMenu();
+    }
+    return;
+  }
+  if (coopDeathAwaitKey) {
+    e.preventDefault();
+    restartCoopStageFromDeath();
+    return;
+  }
+  if (gameWinner) return;
   const code = e.code;
   const k = e.key;
   let handled = false;
@@ -981,11 +2881,36 @@ function finishCell() {
   return [fx, fy];
 }
 
+/** Этапы 7–8: противоположные края склеены (тор). */
+function useTorus() {
+  return currentStage >= 7;
+}
+
+function torusXY(x, y) {
+  if (!useTorus()) return [x, y];
+  return [((x % GW) + GW) % GW, ((y % GH) + GH) % GH];
+}
+
+const KING_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+function torusOrthAdjacent(ax, ay, bx, by) {
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const [nx, ny] = torusXY(ax + dx, ay + dy);
+    if (nx === bx && ny === by) return true;
+  }
+  return false;
+}
+
 function setGameMode(m) {
   gameMode = m;
   gel('mode-competition').classList.toggle('active', m === 'competition');
   gel('mode-cooperation').classList.toggle('active', m === 'cooperation');
-  resetActors();
+  updateTitleMode();
+  coopDeathAwaitKey = false;
+  saluteAnim = null;
+  updateGameStatus();
+  updateSidePanels();
+  drawPanels();
   draw();
 }
 
@@ -1079,16 +3004,17 @@ function genGridWallsOnly() {
 function genGridWithTokens() {
   for (let outer = 0; outer < 200; outer++) {
     genGridWallsOnly();
-    for (let t = 0; t < 90; t++) {
-      if (tryPlaceTokensForCurrentStage()) {
-        updateNpcBar();
-        return;
-      }
+    if (tryPlaceTokensForCurrentStage()) {
+      drawPanels();
+      return;
     }
   }
   tokens = [];
   tokensInitialByLv = {};
-  updateNpcBar();
+  k4Pairs = [];
+  k2Territory = {};
+  npcTickCount = 0;
+  drawPanels();
 }
 
 function boardWrapInnerSize() {
@@ -1103,14 +3029,12 @@ function boardWrapInnerSize() {
   let availH = Math.max(0, Math.floor(r.height - pt - pb));
   if (availW < 80 || availH < 80) {
     const titleBar = gel('game-title-bar');
-    const panel = gel('launch-panel');
-    const npcw = gel('npc-panels-wrap');
-    const tw = (titleBar && titleBar.offsetHeight) || 44;
-    const ph = (panel && panel.offsetHeight) || 120;
-    const nh = (npcw && npcw.offsetHeight) || 48;
-    const side = 12 + pl + pr + 100;
+    const npcw = gel('panels-bar');
+    const tw = (titleBar && titleBar.offsetHeight) || 92;
+    const nh = (npcw && npcw.offsetHeight) || 36;
+    const side = 12 + pl + pr + 88;
     availW = Math.max(0, Math.floor(window.innerWidth - side));
-    availH = Math.max(0, Math.floor(window.innerHeight - tw - ph - nh - pt - pb - 24));
+    availH = Math.max(0, Math.floor(window.innerHeight - tw - nh - pt - pb - 20));
   }
   return { availW, availH };
 }
@@ -1119,6 +3043,27 @@ function layoutBoard() {
   const { availW, availH } = boardWrapInnerSize();
   const minCell = 20;
   const maxCell = 88;
+  const pref = getCellSizePreference();
+  const go = gel('grid-out');
+
+  if (pref > 0) {
+    const p = pref;
+    let gw = Math.min(56, Math.max(10, (availW / p) | 0));
+    let gh = Math.min(40, Math.max(8, (availH / p) | 0));
+    let cell = Math.min((availW / gw) | 0, (availH / gh) | 0, p);
+    const floorMin = 16;
+    if (cell < floorMin) {
+      gw = Math.min(56, Math.max(10, (availW / floorMin) | 0));
+      gh = Math.min(40, Math.max(8, (availH / floorMin) | 0));
+      cell = Math.min((availW / gw) | 0, (availH / gh) | 0, p);
+    }
+    GW = gw;
+    GH = gh;
+    CELL = Math.min(maxCell, Math.max(floorMin, cell));
+    if (go) go.textContent = GW + '×' + GH + ' кл. · ' + CELL + ' px';
+    return;
+  }
+
   const gwMax = Math.min(56, Math.max(10, (availW / minCell) | 0));
   const ghMax = Math.min(40, Math.max(8, (availH / minCell) | 0));
   let bestGW = 10, bestGH = 8, bestCELL = minCell;
@@ -1148,28 +3093,43 @@ function layoutBoard() {
     GH = bestGH;
     CELL = bestCELL;
   }
-  gel('grid-out').textContent = GW + '×' + GH + ' кл.';
+  if (go) go.textContent = GW + '×' + GH + ' кл. · ' + CELL + ' px';
 }
 
-function drawTokenInCell(ctx, cx, cy, lv) {
-  const st = TOKEN_STYLE[lv] || TOKEN_STYLE[1];
-  const pad = Math.max(2, CELL * 0.12);
-  const r = Math.max(3, (CELL - pad * 2) * 0.35);
+/** @param {number|{lv:number,npcAbsorbed?:number[]}} tokOrLv */
+function drawTokenInCell(ctx, cx, cy, tokOrLv) {
+  const lv = typeof tokOrLv === 'object' ? tokOrLv.lv : tokOrLv;
+  const label = typeof tokOrLv === 'object' ? npcTokenDisplayLabel(tokOrLv) : String(lv);
+  const rank = typeof tokOrLv === 'object' ? npcMovementRank(tokOrLv) : lv;
+  const st = TOKEN_STYLE[rank] || TOKEN_STYLE[1];
+  const edge = Math.max(0.65, CELL * 0.018);
+  const r = Math.max(4, CELL * 0.5 - edge);
   ctx.beginPath();
   ctx.arc(cx + CELL / 2, cy + CELL / 2, r, 0, Math.PI * 2);
   ctx.fillStyle = st.f;
   ctx.fill();
   ctx.strokeStyle = st.s;
-  ctx.lineWidth = 1.25;
+  ctx.lineWidth = Math.max(0.85, CELL * 0.026);
   ctx.stroke();
   ctx.fillStyle = '#fff';
-  ctx.font = `800 ${Math.max(7, CELL * 0.28)}px system-ui,sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(String(lv), cx + CELL / 2, cy + CELL / 2 + 0.5);
+  const d = 2 * r;
+  let fontPx = label.length <= 1 ? d * 0.96 : label.length === 2 ? d * 0.58 : d * 0.4;
+  fontPx = Math.max(8, fontPx);
+  if (label.length > 2) fontPx = Math.min(fontPx, CELL * 0.7);
+  else if (label.length === 2) fontPx = Math.min(fontPx, d * 0.62);
+  else fontPx = Math.min(fontPx, d * 0.98);
+  ctx.font = `800 ${fontPx}px system-ui,sans-serif`;
+  while (fontPx > 7 && ctx.measureText(label).width > d * 0.94) {
+    fontPx -= 1;
+    ctx.font = `800 ${fontPx}px system-ui,sans-serif`;
+  }
+  ctx.fillText(label, cx + CELL / 2, cy + CELL / 2 + 0.5);
 }
 
 function draw() {
+  pruneK2TerritoryOrphans();
   const cv = gel('c');
   const ctx = cv.getContext('2d');
   const [finX, finY] = finishCell();
@@ -1190,6 +3150,10 @@ function draw() {
       ctx.fillRect(cx, cy, CELL, CELL);
       ctx.fillStyle = '#A04520';
       ctx.fillRect(cx + 1, cy + 1, CELL - 2, CELL - 2);
+      if (tokHere(x, y)) {
+        const t = tokens.find((u) => u.x === x && u.y === y);
+        if (t && t.lv === 7) drawTokenInCell(ctx, cx, cy, t);
+      }
       continue;
     }
     const isFin = x === finX && y === finY;
@@ -1213,9 +3177,14 @@ function draw() {
       ctx.lineWidth = 0.5;
       ctx.strokeRect(cx + 0.25, cy + 0.25, CELL - 0.5, CELL - 0.5);
     }
+    const k2Own = k2Territory[x + ',' + y];
+    if (k2Own !== undefined && k2SidStillAlive(k2Own)) {
+      ctx.fillStyle = K2_TERRITORY_TINTS[k2Own % K2_TERRITORY_TINTS.length];
+      ctx.fillRect(cx, cy, CELL, CELL);
+    }
     if (tokHere(x, y)) {
       const t = tokens.find((u) => u.x === x && u.y === y);
-      if (t) drawTokenInCell(ctx, cx, cy, t.lv);
+      if (t) drawTokenInCell(ctx, cx, cy, t);
     }
     const aHere = onA(x, y);
     const bHere = onB(x, y);
@@ -1306,6 +3275,30 @@ function draw() {
       ctx.fillText('FIN', cx + CELL / 2, cy + CELL / 2);
     }
   }
+  if (useTorus()) {
+    ctx.strokeStyle = 'rgba(232,160,32,0.45)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(0.5, 0.5, pw - 1, ph - 1);
+    ctx.setLineDash([]);
+  }
+  if (coopDeathAwaitKey) {
+    ctx.fillStyle = 'rgba(45, 42, 38, 0.78)';
+    ctx.fillRect(0, 0, pw, ph);
+    ctx.fillStyle = 'rgba(255,255,255,0.93)';
+    ctx.font = `bold ${Math.max(15, CELL * 0.42)}px system-ui,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Погиб один из братьев.', pw / 2, ph * 0.34);
+    if (coopDeathMeetSummary) {
+      ctx.fillStyle = 'rgba(232,220,200,0.98)';
+      ctx.font = `${Math.max(12, CELL * 0.28)}px system-ui,sans-serif`;
+      ctx.fillText(coopDeathMeetSummary, pw / 2, ph * 0.44);
+    }
+    ctx.fillStyle = 'rgba(232,200,160,0.95)';
+    ctx.font = `${Math.max(12, CELL * 0.26)}px system-ui,sans-serif`;
+    ctx.fillText('Нажмите любую клавишу — то же поле этапа заново.', pw / 2, ph * 0.56);
+  }
   if (saluteAnim) {
     const t = performance.now() - saluteAnim.t0;
     if (t < 2800) {
@@ -1316,17 +3309,26 @@ function draw() {
 }
 
 function runGenerate() {
+  closeGameMenu();
   wallPct = parseInt(gel('wall-slider').value, 10);
   gel('wall-out').textContent = wallPct + '%';
   currentStage = startStage;
   campaignDone = false;
   gameWinner = null;
+  saluteAnim = null;
+  coopDeathAwaitKey = false;
   layoutBoard();
   genGridWithTokens();
+  const needTok = expectedNpcSlotCount(currentStage);
+  if (needTok > 0 && tokens.length === 0) {
+    const st = gel('game-status');
+    if (st) st.textContent = 'Не удалось разместить персонажей: уменьшите стартовый этап, число NPC в «Число персонажей» или процент стен — нажмите «Пуск».';
+    openGameMenu();
+  }
   updateLiveStage();
   updateSidePanels();
-  updateNpcBar();
-  updateGameStatus();
+  drawPanels();
+  if (!(needTok > 0 && tokens.length === 0)) updateGameStatus();
   draw();
 }
 
@@ -1334,7 +3336,29 @@ gel('wall-slider').oninput = function () {
   gel('wall-out').textContent = this.value + '%';
 };
 
+gel('cell-slider').addEventListener('input', function () {
+  syncCellOut();
+  saveCellPref();
+  layoutBoard();
+  genGridWithTokens();
+  draw();
+});
+
 gel('start-btn').onclick = runGenerate;
+
+gel('menu-open-btn')?.addEventListener('click', openGameMenu);
+gel('menu-close')?.addEventListener('click', closeGameMenu);
+gel('menu-modal')?.addEventListener('click', function (e) {
+  if (e.target === this) closeGameMenu();
+});
+gel('rules-modal')?.addEventListener('click', function (e) {
+  if (e.target === this) closeRules();
+});
+gel('rules-close')?.addEventListener('click', closeRules);
+gel('rules-open')?.addEventListener('click', openRules);
+gel('title-mode')?.addEventListener('click', function () {
+  setGameMode(gameMode === 'competition' ? 'cooperation' : 'competition');
+});
 
 window.addEventListener('resize', () => {
   layoutBoard();
@@ -1349,11 +3373,25 @@ function fullRelayout() {
 }
 
 loadNpcCounts();
+loadCellPref();
+syncCellOut();
 syncExtrasUi();
 bindExtrasSliders();
+updateTitleMode();
 selectStartStage(1);
 fullRelayout();
 requestAnimationFrame(fullRelayout);
 window.addEventListener('load', () => requestAnimationFrame(fullRelayout));
+startNpcStepTimer();
+setInterval(function () {
+  if (gameWinner || coopDeathAwaitKey || !hasMultiDigitBlinkNeed()) return;
+  npcDigitAnimFrame = (npcDigitAnimFrame + 1) % 1000;
+  try {
+    draw();
+  } catch (e) {}
+}, NPC_DIGIT_BLINK_MS);
 document.addEventListener('keydown', onKeyDown);
 gel('c').addEventListener('click', function () { this.focus({ preventScroll: true }); });
+</script>
+</body>
+</html>

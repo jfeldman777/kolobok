@@ -424,11 +424,12 @@ const K2_TERRITORY_TINTS=[
 
 let hero={x:0,y:0,lvl:2,dots:[],alive:true,isHero:true};
 let darkMode=true; // always dark
-let animFrame=0;
 let gameStarted=false;
+/** Пеналь вроде «43» на фишке и в панели: по очереди 4, 3, 4, 3… (не две цифры разом). */
+let animFrame=0;
 setInterval(()=>{
   animFrame=(animFrame+1)%1000;
-  try{ if(gameStarted&&!won&&!resetT&&hero.alive) draw(); }catch(e){}
+  try{ if(gameStarted&&!won&&!resetT&&hero.alive&&hasMultiGlyphBlinkNeed()) draw(); }catch(e){}
 },120);
 
 gel('n-slider').oninput=function(){gel('n-out').textContent=this.value+'×'+this.value;};
@@ -639,6 +640,18 @@ function getAllNPC(){
   return all;
 }
 
+function hasMultiGlyphBlinkNeed(){
+  if(!gameStarted||won||resetT||!hero.alive) return false;
+  const dd=(hero.displayDots||hero.dots||[hero.lvl]).filter(d=>d>=1&&d<=MAX_DIGIT);
+  if([...new Set(dd)].length>1) return true;
+  for(const npc of getAllNPC()){
+    if(npc.collected) continue;
+    const g=[...fullSet(npc)].filter(d=>d>=1&&d<=MAX_DIGIT);
+    if(new Set(g).size>1) return true;
+  }
+  return false;
+}
+
 const PANEL_COLORS={
   1:{bg:'#1a1040',border:'#7F77DD',text:'#AFA9EC'},
   2:{bg:'#2a0808',border:'#E24B4A',text:'#F09595'},
@@ -665,9 +678,15 @@ function drawPanels(){
   // Hero panel — goes into top-bar, show all digits including repeats
   const hp=gel('hero-panel');
   if(hp&&hp!==_stub){
-    const dd=(hero.displayDots||hero.dots||[hero.lvl]).filter(d=>d>=1&&d<=MAX_DIGIT).sort((a,b)=>b-a);
+    const dd=(hero.displayDots||hero.dots||[hero.lvl]).filter(d=>d>=1&&d<=MAX_DIGIT);
+    const uniq=[...new Set(dd.length?dd:[hero.lvl])].sort((a,b)=>b-a);
     hp.style.cssText='display:inline-flex;align-items:center;height:22px;padding:0 6px;border-radius:4px;font-size:12px;font-weight:900;border:1.5px solid #E8A020;background:#1e1000;color:#E8A020;letter-spacing:1px;white-space:nowrap;';
-    hp.textContent=dd.join('')||String(hero.lvl);
+    if(uniq.length>1){
+      const idx=Math.floor(animFrame/2)%uniq.length;
+      hp.textContent=String(uniq[idx]);
+    }else{
+      hp.textContent=String(uniq[0]||hero.lvl);
+    }
   }
 
   if(stage<2) return;
@@ -690,9 +709,14 @@ function drawPanels(){
     const el=document.createElement('span');
     el.className='panel';
     el.style.cssText=`background:${c.bg};border-color:${c.border};color:${c.text}`;
-    // Show full digit set of this NPC
-    const dset=[...new Set([npc.lvl,...(npc.dots||[])])].filter(d=>d>=1&&d<=MAX_DIGIT).sort((a,b)=>b-a);
-    el.textContent=dset.join('');
+    const seq=[...fullSet(npc)].filter(d=>d>=1&&d<=MAX_DIGIT).sort((a,b)=>b-a);
+    if(seq.length>1){
+      const off=((npc.x||0)*7+(npc.y||0)*13)%97;
+      const idx=Math.floor((animFrame+off)/2)%seq.length;
+      el.textContent=String(seq[idx]);
+    }else{
+      el.textContent=String(maxD);
+    }
     bar.appendChild(el);
   }
 
@@ -1386,6 +1410,7 @@ function draw(){
   if(stage>=7) for(const m of M6) if(!m.collected) drawBall(ctx,m,0,dk);
   if(stage>=8) for(const m of M7) if(!m.collected) drawBall(ctx,m,0,dk);
   if(hero.alive) drawHero(ctx,dk);
+  if(gameStarted&&hasMultiGlyphBlinkNeed()) drawPanels();
   }catch(e){}
 }
 
@@ -1417,9 +1442,13 @@ function drawSquareBall(ctx, gx, gy, lvl, dots, frameOffset, isHero){
     } else {
       const seq=getDigitSeq(lvl,dots||[]);
       const ownC=safeCLR(lvl);
-      // NPC: coloured border + white digit
-      const showIdx=seq.length>1 ? Math.floor((animFrame+frameOffset)/2)%seq.length : 0;
-      const showDigit=seq[Math.max(0,Math.min(showIdx,seq.length-1))];
+      let showDigit;
+      if(seq.length>1){
+        const showIdx=Math.floor((animFrame+frameOffset)/2)%seq.length;
+        showDigit=seq[showIdx];
+      }else{
+        showDigit=seq.length ? Math.max(...seq) : lvl;
+      }
       ctx.strokeStyle=ownC.fdk;
       ctx.lineWidth=2.5;
       ctx.strokeRect(x+1.25,y+1.25,s-2.5,s-2.5);
