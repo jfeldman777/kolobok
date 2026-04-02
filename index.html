@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Колобок — игры</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  min-height: 100%;
+  background: #111;
+  color: #eee;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.45;
+}
+body {
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  max-width: 520px;
+  margin: 0 auto;
+}
+h1 {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+  font-weight: 800;
+  color: #E8A020;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.lead {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 22px;
+}
+.card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.card h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.card p {
+  font-size: 13px;
+  color: #9a9a9a;
+  margin-bottom: 14px;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+a.btn-play {
+  background: #1565c0;
+  border-color: #2e6bb8;
+  color: #fff;
+}
+a.btn-play:active { filter: brightness(1.1); }
+a.btn-dl {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #E8A020;
+}
+a.btn-dl:active { filter: brightness(1.08); }
+a.btn-donate {
+  background: #2d2418;
+  border-color: #a67c2e;
+  color: #f0c04a;
+}
+a.btn-donate:active { filter: brightness(1.12); }
+.card-donate h2 { color: #f0c04a; }
+.hint {
+  margin-top: 22px;
+  padding: 12px 14px;
+  background: #161616;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #666;
+  border: 1px solid #2a2a2a;
+}
+</style>
+</head>
+<body>
+  <h1>Колобок — игры</h1>
+  <p class="lead">Откройте в браузере или сохраните HTML на устройство.</p>
+
+  <article class="card">
+    <h2>Колобок и его команда</h2>
+    <p>Одиночная игра на поле с этапами и таблицей очков.</p>
+    <div class="row">
+      <a class="btn btn-play" href="kolobok_2026.html">Играть</a>
+      <a class="btn btn-dl" href="kolobok_2026.html" download="kolobok_2026.html">Скачать файл</a>
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Два брата-колобка</h2>
+    <p>Два игрока на одном поле: конкуренция или кооперация.</p>
+    <div class="row">
+      <a class="btn btn-play" href="kolobok2brata.html">Играть</a>
+      <a class="btn btn-dl" href="kolobok2brata.html" download="kolobok2brata.html">Скачать файл</a>
+    </div>
+  </article>
+
+  <!-- Донаты: замените username в ссылках на свои логины или удалите лишние кнопки. -->
+  <article class="card card-donate">
+    <h2>Поддержка автора</h2>
+    <p>
+      Если вам понравились игры, вы можете поблагодарить автора и перечислить любую сумму
+      — по желанию, в этом нет необходимости. Спасибо, что играете.
+    </p>
+    <div class="row">
+      <a class="btn btn-donate" href="https://boosty.to/username" target="_blank" rel="noopener noreferrer">Boosty</a>
+      <a class="btn btn-donate" href="https://paypal.me/username" target="_blank" rel="noopener noreferrer">PayPal</a>
+      <a class="btn btn-donate" href="https://ko-fi.com/username" target="_blank" rel="noopener noreferrer">Ko-fi</a>
+    </div>
+  </article>
+
+  <p class="hint">
+    На iPhone Safari кнопка «Скачать» иногда открывает страницу вместо загрузки —
+    тогда «Поделиться» → «Сохранить в файлы». На ПК файл обычно попадает в папку «Загрузки».
+  </p>
+</body>
+</html>

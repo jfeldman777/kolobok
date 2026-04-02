@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Два брата-колобка</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: #111;
+  color: #eee;
+  font-family: system-ui, sans-serif;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100dvh;
+}
+#launch-panel {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+#game-title-bar {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 8px 12px 10px;
+  background: linear-gradient(180deg, #1f1a12 0%, #141414 100%);
+  border-bottom: 2px solid #E8A020;
+  font-size: clamp(1.05rem, 4.2vw, 1.55rem);
+  font-weight: 900;
+  color: #E8A020;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-top: calc(6px + env(safe-area-inset-top, 0px));
+}
+#launch-panel h1 {
+  font-size: clamp(0.85rem, 2.2vw, 0.95rem);
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 0.02em;
+  width: 100%;
+  max-width: 100%;
+}
+#launch-panel .sub {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+  width: 100%;
+  margin-top: -6px;
+}
+.mode-toggle {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.mode-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #aaa;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mode-btn.active {
+  background: #E8A020;
+  color: #111;
+  border-color: #E8A020;
+}
+.mode-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#wall-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #aaa;
+}
+#wall-row input[type=range] {
+  width: min(160px, 35vw);
+  accent-color: #E8A020;
+}
+#wall-out, #grid-out {
+  font-weight: 700;
+  color: #fff;
+  min-width: 36px;
+}
+#start-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid #2e6bb8;
+  background: #1565c0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+#start-btn:active { filter: brightness(1.12); }
+#board-wrap {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(6px + env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-right, 0px))
+    calc(6px + env(safe-area-inset-bottom, 0px));
+}
+#c {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  background: #0a0a0a;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="game-title-bar">Два брата-колобка</div>
+  <div id="launch-panel">
+    <h1>Два игрока · одно поле</h1>
+    <p class="sub">Старт: A слева, B справа; финиш — центр низа. <b>A:</b> WASD. <b>B:</b> стрелки. <b>Конкуренция</b> — кто быстрее дошёл; салют со стороны победителя. <b>Кооперация</b> — оба должны выйти на FIN; салют посередине.</p>
+    <span id="game-status" style="font-size:13px;color:#E8A020;font-weight:800;width:100%;min-height:1.2em"></span>
+    <div class="mode-toggle">
+      <button type="button" class="mode-btn active" id="mode-competition" onclick="setGameMode('competition')">1) Конкуренция</button>
+      <button type="button" class="mode-btn" id="mode-cooperation" onclick="setGameMode('cooperation')">2) Кооперация</button>
+    </div>
+    <div id="wall-row">
+      <label for="wall-slider">Стены</label>
+      <input type="range" id="wall-slider" min="5" max="28" value="14" step="1">
+      <span id="wall-out">14%</span>
+    </div>
+    <span id="grid-out" style="font-size:12px;color:#888;min-width:auto"></span>
+    <button type="button" id="start-btn">Сгенерировать поле</button>
+  </div>
+  <div id="board-wrap">
+    <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
+  </div>
+</div>
+
+<script>
+/** Ширина и высота поля в клетках (прямоугольник). */
+let GW = 18, GH = 14;
+let grid = [];
+let wallPct = 14;
+let CELL = 40;
+let gameMode = 'competition';
+/** Левый игрок A — старт (0,0); правый B — (GW-1, 0). */
+let posA = { x: 0, y: 0 };
+let posB = { x: 0, y: 0 };
+/** Конкуренция: 'A' | 'B'. Кооперация: 'coop'. */
+let gameWinner = null;
+/** Салют: 'left' | 'right' | 'center' и время старта (performance.now). */
+let saluteAnim = null;
+
+function gel(id) { return document.getElementById(id); }
+
+function resetActors() {
+  posA = { x: 0, y: 0 };
+  posB = { x: Math.max(0, GW - 1), y: 0 };
+  gameWinner = null;
+  saluteAnim = null;
+  updateGameStatus();
+}
+
+function updateGameStatus() {
+  const el = gel('game-status');
+  if (!el) return;
+  if (gameWinner === 'A') el.textContent = 'Победа: быстрее игрок A — салют слева!';
+  else if (gameWinner === 'B') el.textContent = 'Победа: быстрее игрок B — салют справа!';
+  else if (gameWinner === 'coop') el.textContent = 'Оба на финише! Салют посередине!';
+  else el.textContent = '';
+}
+
+function startSalute(kind) {
+  saluteAnim = { kind, t0: performance.now() };
+}
+
+function drawSalute(ctx, pw, ph, kind, elapsedMs) {
+  const dur = 2600;
+  const u = Math.min(1, elapsedMs / dur);
+  const minDim = Math.min(pw, ph);
+  let ox;
+  let oy = ph * 0.72;
+  if (kind === 'left') { ox = pw * 0.12; oy = ph * 0.68; }
+  else if (kind === 'right') { ox = pw * 0.88; oy = ph * 0.68; }
+  else { ox = pw * 0.5; oy = ph * 0.65; }
+  const burst = 48;
+  for (let i = 0; i < burst; i++) {
+    const seed = i * 12.9898;
+    const ang = (i / burst) * Math.PI * 2 + u * 2.1;
+    const spd = 0.35 + (i % 7) * 0.06;
+    const t = u * (1.05 - (i % 5) * 0.04);
+    const r = Math.min(pw, ph) * spd * t * (0.85 + 0.15 * Math.sin(seed));
+    const x = ox + Math.cos(ang) * r;
+    const y = oy - Math.sin(ang * 0.9 + 0.5) * r * 1.15 - u * u * ph * 0.08;
+    const alpha = (1 - u) * (0.5 + 0.5 * (1 - t / 1.05));
+    const hue = kind === 'center' ? 38 + (i % 6) * 8 : kind === 'left' ? 210 + (i % 5) * 6 : 280 + (i % 5) * 5;
+    ctx.fillStyle = `hsla(${hue},92%,${58 + (i % 4) * 5}%,${Math.max(0, alpha * 0.9)})`;
+    const sz = Math.max(1.5, (1 - u * 0.6) * (2.5 + (i % 3)));
+    ctx.beginPath();
+    ctx.arc(x, y, sz, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  for (let w = 0; w < 5; w++) {
+    const rise = u * ph * 0.55 * (0.65 + w * 0.08);
+    const tw = (1 - u) * 3.5;
+    ctx.strokeStyle = `rgba(232,160,32,${0.45 * (1 - u)})`;
+    ctx.lineWidth = tw;
+    ctx.beginPath();
+    ctx.moveTo(ox + (w - 2) * 10 * (kind === 'center' ? 1.2 : 1), oy);
+    ctx.quadraticCurveTo(ox + (w - 2) * 8, oy - rise * 0.5, ox + Math.sin(u * 6 + w) * minDim * 0.03, oy - rise);
+    ctx.stroke();
+  }
+}
+
+function tryMove(who, dx, dy) {
+  if (gameWinner) return;
+  const pos = who === 'A' ? posA : posB;
+  const other = who === 'A' ? posB : posA;
+  const nx = pos.x + dx;
+  const ny = pos.y + dy;
+  if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) return;
+  if (grid[ny][nx] === 1) return;
+  const [fx, fy] = finishCell();
+  const finCell = nx === fx && ny === fy;
+  if (other.x === nx && other.y === ny) {
+    if (!(gameMode === 'cooperation' && finCell)) return;
+  }
+  pos.x = nx;
+  pos.y = ny;
+  if (gameMode === 'competition') {
+    if (pos.x === fx && pos.y === fy) {
+      gameWinner = who;
+      startSalute(who === 'A' ? 'left' : 'right');
+      updateGameStatus();
+    }
+  } else {
+    const aFin = posA.x === fx && posA.y === fy;
+    const bFin = posB.x === fx && posB.y === fy;
+    if (aFin && bFin) {
+      gameWinner = 'coop';
+      startSalute('center');
+      updateGameStatus();
+    }
+  }
+  draw();
+}
+
+function onKeyDown(e) {
+  if (gameWinner) return;
+  const code = e.code;
+  const k = e.key;
+  let handled = false;
+  if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'ArrowLeft' || code === 'ArrowRight') {
+    handled = true;
+    if (code === 'ArrowUp') tryMove('B', 0, -1);
+    else if (code === 'ArrowDown') tryMove('B', 0, 1);
+    else if (code === 'ArrowLeft') tryMove('B', -1, 0);
+    else tryMove('B', 1, 0);
+  } else if (code === 'KeyW' || code === 'KeyA' || code === 'KeyS' || code === 'KeyD') {
+    handled = true;
+    if (code === 'KeyW') tryMove('A', 0, -1);
+    else if (code === 'KeyS') tryMove('A', 0, 1);
+    else if (code === 'KeyA') tryMove('A', -1, 0);
+    else tryMove('A', 1, 0);
+  } else if (k === 'w' || k === 'W' || k === 'a' || k === 'A' || k === 's' || k === 'S' || k === 'd' || k === 'D') {
+    handled = true;
+    const c = k.toLowerCase();
+    if (c === 'w') tryMove('A', 0, -1);
+    else if (c === 's') tryMove('A', 0, 1);
+    else if (c === 'a') tryMove('A', -1, 0);
+    else tryMove('A', 1, 0);
+  }
+  if (handled) e.preventDefault();
+}
+
+function finishCell() {
+  const fx = (GW - 1) >> 1;
+  const fy = GH - 1;
+  return [fx, fy];
+}
+
+function setGameMode(m) {
+  gameMode = m;
+  gel('mode-competition').classList.toggle('active', m === 'competition');
+  gel('mode-cooperation').classList.toggle('active', m === 'cooperation');
+  resetActors();
+  draw();
+}
+
+function pOK(sx, sy, ex, ey) {
+  const v = Array.from({ length: GH }, () => new Array(GW).fill(false));
+  const q = [[sx, sy]];
+  v[sy][sx] = true;
+  while (q.length) {
+    const [x, y] = q.shift();
+    if (x === ex && y === ey) return true;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < GW && ny >= 0 && ny < GH && !v[ny][nx] && grid[ny][nx] === 0) {
+        v[ny][nx] = true;
+        q.push([nx, ny]);
+      }
+    }
+  }
+  return false;
+}
+
+function allFloorConnectedFrom(sx, sy) {
+  if (grid[sy][sx] !== 0) return false;
+  const v = Array.from({ length: GH }, () => new Array(GW).fill(false));
+  const q = [[sx, sy]];
+  v[sy][sx] = true;
+  let seen = 0;
+  while (q.length) {
+    const [x, y] = q.shift();
+    seen++;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+      if (grid[ny][nx] !== 0 || v[ny][nx]) continue;
+      v[ny][nx] = true;
+      q.push([nx, ny]);
+    }
+  }
+  let floorCells = 0;
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) if (grid[y][x] === 0) floorCells++;
+  return seen === floorCells;
+}
+
+function gridReachabilityOk() {
+  const [fx, fy] = finishCell();
+  if (grid[0][0] !== 0 || grid[0][GW - 1] !== 0 || grid[fy][fx] !== 0) return false;
+  if (!pOK(0, 0, fx, fy)) return false;
+  if (!pOK(GW - 1, 0, fx, fy)) return false;
+  if (!allFloorConnectedFrom(0, 0)) return false;
+  return true;
+}
+
+function isProtectedCell(x, y) {
+  const [fx, fy] = finishCell();
+  if (x === 0 && y === 0) return true;
+  if (x === GW - 1 && y === 0) return true;
+  if (x === fx && y === fy) return true;
+  return false;
+}
+
+function genGridValidForTryPct(tryPct) {
+  grid = Array.from({ length: GH }, () => new Array(GW).fill(0));
+  const cells = GW * GH;
+  const wc = (cells * tryPct / 100) | 0;
+  let p = 0, t = 0;
+  while (p < wc && t++ < 12000) {
+    const rx = (Math.random() * GW) | 0, ry = (Math.random() * GH) | 0;
+    if (isProtectedCell(rx, ry)) continue;
+    if (grid[ry][rx] === 0) { grid[ry][rx] = 1; p++; }
+  }
+  return gridReachabilityOk();
+}
+
+function genGrid() {
+  let tryPct = wallPct;
+  for (let down = 0; down < 50; down++) {
+    for (let att = 0; att < 320; att++) {
+      if (genGridValidForTryPct(tryPct)) {
+        resetActors();
+        return;
+      }
+    }
+    if (tryPct <= 0) break;
+    tryPct = Math.max(0, tryPct - 2);
+  }
+  grid = Array.from({ length: GH }, () => new Array(GW).fill(0));
+  resetActors();
+}
+
+function boardWrapInnerSize() {
+  const wrap = gel('board-wrap');
+  const r = wrap.getBoundingClientRect();
+  const cs = getComputedStyle(wrap);
+  const pl = parseFloat(cs.paddingLeft) || 0;
+  const pr = parseFloat(cs.paddingRight) || 0;
+  const pt = parseFloat(cs.paddingTop) || 0;
+  const pb = parseFloat(cs.paddingBottom) || 0;
+  let availW = Math.max(0, Math.floor(r.width - pl - pr));
+  let availH = Math.max(0, Math.floor(r.height - pt - pb));
+  if (availW < 80 || availH < 80) {
+    const titleBar = gel('game-title-bar');
+    const panel = gel('launch-panel');
+    const tw = titleBar.offsetHeight || 44;
+    const ph = panel.offsetHeight || 120;
+    const side = 12 + pl + pr;
+    availW = Math.max(0, Math.floor(window.innerWidth - side));
+    availH = Math.max(0, Math.floor(window.innerHeight - tw - ph - pt - pb - 8));
+  }
+  return { availW, availH };
+}
+
+function layoutBoard() {
+  const { availW, availH } = boardWrapInnerSize();
+  const minCell = 20;
+  const maxCell = 88;
+  const gwMax = Math.min(56, Math.max(10, (availW / minCell) | 0));
+  const ghMax = Math.min(40, Math.max(8, (availH / minCell) | 0));
+  let bestGW = 10, bestGH = 8, bestCELL = minCell;
+  let bestScore = Infinity;
+  for (let gh = 8; gh <= ghMax; gh++) {
+    for (let gw = 10; gw <= gwMax; gw++) {
+      const cell = Math.min((availW / gw) | 0, (availH / gh) | 0);
+      if (cell < minCell || cell > maxCell) continue;
+      const slackW = availW - gw * cell;
+      const slackH = availH - gh * cell;
+      if (slackW < 0 || slackH < 0) continue;
+      const score = slackW * 1 + slackH * 10000;
+      if (score < bestScore) {
+        bestScore = score;
+        bestGW = gw;
+        bestGH = gh;
+        bestCELL = cell;
+      }
+    }
+  }
+  if (bestScore === Infinity) {
+    GW = Math.max(10, Math.min(56, (availW / minCell) | 0));
+    GH = Math.max(8, Math.min(40, (availH / minCell) | 0));
+    CELL = Math.max(16, Math.min(maxCell, Math.min((availW / GW) | 0, (availH / GH) | 0)));
+  } else {
+    GW = bestGW;
+    GH = bestGH;
+    CELL = bestCELL;
+  }
+  gel('grid-out').textContent = GW + '×' + GH + ' кл.';
+}
+
+function draw() {
+  const cv = gel('c');
+  const ctx = cv.getContext('2d');
+  const [finX, finY] = finishCell();
+  const pw = GW * CELL, ph = GH * CELL;
+  cv.width = pw;
+  cv.height = ph;
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, pw, ph);
+  const onA = (x, y) => posA.x === x && posA.y === y;
+  const onB = (x, y) => posB.x === x && posB.y === y;
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+    const cx = x * CELL, cy = y * CELL;
+    if (grid[y][x] === 1) {
+      ctx.fillStyle = '#8B3A1A';
+      ctx.fillRect(cx, cy, CELL, CELL);
+      ctx.fillStyle = '#A04520';
+      ctx.fillRect(cx + 1, cy + 1, CELL - 2, CELL - 2);
+      continue;
+    }
+    const isFin = x === finX && y === finY;
+    if (isFin) {
+      ctx.fillStyle = '#0d2e12';
+      ctx.fillRect(cx, cy, CELL, CELL);
+      ctx.strokeStyle = '#4caf50';
+      ctx.lineWidth = Math.max(1, CELL * 0.08);
+      ctx.strokeRect(cx + 1, cy + 1, CELL - 2, CELL - 2);
+    } else {
+      ctx.fillStyle = (x + y) % 2 === 0 ? '#1a1a1a' : '#161616';
+      ctx.fillRect(cx, cy, CELL, CELL);
+      ctx.strokeStyle = '#2a2a2a';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(cx + 0.25, cy + 0.25, CELL - 0.5, CELL - 0.5);
+    }
+    const aHere = onA(x, y);
+    const bHere = onB(x, y);
+    if (aHere && bHere) {
+      ctx.fillStyle = 'rgba(26,35,126,0.55)';
+      ctx.fillRect(cx, cy, CELL / 2, CELL);
+      ctx.fillStyle = 'rgba(74,20,140,0.55)';
+      ctx.fillRect(cx + CELL / 2, cy, CELL / 2, CELL);
+      ctx.fillStyle = '#fff';
+      ctx.font = `700 ${Math.max(8, CELL * 0.28)}px system-ui,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('A', cx + CELL / 4, cy + CELL / 2);
+      ctx.fillText('B', cx + (3 * CELL) / 4, cy + CELL / 2);
+    } else if (aHere) {
+      ctx.fillStyle = '#1a237e';
+      ctx.fillRect(cx, cy, CELL, CELL);
+      ctx.strokeStyle = '#7986cb';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('A', cx + CELL / 2, cy + CELL / 2);
+    } else if (bHere) {
+      ctx.fillStyle = '#4a148c';
+      ctx.fillRect(cx, cy, CELL, CELL);
+      ctx.strokeStyle = '#e1bee7';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = `700 ${Math.max(8, CELL * 0.35)}px system-ui,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('B', cx + CELL / 2, cy + CELL / 2);
+    } else if (isFin) {
+      ctx.fillStyle = '#4caf50';
+      ctx.font = `600 ${Math.max(6, CELL * 0.26)}px system-ui,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('FIN', cx + CELL / 2, cy + CELL / 2);
+    }
+  }
+  if (saluteAnim) {
+    const t = performance.now() - saluteAnim.t0;
+    if (t < 2800) {
+      drawSalute(ctx, pw, ph, saluteAnim.kind, t);
+      requestAnimationFrame(draw);
+    } else saluteAnim = null;
+  }
+}
+
+function runGenerate() {
+  wallPct = parseInt(gel('wall-slider').value, 10);
+  gel('wall-out').textContent = wallPct + '%';
+  layoutBoard();
+  genGrid();
+  draw();
+}
+
+gel('wall-slider').oninput = function () {
+  gel('wall-out').textContent = this.value + '%';
+};
+
+gel('start-btn').onclick = runGenerate;
+
+window.addEventListener('resize', () => {
+  layoutBoard();
+  genGrid();
+  draw();
+});
+
+function fullRelayout() {
+  layoutBoard();
+  genGrid();
+  draw();
+}
+
+fullRelayout();
+requestAnimationFrame(fullRelayout);
+window.addEventListener('load', () => requestAnimationFrame(fullRelayout));
+document.addEventListener('keydown', onKeyDown);
+gel('c').addEventListener('click', function () { this.focus({ preventScroll: true }); });
+</script>
+</body>
+</html>
+</think>
+
+
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+StrReplace
