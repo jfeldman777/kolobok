@@ -30,6 +30,24 @@ html, body {
   background: linear-gradient(180deg, #1f1a12 0%, #141414 100%);
   border-bottom: 2px solid #E8A020;
 }
+.title-bar-home-row {
+  text-align: center;
+  padding-bottom: 6px;
+  margin: -2px 0 2px;
+  border-bottom: 1px solid rgba(232, 160, 32, 0.25);
+}
+.home-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9a86c;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(232, 160, 32, 0.45);
+}
+.home-link:hover {
+  color: #E8A020;
+  border-bottom-color: rgba(232, 160, 32, 0.75);
+}
+.home-link:active { opacity: 0.88; }
 .title-row {
   display: flex;
   align-items: center;
@@ -744,6 +762,9 @@ html, body {
 <body>
 <div id="app">
   <div id="game-title-bar">
+    <div class="title-bar-home-row">
+      <a href="index.html" class="home-link">На главную</a>
+    </div>
     <div class="title-row">
       <button type="button" id="menu-open-btn" class="menu-open-btn" aria-label="Настройки и пуск">☰</button>
       <div class="title-block">
