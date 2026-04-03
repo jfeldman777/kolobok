@@ -248,7 +248,7 @@ canvas { display: block; }
   <h3>Управление</h3>
   <p>Стрелки на клавиатуре или кнопки ↑↓←→. <b>Enter</b> — сброс этапа.</p>
   <h3>Этапы 7–8 — склейка краёв</h3>
-  <p>Стороны доски соединены как у тора: шаг <b>вверх</b> с верхнего ряда переносит на нижний, <b>вниз</b> с нижнего — на верхний; шаг <b>вправо</b> с правого столбца переносит к левому краю, <b>влево</b> с левого — к правому. Так же двигаются к-2, к-3, к-5 и к-6 (и к-7, но для неё и стены проходимы). У к-4 ход только внутри своих двух рядов, без склейки. Края поля на экране обозначены оранжевым пунктиром.</p>
+  <p>Стороны доски соединены как у тора: шаг <b>вверх</b> с верхнего ряда переносит на нижний, <b>вниз</b> с нижнего — на верхний; шаг <b>вправо</b> с правого столбца переносит к левому краю, <b>влево</b> с левого — к правому. Так же двигаются к-2, к-3, к-4, к-5 и к-6 (и к-7, но для неё и стены проходимы). Края поля на экране обозначены оранжевым пунктиром.</p>
   <h3>Персонажи</h3>
   <p>По умолчанию не больше трёх штук каждого вида (у к-4 — две пары); в игровом меню <b>«Дополнительно — число NPC»</b> задаёт пределы (1…12, пары к-4 до 8). Кнопка <b>«Применить на поле»</b> пересобирает текущий этап с этими числами; отдельной «Сохранить» нет — значения с ползунков запоминаются сами.</p>
   <ul>
@@ -923,11 +923,12 @@ function k6SpawnPlayable(x,y){
   return false;
 }
 
-/** К-4: в коридоре есть две соседние по оси допустимые позиции (иначе пара не сдвинется). */
+/** К-4: в коридоре есть две соседние по оси допустимые позиции (иначе пара не сдвинется). На торе соседство учитывает склейку 0↔N−1. */
 function p4PairPlayable(p){
   for(const pos of p.freeSet){
     if(p.freeSet.has(pos+1)||p.freeSet.has(pos-1)) return true;
   }
+  if(useTorus()&&p.freeSet.has(0)&&p.freeSet.has(N-1)) return true;
   return false;
 }
 
@@ -1059,10 +1060,25 @@ function stepM5(m){
 
 function stepP4(pair){
   if(pair.a.collected&&pair.b.collected)return;
-  const np=pair.pos+pair.dir;
-  const bl=np<0||np>=N||!pair.freeSet.has(np);
-  if(bl){ pair.dir=-pair.dir; const np2=pair.pos+pair.dir; if(np2<0||np2>=N||!pair.freeSet.has(np2))return; pair.pos=np2; }
-  else pair.pos=np;
+  const npRaw=pair.pos+pair.dir;
+  const npTorus=((npRaw%N)+N)%N;
+  const bl=useTorus()
+    ? !pair.freeSet.has(npTorus)
+    : (npRaw<0||npRaw>=N||!pair.freeSet.has(npRaw));
+  if(bl){
+    pair.dir=-pair.dir;
+    const np2Raw=pair.pos+pair.dir;
+    const np2Torus=((np2Raw%N)+N)%N;
+    if(useTorus()){
+      if(!pair.freeSet.has(np2Torus)) return;
+      pair.pos=np2Torus;
+    } else {
+      if(np2Raw<0||np2Raw>=N||!pair.freeSet.has(np2Raw)) return;
+      pair.pos=np2Raw;
+    }
+  } else {
+    pair.pos=useTorus() ? npTorus : npRaw;
+  }
   if(pair.horiz){ if(!pair.a.collected){pair.a.x=pair.pos;pair.a.y=pair.line1;} if(!pair.b.collected){pair.b.x=pair.pos;pair.b.y=pair.line2;} }
   else{ if(!pair.a.collected){pair.a.x=pair.line1;pair.a.y=pair.pos;} if(!pair.b.collected){pair.b.x=pair.line2;pair.b.y=pair.pos;} }
   if(!pair.a.collected) checkMeetings(pair.a);
