@@ -29,8 +29,47 @@ h1 {
 .lead {
   font-size: 14px;
   color: #888;
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
+.page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+.page-nav a {
+  flex: 1 1 auto;
+  min-width: min(100%, 140px);
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #ddd;
+  background: #1f1f1f;
+  border: 1px solid #3a3a3a;
+}
+.page-nav a:hover { border-color: #555; color: #fff; }
+.page-nav a:active { filter: brightness(1.05); }
+.page-section,
+#donate,
+#feedback {
+  scroll-margin-top: 12px;
+}
+.section-heading {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6a6a6a;
+  margin: 0 0 10px 2px;
+}
+.section-heading:first-child { margin-top: 0; }
+#games .section-heading { color: #8a7848; }
+#video .section-heading { color: #4a7a9a; }
 .card {
   background: #1a1a1a;
   border: 1px solid #333;
@@ -154,6 +193,81 @@ span.btn-soon {
 .card-wip .card-follow a { color: #7ec8e3; text-decoration: none; }
 .card-wip .card-follow a:active { opacity: 0.85; }
 .card-donate h2 { color: #f0c04a; }
+.card-feedback h2 { color: #a8c8e0; }
+.card-feedback { border-color: #3a4a55; }
+.feedback-intro {
+  font-size: 13px;
+  color: #9a9a9a;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+#feedback-form { margin: 0; }
+.feedback-field {
+  margin-bottom: 12px;
+}
+.feedback-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 6px;
+}
+.feedback-field textarea,
+.feedback-field input[type=email] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #444;
+  background: #141414;
+  color: #eee;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.45;
+  resize: vertical;
+}
+.feedback-field textarea {
+  min-height: 140px;
+}
+.feedback-field textarea::placeholder,
+.feedback-field input::placeholder { color: #555; }
+.feedback-submit {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid #4a6a80;
+  background: #1e3a4a;
+  color: #c8e8f8;
+  cursor: pointer;
+}
+.feedback-submit:hover { filter: brightness(1.08); }
+.feedback-submit:active { filter: brightness(1.12); }
+.feedback-foot {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #555;
+  line-height: 1.4;
+}
+#feedback-status {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+#feedback-status.feedback-ok {
+  color: #8fbc8f;
+}
+#feedback-status.feedback-err {
+  color: #e57373;
+}
+.feedback-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.feedback-field .label-optional {
+  font-weight: 400;
+  color: #666;
+}
 .donate-req h3 {
   font-size: 11px;
   font-weight: 800;
@@ -282,6 +396,11 @@ body.modal-open { overflow: hidden; }
 .parents-ok:active { filter: brightness(1.05); }
 .card-video { border-color: #2a4a6a; }
 .card-video h2 { color: #7ec8e3; }
+.soon-mark {
+  font-weight: 700;
+  color: #9ab;
+  letter-spacing: 0.02em;
+}
 .video-wrap {
   width: 100%;
   margin-bottom: 10px;
@@ -302,6 +421,12 @@ body.modal-open { overflow: hidden; }
   margin-bottom: 0 !important;
   line-height: 1.4;
 }
+.video-sep {
+  border: none;
+  height: 0;
+  margin: 20px 0;
+  border-top: 1px solid rgba(126, 200, 227, 0.28);
+}
 </style>
 </head>
 <body>
@@ -319,19 +444,15 @@ body.modal-open { overflow: hidden; }
   <h1>Колобок — игры</h1>
   <p class="lead">Откройте в браузере или сохраните HTML на устройство.</p>
 
-  <!-- Видео: game.webm (~80 МБ) в корне репозитория рядом с index.html. GitHub обычно принимает файлы до 100 МБ. -->
-  <article class="card card-video">
-    <h2>Видео: малая игра</h2>
-    <p>Обсуждение и примеры прохождения «Колобок и его команда». Файл <strong>game.webm</strong> на сервере.</p>
-    <div class="video-wrap">
-      <video controls playsinline preload="metadata"
-        aria-label="Видео: Колобок и его команда">
-        <source src="game.webm" type="video/webm">
-        <a href="game.webm">Скачать видео (game.webm)</a> — если браузер не воспроизводит WebM.
-      </video>
-    </div>
-    <p class="video-foot">WebM отлично идёт в Chrome, Firefox, Edge. В старом Safari на части iPhone/iPad может не заиграть — тогда добавьте копию в .mp4 вторым &lt;source&gt; или выложите ролик на YouTube.</p>
-  </article>
+  <nav class="page-nav" aria-label="Быстрые ссылки">
+    <a href="#donate">Донаты</a>
+    <a href="#feedback">Обратная связь</a>
+    <a href="#video">Видео</a>
+    <!-- <a href="author.html">Об авторе</a> -->
+  </nav>
+
+  <section id="games" class="page-section" aria-labelledby="games-heading">
+    <h2 class="section-heading" id="games-heading">Игры и поддержка</h2>
 
   <article class="card">
     <h2>Колобок и его команда</h2>
@@ -360,11 +481,11 @@ body.modal-open { overflow: hidden; }
     </div>
   </article>
 
-  <article class="card card-donate">
+  <article id="donate" class="card card-donate">
     <h2>Поддержка автора</h2>
     <p>
-      Если вам понравились игры, вы можете поблагодарить автора и перечислить любую сумму
-      — по желанию, в этом нет необходимости. Спасибо, что играете.
+      Если вам понравились игры, вы можете поблагодарить автора - перечислить ему любую сумму.<br>
+      Спасибо, что играете.
     </p>
     <div class="donate-req">
       <h3>Для тех, кто в России</h3>
@@ -386,10 +507,81 @@ body.modal-open { overflow: hidden; }
     </div>
   </article>
 
+  <article id="feedback" class="card card-feedback">
+    <h2>Обратная связь</h2>
+    <p class="feedback-intro">Отзывы, пожелания, баги</p>
+    <form id="feedback-form" action="#" method="post" novalidate>
+      <div class="feedback-field">
+        <label for="feedback-msg">Сообщение</label>
+        <textarea id="feedback-msg" name="msg" rows="6" maxlength="8000" placeholder="Всё, что хотите передать…"></textarea>
+      </div>
+      <div class="feedback-field">
+        <label for="feedback-reply">Ваш e-mail, если нужен ответ <span class="label-optional">(необязательно)</span></label>
+        <input type="email" id="feedback-reply" name="reply" maxlength="320" placeholder="необязательно" autocomplete="email">
+      </div>
+      <button type="submit" class="feedback-submit">Отправить</button>
+      <p id="feedback-status" class="feedback-foot" role="status" aria-live="polite" hidden></p>
+    </form>
+  </article>
+
   <p class="hint">
     На iPhone Safari кнопка «Скачать» иногда открывает страницу вместо загрузки —
     тогда «Поделиться» → «Сохранить в файлы». На ПК файл обычно попадает в папку «Загрузки».
   </p>
+
+  </section>
+
+  <section id="video" class="page-section" aria-labelledby="video-heading">
+    <h2 class="section-heading" id="video-heading">Видео</h2>
+  <!-- Видео: game.webm (~80 МБ) в корне репозитория рядом с index.html. GitHub обычно принимает файлы до 100 МБ. -->
+  <article class="card card-video">
+    <h2>Колобок и его команда</h2>
+    <p>Рассказывает автор.</p>
+    <div class="video-wrap">
+      <video controls playsinline preload="metadata"
+        aria-label="Видео: Колобок и его команда">
+        <source src="game.webm" type="video/webm">
+        <a href="game.webm">Скачать видео (game.webm)</a> — если браузер не воспроизводит WebM.
+      </video>
+    </div>
+    <p class="video-foot">WebM отлично идёт в Chrome, Firefox, Edge. В старом Safari на части iPhone/iPad может не заиграть — тогда добавьте копию в .mp4 вторым &lt;source&gt; или выложите ролик на YouTube.</p>
+  </article>
+
+  <hr class="video-sep" aria-hidden="true">
+
+  <article class="card card-video">
+    <h2>Колобок-экстрасенс</h2>
+    <p>Рассказывает автор. <span class="soon-mark">(Скоро)</span></p>
+    <!-- ПОКА: положите ролик рядом с index.html как game_extra.webm
+    <div class="video-wrap">
+      <video controls playsinline preload="metadata"
+        aria-label="Видео: Колобок-экстрасенс">
+        <source src="game_extra.webm" type="video/webm">
+        <a href="game_extra.webm">Скачать видео (game_extra.webm)</a> — если браузер не воспроизводит WebM.
+      </video>
+    </div>
+    <p class="video-foot">Тот же формат, что у первого ролика. Файл должен лежать в одной папке с этой страницей.</p>
+    -->
+  </article>
+
+  <hr class="video-sep" aria-hidden="true">
+
+  <article class="card card-video">
+    <h2>Два брата-колобка</h2>
+    <p>Рассказывает автор. <span class="soon-mark">(Скоро)</span></p>
+    <!-- ПОКА: положите ролик рядом с index.html как game_2brata.webm
+    <div class="video-wrap">
+      <video controls playsinline preload="metadata"
+        aria-label="Видео: Два брата-колобка">
+        <source src="game_2brata.webm" type="video/webm">
+        <a href="game_2brata.webm">Скачать видео (game_2brata.webm)</a> — если браузер не воспроизводит WebM.
+      </video>
+    </div>
+    <p class="video-foot">Тот же формат, что у первого ролика. Файл должен лежать в одной папке с этой страницей.</p>
+    -->
+  </article>
+  </section>
+
   <script>
   (function () {
     try {
@@ -424,6 +616,87 @@ body.modal-open { overflow: hidden; }
     });
     document.addEventListener('keydown', function (e) {
       if (!ov.hidden && e.key === 'Escape') closeParents();
+    });
+  })();
+
+  (function () {
+    var form = document.getElementById('feedback-form');
+    if (!form) return;
+    var endpoint = 'https://formsubmit.co/ajax/jfeldman777@gmail.com';
+    var statusEl = document.getElementById('feedback-status');
+    var btn = form.querySelector('.feedback-submit');
+
+    function showStatus(ok, text) {
+      if (!statusEl) return;
+      statusEl.hidden = false;
+      statusEl.className = 'feedback-foot ' + (ok ? 'feedback-ok' : 'feedback-err');
+      statusEl.textContent = text;
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msgEl = document.getElementById('feedback-msg');
+      var replyEl = document.getElementById('feedback-reply');
+      var msg = msgEl ? msgEl.value : '';
+      var reply = replyEl ? replyEl.value : '';
+      if (!String(msg).trim()) {
+        showStatus(false, 'Напишите текст сообщения.');
+        if (msgEl) msgEl.focus();
+        return;
+      }
+      var body = String(msg).trim();
+      if (String(reply).trim()) {
+        body += '\n\n— Ответить на: ' + String(reply).trim();
+      }
+
+      var payload = {
+        _subject: 'Колобок: обратная связь',
+        message: body,
+        _gotcha: ''
+      };
+      if (String(reply).trim()) {
+        payload._replyto = String(reply).trim();
+      }
+
+      btn.disabled = true;
+      if (statusEl) {
+        statusEl.hidden = true;
+        statusEl.textContent = '';
+        statusEl.className = 'feedback-foot';
+      }
+
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (res) {
+          return res.json().catch(function () {
+            return { success: false, message: 'Нет ответа сервера.' };
+          }).then(function (data) {
+            if (!res.ok) {
+              data = data && typeof data === 'object' ? data : {};
+              data.success = false;
+              if (!data.message) data.message = 'Сервер вернул ошибку.';
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          if (data && (data.success === true || data.success === 'true' || data.success === 'Thank You')) {
+            showStatus(true, 'Сообщение отправлено. Спасибо!');
+            form.reset();
+          } else {
+            var err = (data && (data.message || data.error)) || 'Не удалось отправить. Попробуйте позже или напишите на jfeldman777@gmail.com вручную.';
+            showStatus(false, err);
+          }
+        })
+        .catch(function () {
+          showStatus(false, 'Ошибка сети. Проверьте подключение или напишите на jfeldman777@gmail.com.');
+        })
+        .finally(function () {
+          btn.disabled = false;
+        });
     });
   })();
   </script>
