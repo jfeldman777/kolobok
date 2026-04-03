@@ -208,7 +208,7 @@ canvas { display: block; }
     <div id="panels-bar"><!-- panels drawn by JS --></div>
     <div id="canvas-wrap">
       <div id="board-stack">
-        <canvas id="c"></canvas>
+        <canvas id="c" tabindex="0" aria-label="Игровое поле"></canvas>
         <div id="ctrl">
           <div id="ctrl-row1"><button id="btn-up" onclick="pmove(0,-1)">↑</button></div>
           <div id="ctrl-row2">
@@ -246,7 +246,7 @@ canvas { display: block; }
   <h3>Цель</h3>
   <p>Провести героя из левого верхнего угла в правый нижний (ФИНИШ), собрав всех персонажей в правильном порядке.</p>
   <h3>Управление</h3>
-  <p>Стрелки на клавиатуре или кнопки ↑↓←→. <b>Enter</b> — сброс этапа. На ПК с мышью: <b>Пробел</b> — полная пауза (герой и NPC), снова <b>Пробел</b> — продолжить.</p>
+  <p>Стрелки на клавиатуре или кнопки ↑↓←→. <b>Enter</b> — сброс этапа. На ПК с мышью: <b>Пробел</b> — полная пауза (герой и NPC), снова <b>Пробел</b> — продолжить; страница не прокручивается, поле остаётся на экране.</p>
   <h3>Этапы 7–8 — склейка краёв</h3>
   <p>Стороны доски соединены как у тора: шаг <b>вверх</b> с верхнего ряда переносит на нижний, <b>вниз</b> с нижнего — на верхний; шаг <b>вправо</b> с правого столбца переносит к левому краю, <b>влево</b> с левого — к правому. Так же двигаются к-2, к-3, к-4, к-5 и к-6 (и к-7, но для неё и стены проходимы). Края поля на экране обозначены оранжевым пунктиром.</p>
   <h3>Персонажи</h3>
@@ -476,11 +476,14 @@ function startGame(){
   wallPct=parseInt(gel('wall-slider').value);
   gel('setup').style.display='none';
   gel('game').style.display='flex';
-  document.body.focus();
   gameStarted=true;
   layoutCellSize();
   stage=startStage; loadStage();
   document.addEventListener('keydown',onKey);
+  try {
+    const cv = gel('c');
+    if (cv) cv.focus({ preventScroll: true });
+  } catch (err) {}
 }
 
 function clrT(){ if(tickT){clearInterval(tickT);tickT=null;} if(resetT){clearTimeout(resetT);resetT=null;} }
@@ -1745,7 +1748,12 @@ function onKey(e){
     if(gel('menu-overlay').classList.contains('open')) return;
     if(gel('lb-modal').style.display==='flex') return;
     e.preventDefault();
+    e.stopPropagation();
     toggleStop();
+    try {
+      const cv = gel('c');
+      if (cv) cv.focus({ preventScroll: true });
+    } catch (err) {}
     return;
   }
   const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
@@ -1875,6 +1883,10 @@ function clearLeaderboard(){
   showLeaderboard();
 }
 
+(function () {
+  const cv = document.getElementById('c');
+  if (cv) cv.addEventListener('click', function () { this.focus({ preventScroll: true }); });
+})();
 loadNpcCounts();
 bindExtrasSliders();
 </script>

@@ -812,7 +812,7 @@ html, body {
       <button type="button" id="rules-close" aria-label="Закрыть правила">×</button>
       <h1 id="rules-title">Правила</h1>
       <p class="sub">
-        Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки. На ПК с мышью: <b>Пробел</b> — пауза всего поля, снова <b>Пробел</b> — продолжить.
+        Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки. <b>Пауза поля</b> — <b>двойной клик</b> по чёрному полю; ещё двойной клик — продолжить (один клик только переключает фокус на поле для клавиш).
         <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила: сравниваются множества цифр в пеналах. <b>В начале</b> в пенале у каждого <b>одна цифра — уровень</b>. У игрока он <b>совпадает с номером этапа</b>; у фишки задаётся при появлении и <b>всегда меньше номера этапа</b>. <b>Уровень определяет поведение</b> фишки. <b>При кооптации</b> два пенала <b>сливаются в один</b>: цифры объединяют, наибольшая становится новым <b>уровнем на поле</b>, остальные — <b>кооптированные, по убыванию</b> (как в алгоритме игры); две фишки дают одну. Если максимумы двух сторон <b>равны</b> — проход насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего (кооптация, см. выше). Иначе — максимумы по-прежнему разные, но <b>кооптация невозможна</b> (нет пары с разностью 1 между множествами; напр. <b>654</b> и <b>21</b>) — <b>гибнет старший</b>.
       </p>
       <p class="sub">
@@ -929,7 +929,7 @@ let npcTickCount = 0;
 /** Интервал шага всех NPC (мс); не привязан к ходам игрока */
 const NPC_STEP_INTERVAL_MS = 450;
 let npcStepTimerId = null;
-/** Пауза мира (только ПК: переключается по пробелу при pointer: fine). */
+/** Пауза мира: двойной клик по canvas (первый клик — только фокус для клавиш). */
 let worldPaused = false;
 
 const K2_TERRITORY_TINTS = [
@@ -1012,8 +1012,10 @@ function closeGameMenu() {
   const m = gel('menu-modal');
   if (m) m.classList.remove('open');
   closeRules();
-  const ob = gel('menu-open-btn');
-  if (ob) ob.focus();
+  try {
+    const cv = gel('c');
+    if (cv) cv.focus({ preventScroll: true });
+  } catch (err) {}
 }
 
 function openRules() {
@@ -3010,14 +3012,6 @@ function tryMove(who, dx, dy) {
   draw();
 }
 
-function isDesktopFinePointer() {
-  try {
-    return window.matchMedia('(pointer: fine)').matches;
-  } catch (err) {
-    return false;
-  }
-}
-
 function onKeyDown(e) {
   if (gel('extras-modal')?.classList.contains('open')) {
     if (e.key === 'Escape') {
@@ -3048,11 +3042,6 @@ function onKeyDown(e) {
   if (drawAwaitKey) {
     e.preventDefault();
     restartStageAfterDraw();
-    return;
-  }
-  if (isDesktopFinePointer() && e.code === 'Space') {
-    e.preventDefault();
-    if (!gameWinner) worldPaused = !worldPaused;
     return;
   }
   if (gameWinner) return;
@@ -3609,7 +3598,25 @@ setInterval(function () {
   } catch (e) {}
 }, NPC_DIGIT_BLINK_MS);
 document.addEventListener('keydown', onKeyDown);
-gel('c').addEventListener('click', function () { this.focus({ preventScroll: true }); });
+(function () {
+  const cv = gel('c');
+  if (!cv) return;
+  cv.addEventListener('click', function () {
+    this.focus({ preventScroll: true });
+  });
+  cv.addEventListener('dblclick', function (e) {
+    e.preventDefault();
+    if (gameWinner || coopDeathAwaitKey || drawAwaitKey) return;
+    if (gel('menu-modal')?.classList.contains('open')) return;
+    if (gel('rules-modal')?.classList.contains('open')) return;
+    if (gel('extras-modal')?.classList.contains('open')) return;
+    worldPaused = !worldPaused;
+    try {
+      this.focus({ preventScroll: true });
+    } catch (err2) {}
+    draw();
+  });
+})();
 </script>
 </body>
 </html>
