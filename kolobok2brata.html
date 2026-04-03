@@ -594,7 +594,8 @@ html, body {
 /* Пенал погибших (убитые игроки и фишки — не кооптация) */
 #dead-panels-bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 4px;
   padding: 4px 6px;
   background: #141414;
@@ -602,6 +603,9 @@ html, body {
   align-items: center;
   flex-shrink: 0;
   min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 #dead-panels-bar:empty {
   display: none;
@@ -753,12 +757,12 @@ html, body {
       <div id="comp-track-b" class="comp-track comp-track-b" aria-label="Этапы конкуренции, игрок B: белый — выиграл, чёрный — проиграл"></div>
     </div>
     <div class="title-players-row">
-      <div class="title-penal-group title-penal-group-a" aria-label="Игрок A: пенал с цифрами силы (образно — школьная коробочка для мелочей)">
+      <div class="title-penal-group title-penal-group-a" aria-label="Игрок A: пенал с цифрами уровня и коопта (образно — школьная коробочка для мелочей)">
         <span class="title-penal-letter">A</span>
         <span id="panel-a-lvl" class="player-penal player-penal-a" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя A">1</span>
       </div>
       <span id="live-stage">Этап 1 из 8</span>
-      <div class="title-penal-group title-penal-group-b" aria-label="Игрок B: пенал с цифрами силы (образно — школьная коробочка для мелочей)">
+      <div class="title-penal-group title-penal-group-b" aria-label="Игрок B: пенал с цифрами уровня и коопта (образно — школьная коробочка для мелочей)">
         <span id="panel-b-lvl" class="player-penal player-penal-b" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя B">1</span>
         <span class="title-penal-letter">B</span>
       </div>
@@ -809,7 +813,7 @@ html, body {
       <h1 id="rules-title">Правила</h1>
       <p class="sub">
         Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки.
-        <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила, без исключений для отдельных цифр: сравниваются максимумы множеств цифр сторон (у игрока: якорь этапа + <b>текущий уровень</b> + кооптированные; у фишки: уровень на поле + кооптированные, напр. «32» → 3 и 2). Если максимумы <b>равны</b> — насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего, <b>пеналы сливаются</b>: объединяются множества цифр (игроку: новый текущий уровень = максимум объединения, кооптированные — остальные цифры по убыванию, якорь этапа сохраняется; у фишки — одна фишка, как при коопте двух NPC). Иначе <b>гибнет старший</b>.
+        <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила: сравниваются множества цифр в пеналах. <b>В начале</b> в пенале у каждого <b>одна цифра — уровень</b>. У игрока он <b>совпадает с номером этапа</b>; у фишки задаётся при появлении и <b>всегда меньше номера этапа</b>. <b>Уровень определяет поведение</b> фишки. <b>При кооптации</b> два пенала <b>сливаются в один</b>: цифры объединяют, наибольшая становится новым <b>уровнем на поле</b>, остальные — <b>кооптированные, по убыванию</b> (как в алгоритме игры); две фишки дают одну. Если максимумы двух сторон <b>равны</b> — проход насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего (кооптация, см. выше). Иначе — максимумы по-прежнему разные, но <b>кооптация невозможна</b> (нет пары с разностью 1 между множествами; напр. <b>654</b> и <b>21</b>) — <b>гибнет старший</b>.
       </p>
       <p class="sub">
         <b>Кооперация:</b> <b>каждый набирает себе команду</b> (поглощает фишки по правилам встречи, пенал как у «Колобок и его команда»); победа, когда <b>оба</b> на FIN и у <b>каждого</b> в пенале есть <b>1</b>, а <b>максимум цифр = номеру этапа</b> (этап 1 — «1»; этап 2 — как «21»; полностью к одной «1» снижать не обязательно). <b>Всех персонажей на поле собирать не нужно.</b> Оба на FIN одновременно (ход на FIN вдвоём). <b>Погиб один</b> — любая клавиша, тот же этап заново. Проигрыш вдвоём — если <b>оба</b> не могут выиграть.
@@ -817,8 +821,7 @@ html, body {
         <b>Салют</b> на поле только при приходе на FIN с победой: в <b>кооперации</b> — когда <b>оба</b> на FIN с целью этапа в пенале (есть 1, макс. цифра = номеру этапа); в <b>конкуренции</b> — когда <b>один</b> первым на FIN с той же целью (при ничьей и кооп‑проигрыше без победы на FIN салюта нет).
       </p>
       <p class="sub">
-        <b>Пенал</b> — это, как в школе, <b>прямоугольная коробочка</b>, в которой ученик держит мелкие вещи (ластик, точилку, ручки…). В игре у героя и у фишки «пенал» — такой же по смыслу <b>прямоугольник с цифрами</b> силы: в «коробочку» складываются текущая сила и кооптированные цифры.
-        Над полем — пенал на каждую живую фишку. <b>Погибший</b> (игрок или NPC): его пенал убирается с места отображения и появляется <b>серой плашкой</b> в полосе под панелями над полем (цифры по убыванию, как во встрече). В шапке у живых — пеналы A / B тем же правилом; у погибшего игрока цветной пенал скрыт. По бокам — метки A / B.
+        <b>Пенал</b> — как в школе <b>коробочка</b> для мелочей; в игре это <b>прямоугольник с цифрами</b> уровня и коопта. <b>Первая цифра</b> в пенале ни у кого <b>не пропадает</b> сама по себе — <b>только</b> вместе с <b>исчезновением пенала</b> (когда персонаж погибает). Пенал есть <b>у каждого живого</b> (игроки и фишки на поле). <b>Пеналы A и B</b> — в <b>первой строке шапки</b>; над полем — пенал на каждую живую фишку. <b>Кладбище</b> — <b>серая полоса</b> под панелями: у каждого погибшего <b>своя плашка</b>, в ней <b>все цифры его пенала подряд</b>, <b>без пересортировки</b>; новые плашки <b>добавляются справа</b> к общему ряду и <b>не сливаются</b> друг с другом. У погибшего игрока цветной пенал в шапке скрывается. По бокам поля — метки A / B.
       </p>
       <p class="sub" style="color:#a89868">После «Пуск» <b>кликните по чёрному полю</b>, затем клавиши.</p>
     </div>
@@ -832,7 +835,7 @@ html, body {
     </aside>
     <div id="center-stack">
       <div id="panels-bar" aria-label="Пеналы персонажей на поле — прямоугольники с цифрами, как школьный пенал"></div>
-      <div id="dead-panels-bar" aria-label="Погибшие персонажи"></div>
+      <div id="dead-panels-bar" aria-label="Кладбище: отдельная плашка на каждого погибшего, новые справа"></div>
       <div id="board-wrap">
         <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
       </div>
@@ -1189,15 +1192,16 @@ function formatDigitSetSortedMeet(set) {
   return Array.from(set).filter((d) => d >= 1 && d <= 8).sort((a, b) => b - a).join('');
 }
 
-function formatPlayerDeadLabel(who) {
-  return (who === 'A' ? 'A·' : 'B·') + formatDigitSetSortedMeet(playerDigitSet(who));
-}
-
-/** Погибший игрок и фишка: числа сторон (по убыванию), для пенала и оверлея */
-function formatPlayerKilledVersusNpc(who, npcTok) {
-  const p = formatDigitSetSortedMeet(playerDigitSet(who));
-  const n = formatDigitSetSortedMeet(npcTokenDigitSet(npcTok));
-  return (who === 'A' ? 'A·' : 'B·') + p + ' — ' + n;
+/** Кладбище: цифры пенала погибшего игрока подряд, без пересортировки (якорь этапа → уровень на поле → кооптированные). */
+function formatPlayerDeadPenalGraveyard(who) {
+  const anchor = who === 'A' ? anchorA : anchorB;
+  const lv = who === 'A' ? lvlA : lvlB;
+  const abs = who === 'A' ? absorbedA : absorbedB;
+  const prefix = who === 'A' ? 'A·' : 'B·';
+  let s = String(anchor);
+  if (lv !== anchor) s += String(lv);
+  if (abs && abs.length) s += abs.map(String).join('');
+  return prefix + s;
 }
 
 function recordPlayerKilled(who, npcTok) {
@@ -1206,20 +1210,18 @@ function recordPlayerKilled(who, npcTok) {
   } else {
     if (!aliveB) return;
   }
-  let label;
+  deadPenalChips.push(formatPlayerDeadPenalGraveyard(who));
   if (npcTok != null) {
-    label = formatPlayerKilledVersusNpc(who, npcTok);
     const p = formatDigitSetSortedMeet(playerDigitSet(who));
     const n = formatDigitSetSortedMeet(npcTokenDigitSet(npcTok));
     coopDeathMeetSummary = 'Игрок ' + who + ': ' + p + ' · фишка: ' + n;
   } else {
-    label = formatPlayerDeadLabel(who);
+    coopDeathMeetSummary = '';
   }
-  deadPenalChips.push(label);
 }
 
 function recordNpcKilled(t) {
-  deadPenalChips.push(formatDigitSetSortedMeet(npcTokenDigitSet(t)));
+  deadPenalChips.push(npcTokenPanelText(t));
 }
 
 function updateDeadPenalsBar() {
@@ -1266,7 +1268,7 @@ function updateSidePanels() {
 
 /**
  * Панели над полем — как drawPanels() в kolobok_2026.html:
- * у каждого живого персонажа на поле свой .panel; порядок по «силе» (уровень по убыванию).
+ * у каждого живого персонажа на поле свой .panel; порядок по уровню (по убыванию).
  * У фишки уровень и при коопте 4+5 — подпись вроде «54».
  */
 function drawPanels() {
@@ -1285,7 +1287,7 @@ function drawPanels() {
     el.className = 'panel';
     el.style.cssText = 'background:' + c.bg + ';border-color:' + c.border + ';color:' + c.text;
     el.textContent = npcTokenPanelText(t);
-    el.title = 'Пенал фишки — прямоугольник с цифрами силы (образно школьная коробочка для ластика, точилки…)';
+    el.title = 'Пенал фишки — прямоугольник с цифрами уровня и коопта (образно школьная коробочка для ластика, точилки…)';
     bar.appendChild(el);
   }
 }
@@ -1578,7 +1580,7 @@ function npcCanPassThroughSamePureLv(a, b) {
 }
 
 /**
- * Обмен при ортососедстве: две чистые одного lv, или две чистые с одним и тем же рангом силы.
+ * Обмен при ортососедстве: две чистые одного lv, или две чистые с одним и тем же максимумом набора.
  * Раньше любое равенство ранга (2 и «21» оба ранг 2) давало проскок — чистая к‑2 «отражалась» от 21; теперь 21 не обменивается с чистой 2, к‑2 может выбрать другое направление (обход).
  */
 function npcCanOrthogonalSwapPass(a, b) {
@@ -2491,6 +2493,7 @@ function npcMergeSeniorAbsorbsJunior(senior, junior) {
   const u = new Set(npcTokenDigitSet(senior));
   for (const d of npcTokenDigitSet(junior)) u.add(d);
   const mx = maxOfDigitSet(u);
+  /** Кооптированные (все цифры кроме максимума), строго по убыванию — «хвост» пенала. */
   const rest = Array.from(u).filter((d) => d !== mx).sort((a, b) => b - a);
   senior.lv = mx;
   if (rest.length) senior.npcAbsorbed = rest;
@@ -2501,12 +2504,12 @@ function npcMergeSeniorAbsorbsJunior(senior, junior) {
   }
 }
 
-/** Старшая цифра набора фишки — законы движения как у этой «силы» (43 → как 4, не как 3). */
+/** Старшая цифра набора фишки — законы движения как у этого максимума/уровня (43 → как 4, не как 3). */
 function npcMovementRank(t) {
   return maxOfDigitSet(npcTokenDigitSet(t));
 }
 
-/** Подпись пенала фишки: lv как ведущая цифра + остальные из коопта (напр. «3», «43», «54»). Мигание только на шаре — npcTokenDisplayLabel. */
+/** Подпись пенала фишки: lv (уровень на поле) + остальные цифры из коопта (напр. «3», «43», «54»). Мигание только на шаре — npcTokenDisplayLabel. */
 function npcTokenPanelText(t) {
   const abs = t.npcAbsorbed && t.npcAbsorbed.length ? t.npcAbsorbed.map(String).join('') : '';
   return String(t.lv) + abs;
@@ -2535,7 +2538,7 @@ function hasMultiDigitBlinkNeed() {
 }
 
 /**
- * «Чистая» фишка уровня lv: в пенале одна цифра силы (уровень на поле = lv), в npcAbsorbed ещё ничего нет.
+ * «Чистая» фишка уровня lv: в пенале одна цифра — уровень на поле = lv, в npcAbsorbed ещё ничего нет.
  * Подпись пенала на поле/в панели — просто эта цифра (напр. «3»); после коопта появятся и другие цифры.
  */
 function npcIsPureLv(t, lv) {
@@ -2548,6 +2551,7 @@ function mergePlayerPenalFromNpcToken(who, t) {
   const u = new Set(playerDigitSet(who));
   for (const d of npcTokenDigitSet(t)) u.add(d);
   const mx = maxOfDigitSet(u);
+  /** Кооптированные по убыванию; якорь этапа в `playerDigitSet` отдельно. */
   const rest = Array.from(u).filter((d) => d !== mx).sort((a, b) => b - a);
   if (who === 'A') {
     lvlA = mx;
