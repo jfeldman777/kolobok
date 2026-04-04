@@ -465,8 +465,9 @@ html, body {
   width: 100%;
 }
 .side-panel {
-  flex: 0 0 36px;
-  min-width: 32px;
+  flex: 0 0 clamp(48px, 11vw, 64px);
+  min-width: 44px;
+  max-width: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -501,6 +502,21 @@ html, body {
   align-items: center;
   justify-content: center;
   text-align: center;
+  gap: 6px;
+}
+.side-controls-hint {
+  font-size: clamp(7px, 1.85vw, 9px);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  hyphens: auto;
+  word-break: break-word;
+}
+.side-panel-a .side-controls-hint {
+  color: rgba(200, 202, 238, 0.82);
+}
+.side-panel-b .side-controls-hint {
+  color: rgba(238, 210, 245, 0.82);
 }
 .side-marker {
   font-size: clamp(16px, 4.2vw, 20px);
@@ -739,11 +755,21 @@ html, body {
     flex: 0 0 auto;
     flex-direction: row;
     width: 100%;
+    max-width: none;
     border-right: none !important;
     border-left: none !important;
     border-bottom: 1px solid #2a2a2a;
     padding: 8px 12px;
-    justify-content: space-around;
+    justify-content: center;
+  }
+  .side-panel-inner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .side-controls-hint {
+    font-size: clamp(10px, 2.8vw, 12px);
+    text-align: center;
   }
   .side-panel:last-of-type {
     border-top: 1px solid #2a2a2a;
@@ -851,9 +877,10 @@ html, body {
   </div>
 
   <div id="play-row">
-    <aside id="panel-a" class="side-panel side-panel-a" aria-label="Сторона игрока A">
+    <aside id="panel-a" class="side-panel side-panel-a" aria-label="Игрок A: слева, управление WASD">
       <div class="side-panel-inner">
         <span class="side-marker">A</span>
+        <span class="side-controls-hint">Управляется буквами WASD</span>
       </div>
     </aside>
     <div id="center-stack">
@@ -863,9 +890,10 @@ html, body {
         <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
       </div>
     </div>
-    <aside id="panel-b" class="side-panel side-panel-b" aria-label="Сторона игрока B">
+    <aside id="panel-b" class="side-panel side-panel-b" aria-label="Игрок B: справа, управление стрелками">
       <div class="side-panel-inner">
         <span class="side-marker">B</span>
+        <span class="side-controls-hint">Управляется стрелками</span>
       </div>
     </aside>
   </div>
