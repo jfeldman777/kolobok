@@ -307,6 +307,14 @@ a.req-val:active { opacity: 0.85; }
   margin-top: 10px;
   margin-bottom: 0;
 }
+#donate-paypal-slot.donate-paypal--pending p.donate-paypal-status {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+#donate-paypal-slot.donate-paypal--err p.donate-paypal-status {
+  color: #e57373;
+}
 .hint {
   margin-top: 22px;
   padding: 12px 14px;
@@ -496,13 +504,8 @@ body.modal-open { overflow: hidden; }
         </p>
         <p>Получатель: <span class="req-name">Яков&nbsp;Ф.</span></p>
       </div>
-      <h3>Для всех остальных</h3>
-      <div class="req-block">
-        <p class="req-bank">PayPal</p>
-        <p>Адрес получателя:<br>
-          <span class="req-val">theoryoflevels@gmail.com</span>
-        </p>
-        <p class="req-paypal-hint">В приложении или на сайте PayPal укажите этот e-mail у получателя платежа.</p>
+      <div id="donate-paypal-slot" class="donate-paypal--pending" aria-busy="true">
+        <p class="donate-paypal-status">Загрузка реквизитов PayPal…</p>
       </div>
     </div>
   </article>
@@ -617,6 +620,28 @@ body.modal-open { overflow: hidden; }
     document.addEventListener('keydown', function (e) {
       if (!ov.hidden && e.key === 'Escape') closeParents();
     });
+  })();
+
+  (function () {
+    var slot = document.getElementById('donate-paypal-slot');
+    if (!slot) return;
+    fetch('donate-paypal.html', { credentials: 'same-origin' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function (html) {
+        slot.innerHTML = html.trim();
+        slot.classList.remove('donate-paypal--pending', 'donate-paypal--err');
+        slot.removeAttribute('aria-busy');
+      })
+      .catch(function () {
+        slot.classList.remove('donate-paypal--pending');
+        slot.classList.add('donate-paypal--err');
+        slot.removeAttribute('aria-busy');
+        slot.innerHTML =
+          '<p class="donate-paypal-status">Не удалось подгрузить блок PayPal. Откройте страницу по HTTPS (например, с GitHub Pages) или проверьте, что рядом с index.html лежит файл <code style="font-size:11px">donate-paypal.html</code>.</p>';
+      });
   })();
 
   (function () {
