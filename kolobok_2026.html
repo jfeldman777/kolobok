@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#111111">
 <title>Колобок и его команда</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: #111; color: #fff; font-family: system-ui, sans-serif; height: 100%; overflow: hidden; }
@@ -222,6 +223,7 @@ canvas { display: block; }
         <button class="stage-sel" onclick="selectStage(6)">6</button>
         <button class="stage-sel" onclick="selectStage(7)">7</button>
         <button class="stage-sel" onclick="selectStage(8)">8</button>
+        <button class="stage-sel" onclick="selectStage(9)">9</button>
       </div>
     </div>
     <button type="button" id="setup-extras-btn" onclick="showExtras()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">+ Дополнительно — число NPC</button>
@@ -275,6 +277,11 @@ canvas { display: block; }
 <div id="help-box">
   <button id="help-close" onclick="hideHelp()">✕</button>
   <div class="screen-title-bar">Колобок и его команда</div>
+  <div id="help-stage9-only" style="display:none">
+    <h2 style="margin-top:0;">Этап 9 — правила</h2>
+    <p>На этом этапе сравниваются не команды, а только максимумы. Вы можете назначить колобку цифру уровня от 1 до 8, а дальше он живёт своей жизнью. Цель — колобок должен добраться до центра и не погибнуть.</p>
+  </div>
+  <div id="help-full">
   <h2 style="margin-top:0;">🎮 Правила</h2>
   <h3>Цель</h3>
   <p>Провести героя из левого верхнего угла в правый нижний (ФИНИШ), собрав всех персонажей в правильном порядке.</p>
@@ -285,8 +292,8 @@ canvas { display: block; }
   <h3>Персонажи</h3>
   <p>По умолчанию не больше трёх штук каждого вида (у к-4 — две пары); в игровом меню <b>«Дополнительно — число NPC»</b> задаёт пределы (1…12, пары к-4 до 8). Кнопка <b>«Применить на поле»</b> пересобирает текущий этап с этими числами; отдельной «Сохранить» нет — значения с ползунков запоминаются сами.</p>
   <ul>
-    <li><span class="badge" style="background:#eeedfe;color:#3C3489">к-1 фиолетовые</span> — сидят в закутках. Неподвижны.</li>
-    <li><span class="badge" style="background:#fceaea;color:#791F1F">к-2 красные</span> — медленно бродят, захватывают территорию (закрашивают клетки); у каждого к-2 свой цвет заливки. Другие к-2 на чужую территорию не заходят.</li>
+    <li><span class="badge" style="background:#eeedfe;color:#3C3489">к-1 фиолетовые</span> — сидят в закутке («углу») поля. <b>Не двигаются.</b></li>
+    <li><span class="badge" style="background:#fceaea;color:#791F1F">к-2 красные</span> — ходят <b>в два раза реже</b> остальных NPC (раз в два тика), закрашивают поле <b>своим</b> цветом, стараются не заходить на уже закрашенные свои клетки, если есть свободная незакрашенная, и <b>не входят на территорию чужих двоек</b>.</li>
     <li><span class="badge" style="background:#eaf3de;color:#27500A">к-3 зелёные</span> — движутся по прямой, отскакивают от стен.</li>
     <li><span class="badge" style="background:#e6f1fb;color:#0C447C">к-4 синие</span> — ходят парами по двум соседним рядам.</li>
     <li><span class="badge" style="background:#faeeda;color:#633806">к-5 оранжевые</span> — прыгают сквозь стены, клетка приземления вспыхивает красным.</li>
@@ -294,9 +301,22 @@ canvas { display: block; }
     <li><span class="badge" style="background:#ccfbf1;color:#0f766e">к-7 бирюзовые</span> — только этап 8. Ходят, как шахматный король, по полу и стенам; <b>предпочитают стенки</b> и <b>стараются не возвращаться</b> на уже пройденные клетки (если некуда — допускают повтор). См. вытягивание из стены в описании этапа 8.</li>
   </ul>
   <h3>Числа на шариках</h3>
-  <p><b>Колобок</b> на поле всегда с «лицом» — без цифр на фигуре; весь его набор уровней виден в <b>верхней строке</b> рядом с номером этапа. У остальных персонажей цифры на шарике; после поглощений набор крутится по кругу.</p>
+  <p><b>Колобок</b> на поле без цифры на фигуре; в <b>верхней строке</b> — одна цифра текущего уровня. У остальных — «пенал» цифр на фишке; при встрече <b>герой ↔ фишка</b> учитываются только <b>максимумы</b> наборов. Если максимум фишки ровно на 1 больше максимума героя, герой <b>не гибнет</b>: с фишки снимается одна верхняя цифра пенала (как «минус один» по силе). При встрече <b>двух фишек</b> — все цифры пенала.</p>
+  <h3>Этап 9 — к‑1 и к‑2</h3>
+  <p>На поле одна <b>к‑1</b> и одна <b>к‑2</b>, FIN в центре. Сброс уровня героя: <b>0</b> или уровень этапа <b>9</b>. <b>1</b> — замереть как к‑1; <b>2</b> — ходить и закрашивать как к‑2 (см. таблицу ниже).</p>
+  <h3>Движение фишек и героя на этапе 9 (клавиши 1…8, 0 — сброс к уровню этапа)</h3>
+  <p><b>NPC</b> — как в тике игры; <b>герой</b> — ваши шаги стрелками / 8·4·6·2 на NumPad; уровни <b>6</b> и <b>7</b> дают ещё диагонали NumPad 7·9·1·3.</p>
+  <ul style="margin-top:0.4rem;padding-left:1.2rem;">
+    <li><b>к‑1</b> — не ходят, сидят в углу/закутке. <b>Герой «1»</b> на этапе&nbsp;9: <b>не ходит</b> — остаётся там, где перешёл в режим «1» (как неподвижная к‑1).</li>
+    <li><b>к‑2</b> — в два раза медленнее остальных, закрашивают клетки своим цветом, не на чужую раскраску, по возможности не на свою уже закрашенную. <b>Герой «2»</b> на этапе&nbsp;9 — то же: <b>каждый второй</b> ваш ортогональный ход срабатывает, закраска как у первой к‑2 (красный оттенок), те же ограничения по клеткам.</li>
+    <li><b>к‑3</b> — по прямой до отскока от стены. <b>Герой «3»:</b> только ортогонально, без инерции отскока (каждый ход вы задаёте направление).</li>
+    <li><b>к‑4</b> — две связанные фишки сдвигаются вдоль коридора. <b>Герой «4»:</b> один на поле — только ортогональные шаги, не «пара».</li>
+    <li><b>к‑5</b> — прыжок по лучу до ближайшего пола через стены. <b>Герой «5»:</b> ортогонально по одной клетке, без прыжков через стены.</li>
+    <li><b>к‑6</b> — король, 8 направлений; на 7–8 ещё тор. <b>Герой «6»:</b> на этапе 9 плоский лист — 8 направлений (включая диагонали), без склейки рёбер.</li>
+    <li><b>к‑7</b> — король по полу и стенам, уклон к стенкам. <b>Герой «7»:</b> 8 направлений по <b>полу</b> только; по стенам не ходит (вытягивание к‑7 из стены — как на этапе 8, не реализовано как ход по стене).</li>
+  </ul>
   <h3>Кооптация (поглощение)</h3>
-  <p>При встрече: <b>старший</b> (с бо́льшим максимумом набора) пытается кооптировать младшего. Кооптация возможна если в наборах есть хотя бы одна пара <b>соседних цифр</b> (разница = 1) — тогда наборы сливаются. Если соседних нет — <b>старший погибает</b>. Равные максимумы → проходят сквозь.</p>
+  <p>При встрече: <b>старший</b> (с бо́льшим максимумом набора) пытается кооптировать младшего. Кооптация возможна если в наборах есть хотя бы одна пара <b>соседних цифр</b> (разница = 1) — тогда наборы сливаются (две фишки) или герой поглощает нижнюю фишку. Если младший — <b>герой</b>, а старший — NPC, герой выживает: с NPC снимается <b>максимум набора</b> (пенал −1). Если соседних нет — <b>старший погибает</b>. Равные максимумы → проходят сквозь.</p>
   <h3>Порядок сбора на этапах</h3>
   <ul>
     <li>Этап 2: к-1</li>
@@ -308,6 +328,7 @@ canvas { display: block; }
     <li>Этап 8: к-7 → к-6 → … → к-1 → ФИНИШ. Герой уровня 8. <b>к-7</b> ходит по полю и стенам, как король, с уклоном в стенки и без повторных клеток, пока есть куда. Если к-7 стоит в стене, а герой на соседней по стороне <b>поле</b> (не стена), кооптация срабатывает — герой «вытягивает» его из стены (как при встрече в одной клетке).</li>
   </ul>
   <p style="font-size:12px;color:#888;margin-top:0.5rem;">У к-7 на этапе 8 действуют те же ограничения числа, что и у к-5/к-6 (не более трёх).</p>
+  </div>
 </div>
 </div>
 
@@ -356,6 +377,7 @@ const CLR={
   5:{f:'#BA7517',fdk:'#FAC775',s:'#633806',sdk:'#EF9F27',p:'#412402'},
   6:{f:'#9B6BB8',fdk:'#E8D4F5',s:'#4a1a6b',sdk:'#6B2D91',p:'#2d1040'},
   7:{f:'#14b8a6',fdk:'#5eead4',s:'#0f766e',sdk:'#0d9488',p:'#042f2e'},
+  8:{f:'#e11d48',fdk:'#fb7185',s:'#881337',sdk:'#be123c',p:'#4c0519'},
 };
 const KING_DIRS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
 /** Сколько стараться поставить юнитов каждого вида (меню «Дополнительно»). */
@@ -442,29 +464,28 @@ function npcP4Pairs(){
 /** Максимальная цифра уровня в наборах (герой на этапе 8). */
 const MAX_DIGIT=8;
 function useTorus(){ return stage===7||stage===8; }
+/** Финиш: этапы 1–8 — правый нижний угол; этап 9 — центр поля (превью доски). */
+function finishGX(){ return stage===9?(N-1)>>1:N-1; }
+function finishGY(){ return stage===9?(N-1)>>1:N-1; }
 
-/** Территория к-2: каждый индекс в M2 — свой заметный цвет (полупрозрачная заливка). */
+/** Территория к-2: у каждой фишки свой оттенок в одной гамме (полупрозрачная заливка). */
 const K2_TERRITORY_TINTS=[
-  'hsla(0,   82%, 52%, 0.34)', // красный
-  'hsla(32,  95%, 52%, 0.32)', // оранжевый
-  'hsla(305, 72%, 56%, 0.32)', // маджента / фуксия
-  'hsla(48,  90%, 50%, 0.30)', // золотисто-янтарный
-  'hsla(268, 62%, 58%, 0.30)', // фиолетовый
-  'hsla(15,  88%, 54%, 0.32)', // кораллово-алый
-  'hsla(348, 78%, 52%, 0.32)', // малиновый
-  'hsla(188, 58%, 46%, 0.28)', // сине-бирюзовый (контраст)
+  'hsla(2,   78%, 50%, 0.34)', // красный (NPC индекс 0)
+  'hsla(18,  82%, 52%, 0.32)', // кораллово-терракотовый
+  'hsla(328, 70%, 54%, 0.32)', // розово-малиновый
+  'hsla(42,  88%, 48%, 0.30)', // янтарь
+  'hsla(275, 58%, 56%, 0.30)', // фиолетовый
+  'hsla(8,   85%, 52%, 0.32)', // алый
+  'hsla(340, 74%, 52%, 0.32)', // вишня
+  'hsla(195, 55%, 44%, 0.28)', // бирюза (контраст)
 ];
-
-let hero={x:0,y:0,lvl:2,dots:[],alive:true,isHero:true};
+/** Зона героя-«2» на этапе 9 — чуть другой красный, чем у первой к‑2 на поле. */
+const K2_TERRITORY_TINT_HERO='hsla(352, 70%, 47%, 0.33)';
+/** В k2Territory: метка зоны героя с уровнем 2 (K2_OWNER_HERO). */
+const K2_OWNER_HERO=-1;
+let hero={x:0,y:0,lvl:2,dots:[],alive:true,isHero:true,navDigit:0};
 let darkMode=true; // always dark
 let gameStarted=false;
-/** Пеналь вроде «43» на фишке и в панели: по очереди 4, 3, 4, 3… (не две цифры разом). */
-let animFrame=0;
-setInterval(()=>{
-  animFrame=(animFrame+1)%1000;
-  try{ if(gameStarted&&!won&&!resetT&&hero.alive&&hasMultiGlyphBlinkNeed()) draw(); }catch(e){}
-},120);
-
 gel('n-slider').oninput=function(){gel('n-out').textContent=this.value+'×'+this.value;};
 gel('wall-slider').oninput=function(){gel('wall-out').textContent=this.value+'%';};
 gel('start-btn').onclick=()=>{gel('start-btn').blur();startGame();};
@@ -510,9 +531,10 @@ function startGame(){
   gel('setup').style.display='none';
   gel('game').style.display='flex';
   gameStarted=true;
+  paused=false;
   layoutCellSize();
   stage=startStage; loadStage();
-  document.addEventListener('keydown',onKey);
+  document.addEventListener('keydown',onKey,{capture:true});
   try {
     const cv = gel('c');
     if (cv) cv.focus({ preventScroll: true });
@@ -526,7 +548,7 @@ Object.defineProperty(_stub,'textContent',{set:()=>{},get:()=>''});
 function gel(id){ return document.getElementById(id)||_stub; }
 function setMsg(t,w){ const e=gel('msg'); if(e){e.textContent=t; e.className=w?'warn':'';} }
 function showL(id,ci,ti,c,t){ const e=gel(id),ec=gel(ci),et=gel(ti); if(e)e.style.display='block'; if(ec)ec.textContent=c; if(et)et.textContent=t; }
-function hideL(){ ['line2','line3','line4','line5','line6','line7','line8'].forEach(id=>{const e=gel(id);if(e)e.style.display='none';}); }
+function hideL(){ ['line2','line3','line4','line5','line6','line7','line8','line9'].forEach(id=>{const e=gel(id);if(e)e.style.display='none';}); }
 function kxy(m){ return m.x+','+m.y; }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];} }
 
@@ -542,18 +564,203 @@ function maxNpcLvl(){
 }
 
 function updateHeroLvl(){
-  // hero.lvl is always the stage number — no recalculation needed
   drawPanels();
 }
 
+/** Эффективный ранг героя для правил движения (как к-N): выбранная цифра или уровень этапа. */
+function heroMovementRank(){
+  if(!hero||!hero.alive) return 0;
+  const nd=hero.navDigit|0;
+  if(nd>=1&&nd<=MAX_DIGIT) return nd;
+  if(nd===9) return 9;
+  const L=hero.lvl|0;
+  if(L>=1&&L<=MAX_DIGIT) return L;
+  return L===9?9:Math.min(Math.max(1,L),MAX_DIGIT);
+}
+
+/** Этап 9 + уровень героя 1: как к‑1 — не выбирает ходов, стоит там, где «пойман» режимом. */
+function heroImmobileLikeK1(){
+  return stage===9 && heroMovementRank()===1;
+}
+
+function heroActsLikeK2(){
+  return stage===9 && heroMovementRank()===2;
+}
+
+function k2OwnerBlocksHeroAtCell(ow){
+  if(ow===undefined||ow===K2_OWNER_HERO) return false;
+  if(ow>=0&&ow<M2.length&&M2[ow]&&!M2[ow].collected) return true;
+  return false;
+}
+
+function heroK2UnpaintedOrthExists(){
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  for(const[dx,dy] of dirs){
+    let ox=hero.x+dx, oy=hero.y+dy;
+    if(useTorus()){[ox,oy]=torusXY(ox,oy);}
+    else if(ox<0||ox>=N||oy<0||oy>=N) continue;
+    if(grid[oy][ox]===1) continue;
+    const o=k2Territory[ox+','+oy];
+    if(k2OwnerBlocksHeroAtCell(o)) continue;
+    if(o===undefined) return true;
+  }
+  return false;
+}
+
+function heroK2TargetAllowed(nx,ny){
+  const ow=k2Territory[nx+','+ny];
+  if(k2OwnerBlocksHeroAtCell(ow)) return false;
+  if(ow===K2_OWNER_HERO && heroK2UnpaintedOrthExists()) return false;
+  return true;
+}
+
+/** В наборе героя есть и 2, и 3 («32» после кооптации и т.п.). */
+function heroCarriesDigitsTwoAndThree(){
+  if(!hero||!hero.alive) return false;
+  const s=fullSet(hero);
+  return s.has(2)&&s.has(3);
+}
+
+/** Герой стоит на клетке, закрашенной чужой к‑2. */
+function heroStandsOnEnemyK2Paint(){
+  if(stage!==9||!hero) return false;
+  const ow=k2Territory[hero.x+','+hero.y];
+  return k2OwnerBlocksHeroAtCell(ow);
+}
+
+function heroWantsExitEnemyK2Paint32(){
+  return stage===9&&hero&&hero.alive&&heroCarriesDigitsTwoAndThree()&&heroStandsOnEnemyK2Paint();
+}
+
+/** Куда ступить с чужой раскраски: 0 — чистое поле, 1 — своя к‑2, иначе хуже. */
+function heroK2ExitStepScore(nx,ny){
+  const ow=k2Territory[nx+','+ny];
+  if(ow===undefined) return 0;
+  if(ow===K2_OWNER_HERO) return 1;
+  if(k2OwnerBlocksHeroAtCell(ow)) return 3;
+  return 2;
+}
+
+function pickBestK2ExitMoves(coords){
+  let best=999;
+  const out=[];
+  for(const p of coords){
+    const sc=heroK2ExitStepScore(p[0],p[1]);
+    if(sc<best){ best=sc; out.length=0; out.push(p); }
+    else if(sc===best) out.push(p);
+  }
+  return out.length?out:coords;
+}
+
+function clearHeroK2Paint(){
+  for(const k of Object.keys(k2Territory)){
+    if(k2Territory[k]===K2_OWNER_HERO) delete k2Territory[k];
+  }
+}
+
+/** Клетка заблокирована для «пустых» спутников героя-4: стена, край, живый NPC. */
+function heroNpcBlocksCell(x,y){
+  if(x<0||x>=N||y<0||y>=N||grid[y][x]!==0) return true;
+  for(const o of getAllNPC()) if(!o.collected&&o.x===x&&o.y===y) return true;
+  return false;
+}
+
+/** Пара пустых кружков слева/справа от направления (dx,dy): перпендикуляры (-dy,dx) и (dy,-dx). */
+function initHeroMode4Satellites(keepDir){
+  hero._satL=null; hero._satR=null;
+  const base=[[1,0],[-1,0],[0,1],[0,-1]];
+  const tryDirs=[];
+  if(keepDir && ((hero._bdx|0)!==0||(hero._bdy|0)!==0)){
+    tryDirs.push([hero._bdx|0,hero._bdy|0]);
+    for(const d of base) if(d[0]!==(hero._bdx|0)||d[1]!==(hero._bdy|0)) tryDirs.push(d);
+  } else for(const d of base) tryDirs.push(d);
+  for(const[dx,dy] of tryDirs){
+    const lx=-dy, ly=dx, rx=dy, ry=-dx;
+    const ax=hero.x+lx, ay=hero.y+ly, bx=hero.x+rx, by=hero.y+ry;
+    if(heroNpcBlocksCell(ax,ay)||heroNpcBlocksCell(bx,by)) continue;
+    if((ax===bx&&ay===by)||(ax===hero.x&&ay===hero.y)||(bx===hero.x&&by===hero.y)) continue;
+    hero._bdx=dx; hero._bdy=dy;
+    hero._satL={x:ax,y:ay};
+    hero._satR={x:bx,y:by};
+    return;
+  }
+  hero._bdx=0; hero._bdy=0;
+}
+
+/** Как к-6/к-7: король ходит по 8 направлениям на этапах 7–8 и 9. */
+function heroMayMoveDiagonal(){
+  if(!hero||!hero.alive) return false;
+  if(heroImmobileLikeK1()) return false;
+  const r=heroMovementRank();
+  if(r!==6&&r!==7) return false;
+  return (stage>=7&&stage<=8)||stage===9;
+}
 
 function fullSet(obj){
-  // dots contains all digits: own starting lvl + all absorbed
   const s=new Set(obj.dots||[]);
-  // Always include current lvl (in case dots is stale)
   s.add(obj.lvl);
-  if(obj.isHero&&obj.peakLvl) s.add(obj.peakLvl);
+  if(obj.isHero && (obj.navDigit|0)===0 && obj.peakLvl) s.add(obj.peakLvl);
   return s;
+}
+
+/** Цифра с клавиатуры: уровень героя = N (встречи, движение как к-N); 0 — уровень этапа. */
+function applyHeroChosenDigit(raw){
+  if(!hero||!hero.alive) return;
+  const D=raw|0;
+  const prevNav=hero.navDigit|0;
+  if(stage===9 && D!==2){
+    clearHeroK2Paint();
+    hero._k2Pulse=0;
+  }
+  if(D===0){
+    const st=stage===9?9:Math.min(8,Math.max(1,stage));
+    hero.navDigit=0;
+    hero.lvl=st;
+    hero.peakLvl=st;
+    hero.dots=[st];
+    hero.displayDots=[st];
+    hero.absorbed=[];
+    hero._bdx=0; hero._bdy=0; hero._satL=null; hero._satR=null;
+    hero._k5LastWasJump=false;
+    return;
+  }
+  if(D>=1&&D<=MAX_DIGIT){
+    hero.navDigit=D;
+    hero.lvl=D;
+    hero.peakLvl=D;
+    hero.dots=[D];
+    hero.displayDots=[D];
+    hero.absorbed=[];
+    if(stage===9&&D===2){
+      hero._k2Pulse=0;
+      k2Territory[hero.x+','+hero.y]=K2_OWNER_HERO;
+    }
+    if(stage===9){
+      if(D===3){
+        hero._satL=null; hero._satR=null;
+        if(prevNav!==3&&prevNav!==4){ hero._bdx=0; hero._bdy=0; }
+        hero._k5LastWasJump=false;
+      } else if(D===4){
+        initHeroMode4Satellites(prevNav===3||prevNav===4);
+        hero._k5LastWasJump=false;
+      } else {
+        hero._bdx=0; hero._bdy=0;
+        hero._satL=null; hero._satR=null;
+        hero._k5LastWasJump=false;
+      }
+    }
+    return;
+  }
+  if(D===9&&stage===9){
+    hero.navDigit=9;
+    hero.lvl=9;
+    hero.peakLvl=9;
+    hero.dots=[9];
+    hero.displayDots=[9];
+    hero.absorbed=[];
+    hero._bdx=0; hero._bdy=0; hero._satL=null; hero._satR=null;
+    hero._k5LastWasJump=false;
+  }
 }
 
 function getDigitSeq(lvl, dots){
@@ -565,6 +772,69 @@ function getDigitSeq(lvl, dots){
 
 function maxOfSet(s){ let m=0; s.forEach(v=>{if(v>m)m=v;}); return m; }
 
+/** Одна цифра уровня героя для панели и клетки (без «пенала» из нескольких цифр). */
+function heroDisplayLvl(){
+  return Math.min(maxOfSet(fullSet(hero)),9);
+}
+
+/** Этапы 1–8: строка «пенал» (все цифры набора по убыванию) и через « · » хвосты кооптированных наборов. */
+function penaltyUIFullText(mob){
+  if(!mob||stage===9) return '';
+  const base=[...fullSet(mob)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a).join(' ');
+  const tail=(mob.absorbed&&mob.absorbed.length)
+    ?mob.absorbed.map(ch=>[...ch].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a).join(' ')).join(' · ')
+    :'';
+  if(base&&tail) return base+' · '+tail;
+  if(base) return base;
+  if(tail) return tail;
+  return String(mob.lvl!=null?mob.lvl:1);
+}
+
+/** У NPC снять самую большую цифру из набора (lvl+dots); остальное — новый пенал. Пусто → собрана. */
+function npcPenaltyMinusOne(npc){
+  const s=new Set();
+  for(const d of fullSet(npc)) if((d|0)>=1&&(d|0)<=9) s.add(d|0);
+  if(!s.size){ npc.collected=true; return; }
+  const mx=Math.max(...s);
+  s.delete(mx);
+  if(!s.size){ npc.collected=true; return; }
+  const sorted=[...s].sort((a,b)=>b-a);
+  npc.lvl=sorted[0];
+  npc.dots=sorted.length>1?sorted.slice(1):[];
+  npc.displayDots=[...sorted];
+}
+
+/** После поглощения героем — обновить счётчики сбора по типу фишки. */
+function registerNpcCollectedByHero(npc){
+  if(!npc) return;
+  const n=npc.lvl|0;
+  if(n===1){col1++;gel('c1-cnt').textContent=col1;}
+  else if(n===2){col2++;gel('c2-cnt').textContent=col2;}
+  else if(n===3){col3++;gel('c3-cnt').textContent=col3;}
+  else if(n===4){col4++;gel('c4-cnt').textContent=col4;}
+  else if(n===5){col5++;gel('c5-cnt').textContent=col5;}
+  else if(n===6){col6++;gel('c6-cnt').textContent=col6;}
+  else if(n===7&&stage>=8){col7++;gel('c7-cnt').textContent=col7;}
+}
+
+function meetPriorityPair(a,b){
+  return Math.max(maxOfSet(fullSet(a)),maxOfSet(fullSet(b)));
+}
+function sortPartnersForMeet(mover, partners){
+  return [...partners].sort((x,y)=>{
+    const px=meetPriorityPair(mover,x), py=meetPriorityPair(mover,y);
+    if(py!==px) return py-px;
+    return maxOfSet(fullSet(y))-maxOfSet(fullSet(x));
+  });
+}
+
+/** Встреча двух NPC: одна клетка (этапы 1–8); этап 9 — ещё ортогональное соседство. */
+function npcAdjacentForMeeting(a,b){
+  if(a.x===b.x&&a.y===b.y) return true;
+  if(stage===9) return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)===1;
+  return false;
+}
+
 function meet(A,B){
   const aOk=A.isHero?A.alive:!A.collected;
   const bOk=B.isHero?B.alive:!B.collected;
@@ -573,24 +843,62 @@ function meet(A,B){
   const setA=fullSet(A), setB=fullSet(B);
   const maxA=maxOfSet(setA), maxB=maxOfSet(setB);
 
-  if(maxA===maxB) return null;
+  if(maxA===maxB){
+    if(stage===9 && (A.isHero||B.isHero)){
+      const npc=A.isHero?B:A;
+      const hr=A.isHero?A:B;
+      if(hr.isHero&&!npc.isHero){ npc.collected=true; return null; }
+    }
+    return null;
+  }
 
   const[senior,junior]=maxA>maxB?[A,B]:[B,A];
   const sSets=fullSet(senior), jSets=fullSet(junior);
 
   let canC=false;
-  for(const a of sSets){ for(const b of jSets){ if(Math.abs(a-b)===1){canC=true;break;} } if(canC)break; }
+  if(stage===9) canC=Math.abs(maxA-maxB)===1;
+  else for(const a of sSets){ for(const b of jSets){ if(Math.abs(a-b)===1){canC=true;break;} } if(canC)break; }
 
   if(canC){
+    if(junior.isHero && !senior.isHero){
+      npcPenaltyMinusOne(senior);
+      return null;
+    }
     const toAdd=[junior.lvl,...(junior.dots||[])];
     // dots — unique set for logic
     for(const d of toAdd){ if(d>=1&&d<=MAX_DIGIT&&!senior.dots.includes(d)) senior.dots.push(d); }
-    // displayDots — junior's display list (with his own repeats), appended to senior
-    if(!senior.displayDots) senior.displayDots=[senior.lvl];
-    const juniorDisplay=junior.displayDots||[junior.lvl];
-    for(const d of juniorDisplay){ if(d>=1&&d<=MAX_DIGIT) senior.displayDots.push(d); }
-    if(senior.isHero && !senior.absorbed) senior.absorbed=[];
-    if(senior.isHero) senior.absorbed.push([...jSets].sort((a,b)=>b-a));
+    if(!senior.absorbed) senior.absorbed=[];
+    if(stage!==9) senior.absorbed.push([...jSets].sort((a,b)=>b-a));
+    if(senior.isHero){
+      const mx=maxOfSet(fullSet(senior));
+      const dLv=Math.min(mx,9);
+      senior.lvl=mx;
+      senior.peakLvl=dLv;
+      senior.navDigit=(mx<=MAX_DIGIT)?mx:(mx===9?9:0);
+      if(stage===9){
+        senior.displayDots=[dLv];
+        if(senior.navDigit!==2){
+          clearHeroK2Paint();
+          senior._k2Pulse=0;
+        }
+        senior._k5LastWasJump=false;
+        const nd=senior.navDigit|0;
+        if(nd!==3&&nd!==4){
+          senior._bdx=senior._bdy=0;
+          senior._satL=senior._satR=null;
+        } else if(nd===3){
+          senior._satL=senior._satR=null;
+        } else if(nd===4){
+          initHeroMode4Satellites(true);
+        }
+      } else {
+        const sorted=[...fullSet(senior)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a);
+        senior.displayDots=sorted.length?sorted:[dLv];
+      }
+    } else {
+      const sorted=[...fullSet(senior)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a);
+      senior.displayDots=sorted.length?sorted:[senior.lvl];
+    }
     if(junior.isHero) junior.alive=false; else junior.collected=true;
     return null;
   } else {
@@ -609,28 +917,31 @@ function meet(A,B){
 function checkMeetings(mover){
   const ok=mover.isHero?mover.alive:!mover.collected;
   if(!ok) return;
-  if(!mover.isHero&&hero.alive&&mover.x===hero.x&&mover.y===hero.y){
+  if(!mover.isHero&&hero.alive){
     updateHeroLvl();
-    const info=meet(hero,mover); updateHeroLvl(); refreshCounters();
-    // Update col counters if NPC was absorbed by hero
-    if(mover.collected){
-      if(mover.lvl===1){col1++;gel('c1-cnt').textContent=col1;}
-      else if(mover.lvl===2){col2++;gel('c2-cnt').textContent=col2;}
-      else if(mover.lvl===3){col3++;gel('c3-cnt').textContent=col3;}
-      else if(mover.lvl===4){col4++;gel('c4-cnt').textContent=col4;}
-      else if(mover.lvl===5){col5++;gel('c5-cnt').textContent=col5;}
-      else if(mover.lvl===6){col6++;gel('c6-cnt').textContent=col6;}
-      else if(mover.lvl===7&&stage>=8){col7++;gel('c7-cnt').textContent=col7;}
+    while(hero.alive){
+      const adj=getAllNPC().filter(n=>!n.collected&&heroNpcManhattanMeetOk(n));
+      if(!adj.length) break;
+      const order=sortPartnersForMeet(hero,adj);
+      const target=order[0];
+      if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(target))) break;
+      const info=meet(hero,target);
+      if(target.collected) registerNpcCollectedByHero(target);
+      updateHeroLvl(); refreshCounters();
+      if(!hero.alive){ handleHeroDeath(info); return; }
     }
-    if(!hero.alive){ handleHeroDeath(info); return; }
   }
   const stillOk=mover.isHero?mover.alive:!mover.collected;
   if(!stillOk) return;
-  for(const o of getAllNPC()){
-    if(o===mover||o.collected) continue;
-    if(o.x!==mover.x||o.y!==mover.y) continue;
+  while(true){
+    const partners=getAllNPC().filter(o=>!o.collected&&o!==mover&&npcAdjacentForMeeting(mover,o));
+    if(!partners.length) break;
+    const order=sortPartnersForMeet(mover,partners);
+    const o=order[0];
+    const oWas=o.collected, mWas=mover.collected;
     meet(mover,o);
-    if(mover.isHero?!mover.alive:mover.collected) break;
+    if(o.collected===oWas&&mover.collected===mWas) break;
+    if(mover.collected) break;
   }
   refreshCounters();
 }
@@ -676,18 +987,6 @@ function getAllNPC(){
   return all;
 }
 
-function hasMultiGlyphBlinkNeed(){
-  if(!gameStarted||won||resetT||!hero.alive) return false;
-  const dd=(hero.displayDots||hero.dots||[hero.lvl]).filter(d=>d>=1&&d<=MAX_DIGIT);
-  if([...new Set(dd)].length>1) return true;
-  for(const npc of getAllNPC()){
-    if(npc.collected) continue;
-    const g=[...fullSet(npc)].filter(d=>d>=1&&d<=MAX_DIGIT);
-    if(new Set(g).size>1) return true;
-  }
-  return false;
-}
-
 const PANEL_COLORS={
   1:{bg:'#1a1040',border:'#7F77DD',text:'#AFA9EC'},
   2:{bg:'#2a0808',border:'#E24B4A',text:'#F09595'},
@@ -696,6 +995,7 @@ const PANEL_COLORS={
   5:{bg:'#1e0e00',border:'#BA7517',text:'#FAC775'},
   6:{bg:'#2a1040',border:'#9B6BB8',text:'#E8D4F5'},
   7:{bg:'#042f2e',border:'#14b8a6',text:'#5eead4'},
+  8:{bg:'#3f0d1f',border:'#f43f5e',text:'#fda4af'},
 };
 
 function makePanel(lvl,small){
@@ -707,23 +1007,69 @@ function makePanel(lvl,small){
   return el;
 }
 
+/** Этап 9: какие виды фишек (1…7) ещё есть на поле. */
+function aliveNpcKindDigits(){
+  const kinds=[];
+  if(M1.some(m=>!m.collected)) kinds.push(1);
+  if(M2.some(m=>!m.collected)) kinds.push(2);
+  if(M3.some(m=>!m.collected)) kinds.push(3);
+  for(const p of P4) if(!p.a.collected||!p.b.collected){ kinds.push(4); break; }
+  if(M5.some(m=>!m.collected)) kinds.push(5);
+  if(M6.some(m=>!m.collected)) kinds.push(6);
+  if(M7.some(m=>!m.collected)) kinds.push(7);
+  return kinds;
+}
+
 function drawPanels(){
   const bar=gel('panels-bar'); if(!bar||bar===_stub) return;
-  bar.innerHTML='';
 
-  // Hero panel — goes into top-bar, show all digits including repeats
   const hp=gel('hero-panel');
-  if(hp&&hp!==_stub){
-    const dd=(hero.displayDots||hero.dots||[hero.lvl]).filter(d=>d>=1&&d<=MAX_DIGIT);
-    const uniq=[...new Set(dd.length?dd:[hero.lvl])].sort((a,b)=>b-a);
-    hp.style.cssText='display:inline-flex;align-items:center;height:22px;padding:0 6px;border-radius:4px;font-size:12px;font-weight:900;border:1.5px solid #E8A020;background:#1e1000;color:#E8A020;letter-spacing:1px;white-space:nowrap;';
-    if(uniq.length>1){
-      const idx=Math.floor(animFrame/2)%uniq.length;
-      hp.textContent=String(uniq[idx]);
-    }else{
-      hp.textContent=String(uniq[0]||hero.lvl);
+  if(stage===9 && won){
+    if(hp&&hp!==_stub){
+      hp.textContent='';
+      hp.style.display='none';
     }
+    bar.innerHTML='';
+    bar.style.display='none';
+    return;
   }
+
+  if(hp&&hp!==_stub){
+    const hLv=heroDisplayLvl();
+    const chip=Math.min(Math.max(1,hLv),9);
+    const pc=PANEL_COLORS[chip<=8?chip:8]||PANEL_COLORS[1];
+    const fs=12;
+    hp.style.cssText='display:inline-flex;align-items:center;min-height:22px;padding:0 6px;border-radius:4px;font-size:'+fs+'px;font-weight:900;border:1.5px solid '+pc.border+';background:'+pc.bg+';color:'+pc.text+';letter-spacing:0.06em;white-space:nowrap;max-width:min(92vw,520px);overflow-x:auto;';
+    if(stage===9) hp.textContent='Уровень\u00A0'+hLv;
+    else hp.textContent=penaltyUIFullText(hero);
+  }
+
+  if(stage===9){
+    if(hp&&hp!==_stub) hp.style.removeProperty('display');
+    bar.style.display='flex';
+    bar.innerHTML='';
+    const lab=document.createElement('span');
+    lab.style.cssText='font-size:10px;color:#888;font-weight:600;flex-shrink:0;margin-right:4px;align-self:center;';
+    lab.textContent='Живы:';
+    bar.appendChild(lab);
+    const kinds=aliveNpcKindDigits();
+    if(!kinds.length){
+      const empty=document.createElement('span');
+      empty.style.cssText='font-size:11px;color:#666;align-self:center;';
+      empty.textContent='—';
+      bar.appendChild(empty);
+    } else for(const k of kinds) bar.appendChild(makePanel(k,true));
+    if(killedCount>0){
+      const g=document.createElement('span');
+      g.className='panel-dead';
+      g.style.marginLeft='6px';
+      g.textContent='⚰ '+killedCount;
+      bar.appendChild(g);
+    }
+    return;
+  }
+  bar.style.display='flex';
+  bar.innerHTML='';
 
   if(stage<2) return;
 
@@ -738,21 +1084,18 @@ function drawPanels(){
   if(stage>=2) for(const m of M1) if(!m.collected) allNPC.push(m);
   allNPC.sort((a,b)=>maxOfSet(fullSet(b))-maxOfSet(fullSet(a)));
 
-  // Each live NPC gets its own panel, sorted by max digit desc
+  // Каждый NPC — панель с полным пеналом и хвостом кооптаций (этапы 1–8)
   for(const npc of allNPC){
     const maxD=maxOfSet(fullSet(npc));
     const c=PANEL_COLORS[maxD]||PANEL_COLORS[npc.lvl]||PANEL_COLORS[1];
     const el=document.createElement('span');
     el.className='panel';
     el.style.cssText=`background:${c.bg};border-color:${c.border};color:${c.text}`;
-    const seq=[...fullSet(npc)].filter(d=>d>=1&&d<=MAX_DIGIT).sort((a,b)=>b-a);
-    if(seq.length>1){
-      const off=((npc.x||0)*7+(npc.y||0)*13)%97;
-      const idx=Math.floor((animFrame+off)/2)%seq.length;
-      el.textContent=String(seq[idx]);
-    }else{
-      el.textContent=String(maxD);
-    }
+    const txt=penaltyUIFullText(npc);
+    el.textContent=txt;
+    if(txt.length>14) el.style.fontSize='8px';
+    else if(txt.length>8) el.style.fontSize='9px';
+    else if(txt.length>5) el.style.fontSize='10px';
     bar.appendChild(el);
   }
 
@@ -773,18 +1116,19 @@ function refreshCounters(){
   if(stage>=6) gel('c5-tot').textContent=M5.filter(x=>!x.collected).length+col5;
   if(stage>=7) gel('c6-tot').textContent=M6.filter(x=>!x.collected).length+col6;
   if(stage>=8) gel('c7-tot').textContent=M7.filter(x=>!x.collected).length+col7;
+  if(stage===8) gel('c8-tot').textContent='1';
   drawPanels();
 }
 
 function loadStage(){
-  clrT(); won=false; M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
+  clrT(); won=false; paused=false; M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
   col1=0;col2=0;col3=0;col4=0;col5=0;col6=0;col7=0;
-  // Герой: уровень = номер этапа (на этапе 8 — 8)
-  const lvl=Math.min(8,Math.max(1,stage));
+  // Герой: уровень = номер этапа; на поле и в панели — одна цифра (без пенала)
+  const lvl=stage===9?9:Math.min(8,Math.max(1,stage));
   const dots=[lvl];
-  hero={x:0,y:0,lvl,peakLvl:lvl,dots,displayDots:[lvl],absorbed:[],alive:true,isHero:true};
+  hero={x:0,y:0,lvl,peakLvl:lvl,dots,displayDots:[lvl],absorbed:[],alive:true,isHero:true,navDigit:0};
   killedCount=0;
-  k5Flashes=[]; k5FreezeUntil=0; k2Territory={}; tickCount=0; graveyard=[];
+  k5Flashes=[]; k5WallFlashes=[]; k5FreezeUntil=0; k2Territory={}; tickCount=0; graveyard=[];
   gel('new-btn').style.display='none';
   gel('stage-num').textContent=stage;
   const hp=gel('hero-panel'); if(hp&&hp!==_stub) hp.textContent='';
@@ -797,8 +1141,42 @@ function loadStage(){
   else if(stage===5){ let ok=false,a=0; while(!ok&&a++<200){genGrid();plM1();plM2();plM3();plP4();ok=vS5();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); }
   else if(stage===6){ let ok=false,a=0; while(!ok&&a++<400){genGrid();plM1();plM2();plM3();plP4();plM5();ok=vS6();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); }
   else if(stage===7){ let ok=false,a=0; while(!ok&&a++<500){genGrid();plM1();plM2();plM3();plP4();plM5();plM6();ok=vS7();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); }
-  else if(stage===8){ let ok=false,a=0; while(!ok&&a++<600){genGrid();plM1();plM2();plM3();plP4();plM5();plM6();plM7();ok=vS8();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); showL('line8','c7-cnt','c7-tot',0,M7.length); }
-  heroMoved=false; // NPCs don't move until hero makes first move
+  else if(stage===8){ let ok=false,a=0; while(!ok&&a++<700){M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[]; genGrid(); plM1(); plM2(); plM3(); plP4(); plM5(); plM6(); plM7(); ok=vS8();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); showL('line8','c7-cnt','c7-tot',0,M7.length); showL('line9','c8-cnt','c8-tot',0,1); }
+  else if(stage===9){
+    const saved={...npcCounts};
+    npcCounts={n1:1,n2:1,n3:1,p4:1,n5:1,n6:1,n7:1};
+    let ok9=false,a9=0;
+    while(!ok9&&a9++<2500){
+      M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
+      genGrid();
+      plM1();
+      plM2();
+      plM3();
+      plP4();
+      plM5();
+      plM6();
+      plM7();
+      ok9=vS9Full();
+    }
+    npcCounts=saved;
+    hero.x=0; hero.y=0;
+    hideL();
+    showL('line2','c1-cnt','c1-tot',0,M1.length);
+    showL('line3','c2-cnt','c2-tot',0,M2.length);
+    showL('line4','c3-cnt','c3-tot',0,M3.length);
+    showL('line5','c4-cnt','c4-tot',0,P4.length*2);
+    showL('line6','c5-cnt','c5-tot',0,M5.length);
+    showL('line7','c6-cnt','c6-tot',0,M6.length);
+    showL('line8','c7-cnt','c7-tot',0,M7.length);
+    if(!ok9) setMsg('Этап 9: не удалось разместить набор фишек. Нажмите «Заново».');
+    else setMsg('Этап 9: к‑1…к‑7. FIN в центре. к‑7 ходит по полу и стенам, тянет к камням стены; цифры — режим; встреча на клетке или соседней. 0 — сброс.');
+  }
+  if(stage===9){
+    heroMoved=true;
+    tickT=setInterval(tick,tickMs());
+  } else {
+    heroMoved=false;
+  }
 
   // Save snapshot at stage start (for retry)
   hero._stageStartDots=[...dots];
@@ -832,13 +1210,14 @@ function allFloorConnectedFrom(sx,sy){
 function genGridValidForTryPct(tryPct){
   grid=Array.from({length:N},()=>new Array(N).fill(0));
   const wc=0|N*N*tryPct/100;
+  const fx=finishGX(), fy=finishGY();
   let p=0,t=0;
   while(p<wc&&t++<10000){
     const rx=0|Math.random()*N,ry=0|Math.random()*N;
-    if((rx===0&&ry===0)||(rx===N-1&&ry===N-1)) continue;
+    if((rx===0&&ry===0)||(rx===fx&&ry===fy)) continue;
     if(grid[ry][rx]===0){ grid[ry][rx]=1; p++; }
   }
-  return pOK(0,0,N-1,N-1)&&allFloorConnectedFrom(0,0);
+  return pOK(0,0,fx,fy)&&allFloorConnectedFrom(0,0);
 }
 
 function genGrid(){
@@ -854,7 +1233,8 @@ function genGrid(){
 }
 
 function cscore(x,y){
-  if(grid[y][x]===1||(x===0&&y===0)||(x===N-1&&y===N-1))return -1;
+  const fx=finishGX(), fy=finishGY();
+  if(grid[y][x]===1||(x===0&&y===0)||(x===fx&&y===fy))return -1;
   let s=0;
   for(const[[d1x,d1y],[d2x,d2y]]of[[[-1,0],[0,-1]],[[1,0],[0,-1]],[[-1,0],[0,1]],[[1,0],[0,1]]]){
     const w1=(x+d1x<0||x+d1x>=N||y+d1y<0||y+d1y>=N)?1:grid[y+d1y][x+d1x];
@@ -869,7 +1249,7 @@ function cscore(x,y){
   return s*10+wn;
 }
 
-function mkNPC(x,y,lvl){ return {x,y,lvl,collected:false,dots:[lvl],displayDots:[lvl]}; }
+function mkNPC(x,y,lvl){ return {x,y,lvl,collected:false,dots:[lvl],displayDots:[lvl],absorbed:[]}; }
 
 function getReachable(sx,sy){
   const visited=new Set();
@@ -1001,10 +1381,11 @@ function plP4(){
   shuffle(pc);
   for(const p of pc){
     if(P4.length>=npcP4Pairs()) break;
+    const fx=finishGX(), fy=finishGY();
     const av=p.fp.filter(pos=>{
       const[x1,y1]=p.horiz?[pos,p.line1]:[p.line1,pos];
       const[x2,y2]=p.horiz?[pos,p.line2]:[p.line2,pos];
-      return !occ.has(`${x1},${y1}`)&&!occ.has(`${x2},${y2}`)&&!(x1===0&&y1===0)&&!(x1===N-1&&y1===N-1)&&!(x2===0&&y2===0)&&!(x2===N-1&&y2===N-1);
+      return !occ.has(`${x1},${y1}`)&&!occ.has(`${x2},${y2}`)&&!(x1===0&&y1===0)&&!(x1===fx&&y1===fy)&&!(x2===0&&y2===0)&&!(x2===fx&&y2===fy);
     });
     if(!av.length)continue;
     const sp=av[0|Math.random()*av.length];
@@ -1057,10 +1438,11 @@ function plM7(){
   for(const p of P4){ occ.add(kxy(p.a)); occ.add(kxy(p.b)); }
   for(const m of M5) occ.add(kxy(m));
   for(const m of M6) occ.add(kxy(m));
+  const fgx=finishGX(), fgy=finishGY();
   const pool=[];
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){
     if(occ.has(`${x},${y}`)) continue;
-    if((x===0&&y===0)||(x===N-1&&y===N-1)) continue;
+    if((x===0&&y===0)||(x===fgx&&y===fgy)) continue;
     pool.push({x,y});
   }
   shuffle(pool);
@@ -1073,29 +1455,91 @@ function plM7(){
 
 function vS8(){
   if(!vS7()) return false;
-  return M7.length>=npcCap(7);
+  if(M7.length<npcCap(7)) return false;
+  return true;
 }
 
-// Track k5 landing flashes: [{x,y,t}]
+function vS9(){
+  if(!vS7()) return false;
+  if(M7.length<npcCap(7)) return false;
+  if(M1.length!==1||M2.length!==1||M3.length!==1||M5.length!==1||M6.length!==1||M7.length!==1) return false;
+  if(P4.length!==1) return false;
+  return true;
+}
+
+/** Этап 9: полный набор к‑1…к‑7 и пара к‑4; связность пола старт–центр (FIN). */
+function vS9Full(){
+  if(!vS9()) return false;
+  return pOK(0,0,finishGX(),finishGY())&&allFloorConnectedFrom(0,0);
+}
+
+// Track k5 landing flashes: [{x,y,t}]; стены по траектории прыжка — [{x,y,t}]
 let k5Flashes=[];
+let k5WallFlashes=[];
 let k5FreezeUntil=0; // timestamp until which all movement is frozen
+
+/** К‑5 / герой‑5: после прыжка следующий ход — один шаг на соседнее поле (без луча). */
+function k5StepEntity(ent){
+  if(!ent||ent.collected) return;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  if(ent._k5LastWasJump){
+    ent._k5LastWasJump=false;
+    const order=[...dirs]; shuffle(order);
+    for(const[dx,dy] of order){
+      let nx=ent.x+dx, ny=ent.y+dy;
+      if(useTorus()) [nx,ny]=torusXY(nx,ny);
+      else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+      if(grid[ny][nx]===0){ ent.x=nx; ent.y=ny; return; }
+    }
+    return;
+  }
+  const jumps=[];
+  const limit=useTorus()?N*N+4:Math.max(N*N,32);
+  for(const[dx,dy] of dirs){
+    let cx=ent.x+dx, cy=ent.y+dy;
+    const walls=[];
+    let seenWall=false;
+    for(let s=0;s<limit;s++){
+      if(useTorus()) [cx,cy]=torusXY(cx,cy);
+      else if(cx<0||cx>=N||cy<0||cy>=N){ seenWall=false; walls.length=0; break; }
+      if(grid[cy][cx]===0){
+        if(seenWall) jumps.push({x:cx,y:cy,walls:walls.slice()});
+        break;
+      }
+      if(grid[cy][cx]===1){
+        seenWall=true;
+        if(!useTorus()) walls.push({x:cx,y:cy});
+        cx+=dx; cy+=dy;
+        continue;
+      }
+      break;
+    }
+  }
+  if(jumps.length){
+    const j=jumps[0|Math.random()*jumps.length];
+    ent.x=j.x; ent.y=j.y;
+    ent._k5LastWasJump=true;
+    const t0=Date.now();
+    k5Flashes.push({x:j.x,y:j.y,t:t0});
+    for(const w of j.walls) k5WallFlashes.push({x:w.x,y:w.y,t:t0});
+    return;
+  }
+  const steps=[];
+  for(const[dx,dy] of dirs){
+    let nx=ent.x+dx, ny=ent.y+dy;
+    if(useTorus()) [nx,ny]=torusXY(nx,ny);
+    else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+    if(grid[ny][nx]===0) steps.push({x:nx,y:ny});
+  }
+  if(steps.length){
+    const st=steps[0|Math.random()*steps.length];
+    ent.x=st.x; ent.y=st.y;
+  }
+}
 
 function stepM5(m){
   if(m.collected) return;
-  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-  const[dx,dy]=dirs[0|Math.random()*4];
-  let cx=m.x+dx,cy=m.y+dy;
-  const limit=useTorus()?N*N+4:Math.max(N*N,32);
-  for(let s=0;s<limit;s++){
-    if(useTorus())[cx,cy]=torusXY(cx,cy);
-    else if(cx<0||cx>=N||cy<0||cy>=N) return;
-    if(grid[cy][cx]===0){
-      m.x=cx; m.y=cy;
-      k5Flashes.push({x:cx,y:cy,t:Date.now()});
-      return;
-    }
-    cx+=dx; cy+=dy;
-  }
+  k5StepEntity(m);
 }
 
 function stepP4(pair){
@@ -1171,6 +1615,7 @@ function entitiesAtCell(x,y, ignoreMob){
   return res;
 }
 function canCooptPair(senior, junior){
+  if(stage===9) return Math.abs(maxOfSet(fullSet(senior))-maxOfSet(fullSet(junior)))===1;
   const sSets=fullSet(senior), jSets=fullSet(junior);
   for(const a of sSets) for(const b of jSets) if(Math.abs(a-b)===1) return true;
   return false;
@@ -1196,23 +1641,31 @@ function cellUnsafeForK6(m, nx, ny){
   }
   return false;
 }
-function k6CooptsOnCell(m, nx, ny){
+/** Классификация кооптации на клетке: NPC (предпочтительно) или только герой. */
+function k6CooptKindOnCell(m, nx, ny){
+  const maxK=maxOfSet(fullSet(m));
+  let npc=false, h=false;
   for(const o of entitiesAtCell(nx,ny,m)){
-    const maxK=maxOfSet(fullSet(m)), maxO=maxOfSet(fullSet(o));
-    if(maxK>maxO && canCooptPair(m,o)) return true;
+    const maxO=maxOfSet(fullSet(o));
+    if(maxK<=maxO||!canCooptPair(m,o)) continue;
+    if(o.isHero) h=true; else npc=true;
   }
-  return false;
+  if(npc) return 'npc';
+  if(h) return 'hero';
+  return '';
 }
 function stepM6AI(m){
   if(m.collected||!hero.alive) return;
   const moves=[];
   for(const[dx,dy] of KING_DIRS){
-    const [nx,ny]=torusXY(m.x+dx,m.y+dy);
+    let nx=m.x+dx, ny=m.y+dy;
+    if(useTorus())[nx,ny]=torusXY(nx,ny);
+    else if(nx<0||nx>=N||ny<0||ny>=N) continue;
     if(grid[ny][nx]===1) continue;
     moves.push([nx,ny]);
   }
   if(!moves.length) return;
-  const coopt=[], safe=[], risky=[];
+  const cooptNpc=[], cooptHero=[], safe=[], risky=[];
   for(const [nx,ny] of moves){
     const occ=entitiesAtCell(nx,ny,m);
     let dead=false;
@@ -1220,20 +1673,38 @@ function stepM6AI(m){
       if(!k6SurvivesMeet(m,o)){ dead=true; break; }
     }
     if(dead) continue;
-    if(occ.length && k6CooptsOnCell(m,nx,ny)) coopt.push([nx,ny]);
+    const ck=k6CooptKindOnCell(m,nx,ny);
+    if(ck==='npc') cooptNpc.push([nx,ny]);
+    else if(ck==='hero') cooptHero.push([nx,ny]);
     else if(occ.length) risky.push([nx,ny]);
     else if(!cellUnsafeForK6(m,nx,ny)) safe.push([nx,ny]);
     else risky.push([nx,ny]);
   }
   let pick=null;
-  if(coopt.length) pick=coopt[0|Math.random()*coopt.length];
+  if(cooptNpc.length) pick=cooptNpc[0|Math.random()*cooptNpc.length];
+  else if(cooptHero.length) pick=cooptHero[0|Math.random()*cooptHero.length];
   else if(safe.length) pick=safe[0|Math.random()*safe.length];
   else if(risky.length) pick=risky[0|Math.random()*risky.length];
-  else pick=moves[0|Math.random()*moves.length];
+  if(!pick) return;
   m.x=pick[0]; m.y=pick[1];
   checkMeetings(m);
 }
-function bOcc(){ const o=new Set(['0,0',`${N-1},${N-1}`]); for(const m of M1)o.add(kxy(m)); return o; }
+
+function stepAllM6(){
+  if(stage<7) return true;
+  for(const m of M6){
+    if(m.collected) continue;
+    stepM6AI(m);
+    if(!hero.alive) return false;
+  }
+  return true;
+}
+function bOcc(){
+  const fx=finishGX(), fy=finishGY();
+  const o=new Set(['0,0',`${fx},${fy}`]);
+  for(const m of M1)o.add(kxy(m));
+  return o;
+}
 function freeC(occ){ const f=[]; for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(grid[y][x]===0&&!occ.has(`${x},${y}`))f.push({x,y}); return f; }
 function pOK(sx,sy,ex,ey){
   const v=Array.from({length:N},()=>new Array(N).fill(false));
@@ -1247,6 +1718,29 @@ function pOK(sx,sy,ex,ey){
     }
   }
   return false;
+}
+
+/** к‑2: ортогональный шаг по правилам закраски; ownerId — индекс в M2. */
+function stepK2PaintMob(m,ownerId){
+  if(m.collected||!hero.alive) return;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  const ps=[];
+  for(const[dx,dy]of dirs){
+    let nx=m.x+dx, ny=m.y+dy;
+    if(useTorus()){
+      [nx,ny]=torusXY(nx,ny);
+      if(grid[ny][nx]===1) continue;
+    } else if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1) continue;
+    const owner=k2Territory[nx+','+ny];
+    if(owner!==undefined&&owner!==ownerId) continue;
+    ps.push([nx,ny]);
+  }
+  if(!ps.length) return;
+  const avoidOwn=ps.filter(([nx,ny])=>k2Territory[nx+','+ny]!==ownerId);
+  const pickPool=avoidOwn.length?avoidOwn:ps;
+  const[nx,ny]=pickPool[0|Math.random()*pickPool.length];
+  m.x=nx; m.y=ny;
+  k2Territory[nx+','+ny]=ownerId;
 }
 
 function stepM7(m){
@@ -1264,11 +1758,14 @@ function stepM7(m){
   }
   if(!opts.length) return;
   const isWall=(nx,ny)=>grid[ny][nx]===1;
-  const fresh=opts.filter(([nx,ny])=>!m.k7Visited.has(k7Key(nx,ny)));
-  const pool=fresh.length?fresh:opts;
-  const w=pool.filter(([nx,ny])=>isWall(nx,ny));
-  const f=pool.filter(([nx,ny])=>!isWall(nx,ny));
-  const pick=w.length?w[0|Math.random()*w.length]:f.length?f[0|Math.random()*f.length]:pool[0|Math.random()*pool.length];
+  const tiers=[
+    opts.filter(([nx,ny])=>!m.k7Visited.has(k7Key(nx,ny))&&isWall(nx,ny)),
+    opts.filter(([nx,ny])=>!m.k7Visited.has(k7Key(nx,ny))&&!isWall(nx,ny)),
+    opts.filter(([nx,ny])=>m.k7Visited.has(k7Key(nx,ny))&&isWall(nx,ny)),
+    opts.filter(([nx,ny])=>m.k7Visited.has(k7Key(nx,ny))&&!isWall(nx,ny)),
+  ];
+  const pool=tiers.find(t=>t.length)||opts;
+  const pick=pool[0|Math.random()*pool.length];
   m.x=pick[0]; m.y=pick[1];
   m.k7Visited.add(k7Key(m.x,m.y));
   if(m.k7Visited.size>N*N*3) m.k7Visited=new Set([k7Key(m.x,m.y)]);
@@ -1285,39 +1782,22 @@ function tick(){
       if(!hero.alive) return;
     }
   }
-  if(useTorus()){
-    for(const m of M6){
-      if(m.collected) continue;
-      stepM6AI(m);
-      if(!hero.alive) return;
-    }
-  }
+  // к‑6: первый проход королём (до остальных NPC), второй — после них
+  if(!stepAllM6()) return;
   if(stage>=3){
-    // к-2 moves every 2 ticks (half speed), captures territory, avoids other k2's territory
+    // к-2: раз в два тика
     if(tickCount%2===0){
       for(let i=0;i<M2.length;i++){
         const m=M2[i];
         if(m.collected) continue;
-        const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-        // Filter: avoid cells owned by OTHER k2
-        const ps=[];
-        for(const[dx,dy]of dirs){
-          let nx=m.x+dx, ny=m.y+dy;
-          if(useTorus()){
-            [nx,ny]=torusXY(nx,ny);
-            if(grid[ny][nx]===1) continue;
-          } else if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1) continue;
-          const owner=k2Territory[nx+','+ny];
-          if(owner!==undefined&&owner!==i) continue; // blocked by other k2's territory
-          ps.push([nx,ny]);
-        }
-        if(!ps.length) continue;
-        const[nx,ny]=ps[0|Math.random()*ps.length];
-        m.x=nx; m.y=ny;
-        // Claim territory
-        k2Territory[nx+','+ny]=i;
+        stepK2PaintMob(m,i);
         checkMeetings(m);
         if(!hero.alive) return;
+      }
+      if(stage===9&&(hero.navDigit|0)!==0){
+        if(heroActsLikeK2()){
+          if(!stepHeroAutopilotK2()) return;
+        }
       }
     }
   }
@@ -1367,9 +1847,18 @@ function tick(){
   }
   if(stage>=5){ for(const p of P4){stepP4(p); if(!hero.alive)return;} }
   if(stage>=6){ for(const m of M5){ if(m.collected)continue; stepM5(m); checkMeetings(m); if(!hero.alive)return; } }
+  if(!stepAllM6()) return;
+  if(stage===9&&(hero.navDigit|0)!==0&&!heroActsLikeK2()&&!heroImmobileLikeK1()){
+    const hr=heroMovementRank();
+    if(hr===3){ if(!stepHeroAutopilotK3()) return; }
+    else if(hr===4){ if(!stepHeroAutopilotK4()) return; }
+    else if(hr===5){ if(!stepHeroAutopilotK5()) return; }
+    else if(!stepHeroAutopilotLoose()) return;
+  }
   updateHeroLvl(); refreshCounters(); draw();
   // Check win in case last NPC was absorbed automatically while hero is on finish
   if(hero.alive) checkWin();
+  if(won) draw();
 }
 
 function draw(){
@@ -1389,7 +1878,7 @@ function draw(){
       ctx.fillStyle='#A04520';
       ctx.fillRect(cx+1,cy+1,CELL-2,CELL-2);
     }
-    else if(x===N-1&&y===N-1){
+    else if(x===finishGX()&&y===finishGY()){
       ctx.fillStyle='#0d2e12'; ctx.fillRect(cx,cy,CELL,CELL);
       ctx.strokeStyle='#4caf50'; ctx.lineWidth=2; ctx.strokeRect(cx+1,cy+1,CELL-2,CELL-2);
       ctx.fillStyle='#4caf50'; ctx.font=`600 ${Math.max(7,CELL*0.28)}px system-ui,sans-serif`;
@@ -1412,26 +1901,33 @@ function draw(){
     ctx.setLineDash([]);
   }
 
-  // к-2 territory tint — цвет по индексу владельца в M2
-  if(stage>=3 && Object.keys(k2Territory).length){
+  // к-2 территория — индекс M2 или герой «2» (этап 9)
+  if((stage>=3||stage===9) && Object.keys(k2Territory).length){
     for(const [key,owner] of Object.entries(k2Territory)){
-      if(M2[owner]&&M2[owner].collected) continue;
       const[tx,ty]=key.split(',').map(Number);
-      ctx.fillStyle=K2_TERRITORY_TINTS[owner%K2_TERRITORY_TINTS.length];
+      if(owner===K2_OWNER_HERO) ctx.fillStyle=K2_TERRITORY_TINT_HERO;
+      else{
+        if(M2[owner]&&M2[owner].collected) continue;
+        ctx.fillStyle=K2_TERRITORY_TINTS[owner%K2_TERRITORY_TINTS.length];
+      }
       ctx.fillRect(tx*CELL,ty*CELL,CELL,CELL);
     }
   }
 
-  // к-5 landing flash — solid red cell while frozen, disappears when freeze ends
-  if(stage>=6 && k5Flashes.length){
+  // к-5: красная вспышка приземления и перепрыгнутых стен (~600 ms)
+  if((stage>=6||stage===9) && (k5Flashes.length||k5WallFlashes.length)){
     const now=Date.now();
     k5Flashes=k5Flashes.filter(f=>now-f.t<600);
+    k5WallFlashes=k5WallFlashes.filter(f=>now-f.t<600);
     const frozen=now<k5FreezeUntil;
+    for(const f of k5WallFlashes){
+      if(grid[f.y][f.x]!==1) continue;
+      ctx.fillStyle=frozen?'rgba(200,25,25,0.88)':'rgba(200,25,25,0.42)';
+      ctx.fillRect(f.x*CELL, f.y*CELL, CELL, CELL);
+    }
     for(const f of k5Flashes){
-      // Solid bright red
       ctx.fillStyle=frozen?'rgba(220,20,20,0.95)':'rgba(220,20,20,0.4)';
       ctx.fillRect(f.x*CELL, f.y*CELL, CELL, CELL);
-      // White cross
       if(frozen){
         ctx.fillStyle='rgba(255,255,255,0.7)';
         ctx.fillRect(f.x*CELL+CELL*0.38, f.y*CELL+CELL*0.12, CELL*0.24, CELL*0.76);
@@ -1481,8 +1977,16 @@ function draw(){
   if(stage>=6) for(const m of M5) if(!m.collected) drawBall(ctx,m,0,dk);
   if(stage>=7) for(const m of M6) if(!m.collected) drawBall(ctx,m,0,dk);
   if(stage>=8) for(const m of M7) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage===9 && hero && hero.alive && heroMovementRank()===4 && hero._satL && hero._satR){
+    for(const g of[hero._satL,hero._satR]){
+      const cx=g.x*CELL+CELL/2, cy=g.y*CELL+CELL/2, rr=CELL*0.38;
+      ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
+      ctx.strokeStyle=dk?'rgba(200,215,238,0.58)':'rgba(90,110,145,0.65)';
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+  }
   if(hero.alive) drawHero(ctx,dk);
-  if(gameStarted&&hasMultiGlyphBlinkNeed()) drawPanels();
   }catch(e){}
 }
 
@@ -1490,67 +1994,86 @@ function safeCLR(lvl){
   return CLR[lvl]||CLR[1];
 }
 
-function drawSquareBall(ctx, gx, gy, lvl, dots, frameOffset, isHero){
+function drawSquareBall(ctx, gx, gy, lvl, dots, frameOffset, rawText){
   try{
-    const dk=darkMode;
-    const pad=isHero?1:2;
+    const pad=2;
     const x=gx*CELL+pad, y=gy*CELL+pad;
     const s=CELL-pad*2;
 
-    if(isHero){
-      // Колобок на поле — только «булка», цифры только в верхней панели
-      const cx=x+s/2, cy=y+s/2, r=s*0.45;
-      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-      ctx.fillStyle='#E8A020'; ctx.fill();
-      ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.arc(cx-r*0.3, cy-r*0.18, r*0.13, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx+r*0.3, cy-r*0.18, r*0.13, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle='#1a0a00';
-      ctx.beginPath(); ctx.arc(cx-r*0.3, cy-r*0.15, r*0.06, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx+r*0.3, cy-r*0.15, r*0.06, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx, cy+r*0.08, r*0.35, 0.25, Math.PI-0.25);
-      ctx.strokeStyle='#1a0a00'; ctx.lineWidth=r*0.11; ctx.stroke();
+    const ownC=safeCLR(lvl);
+    let text;
+    if(rawText!=null&&String(rawText).length){
+      text=String(rawText);
     } else {
-      const seq=getDigitSeq(lvl,dots||[]);
-      const ownC=safeCLR(lvl);
-      let showDigit;
-      if(seq.length>1){
-        const showIdx=Math.floor((animFrame+frameOffset)/2)%seq.length;
-        showDigit=seq[showIdx];
-      }else{
-        showDigit=seq.length ? Math.max(...seq) : lvl;
-      }
-      ctx.strokeStyle=ownC.fdk;
-      ctx.lineWidth=2.5;
-      ctx.strokeRect(x+1.25,y+1.25,s-2.5,s-2.5);
-      const fs=Math.max(10, 0|s*0.82);
-      ctx.font=`900 ${fs}px system-ui,sans-serif`;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillStyle='#ffffff';
-      ctx.fillText(String(showDigit), x+s/2, y+s/2);
+      let dd=Array.isArray(dots)&&dots.length?[...dots].filter(d=>d>=1&&d<=9):getDigitSeq(lvl,dots||[]);
+      if(!dd.length) dd=[Math.min(Math.max(1,lvl),9)];
+      text=dd.map(String).join(' ');
     }
+    ctx.strokeStyle=ownC.fdk;
+    ctx.lineWidth=2.5;
+    ctx.strokeRect(x+1.25,y+1.25,s-2.5,s-2.5);
+    let fs=Math.max(10, 0|s*0.82);
+    if(text.length>1){
+      const approx=Math.max(1, text.replace(/\s/g,'').length+Math.max(0,text.split(' ').length-1)*0.35);
+      fs=Math.max(6, Math.min(0|s*0.82, (s*0.88)/(approx*0.52)));
+    }
+    ctx.font=`900 ${0|fs}px system-ui,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(text, x+s/2, y+s/2);
   }catch(e){}
 }
 
 function drawBall(ctx,m,r,dk){
   if(!m||m.collected) return;
   const frameOff=((m.x||0)*7+(m.y||0)*13)%97;
-  drawSquareBall(ctx,m.x,m.y,m.lvl,m.dots,frameOff,false);
+  if(stage===9) drawSquareBall(ctx,m.x,m.y,m.lvl,[m.lvl],frameOff);
+  else drawSquareBall(ctx,m.x,m.y,m.lvl,null,frameOff,penaltyUIFullText(m));
 }
 
 function drawHero(ctx,dk){
   if(!hero||!hero.alive) return;
   const hcx=hero.x*CELL, hcy=hero.y*CELL;
-  ctx.fillStyle='rgba(232,160,32,0.25)';
+  const hMax=heroDisplayLvl();
+  const hk=Math.min(Math.max(1,hMax),MAX_DIGIT);
+  const br=safeCLR(hk).fdk;
+  const m=br.match(/^#([0-9a-f]{6})$/i);
+  if(m){
+    const r=parseInt(m[1].slice(0,2),16), g=parseInt(m[1].slice(2,4),16), b=parseInt(m[1].slice(4,6),16);
+    ctx.fillStyle=dk?`rgba(${r},${g},${b},0.12)`:`rgba(${r},${g},${b},0.2)`;
+  } else ctx.fillStyle='rgba(232,160,32,0.22)';
   ctx.fillRect(hcx,hcy,CELL,CELL);
-  drawSquareBall(ctx,hero.x,hero.y,hero.lvl,hero.displayDots||hero.dots,0,true);
+  const pad=1;
+  const x=hero.x*CELL+pad, y=hero.y*CELL+pad;
+  const s=CELL-pad*2;
+  const cx=x+s/2, cy=y+s/2, rr=s*0.45;
+  ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
+  ctx.fillStyle='#E8A020'; ctx.fill();
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(cx-rr*0.3, cy-rr*0.18, rr*0.13, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+rr*0.3, cy-rr*0.18, rr*0.13, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1a0a00';
+  ctx.beginPath(); ctx.arc(cx-rr*0.3, cy-rr*0.15, rr*0.06, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+rr*0.3, cy-rr*0.15, rr*0.06, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy+rr*0.08, rr*0.35, 0.25, Math.PI-0.25);
+  ctx.strokeStyle='#1a0a00'; ctx.lineWidth=rr*0.11; ctx.stroke();
+  if(stage>=1&&stage<=8&&hero){
+    const cap=penaltyUIFullText(hero);
+    if(cap){
+      const fs=Math.max(5,Math.min(0|CELL*0.16,112/Math.max(cap.length,3)));
+      ctx.fillStyle=dk?'rgba(255,255,255,0.92)':'rgba(30,30,30,0.95)';
+      ctx.font=`700 ${0|fs}px system-ui,sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText(cap,x+s/2,y+s-2);
+    }
+  }
 }
 
-/** Длительность анимации «цифры этапа» после задержки n секунд (n = номер завершённого этапа). */
+/** Длительность салюта (мс); по истечении — переход на следующий этап (или только конец игры для этапа 9). */
 const STAGE_SALUTE_MS=4800;
 
-/** Салют из вылетающих цифр d (1…8). */
+/** Салют из вылетающих цифр завершённого этапа (1…9). */
 function launchStageFireworks(stageDigit){
   const ch=String(stageDigit);
   const cv=gel('confetti-canvas');
@@ -1609,12 +2132,12 @@ function launchStageFireworks(stageDigit){
 }
 
 function scheduleNextStage(completedStage,nextStage){
-  const delayMs=completedStage*1000;
-  setTimeout(()=>launchStageFireworks(completedStage), delayMs);
+  clrT();
+  launchStageFireworks(completedStage);
   setTimeout(()=>{
     stage=nextStage;
     loadStage();
-  }, delayMs+STAGE_SALUTE_MS);
+  }, STAGE_SALUTE_MS);
 }
 
 function launchFireworks(){
@@ -1690,7 +2213,7 @@ function tickMs(){
 
 /** к-7 в стене: герой на соседнем поле — встреча через meet() (кооптация или гибель старшего). */
 function tryHeroPullK7FromWall(){
-  if(stage!==8||!hero.alive) return;
+  if((stage!==8&&stage!==9)||!hero.alive) return;
   if(grid[hero.y][hero.x]!==0) return;
   for(const m of M7){
     if(m.collected) continue;
@@ -1704,50 +2227,250 @@ function tryHeroPullK7FromWall(){
   }
 }
 
+/** Герой и NPC: этапы 1–8 — только одна клетка; этап 9 — ещё ортогональное соседство. */
+function heroNpcManhattanMeetOk(npc){
+  if(!hero||!hero.alive||!npc||npc.collected) return false;
+  const d=Math.abs(hero.x-npc.x)+Math.abs(hero.y-npc.y);
+  if(d===0) return true;
+  return stage===9&&d===1;
+}
+
+/** Встречи на клетке после шага героя; false — герой погиб (уже показана смерть). */
+function heroResolveCellAfterMove(){
+  if(!hero||!hero.alive) return false;
+  updateHeroLvl();
+  while(hero.alive){
+    const adj=getAllNPC().filter(n=>!n.collected&&heroNpcManhattanMeetOk(n));
+    if(!adj.length) break;
+    const order=sortPartnersForMeet(hero,adj);
+    const npc=order[0];
+    if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(npc))) break;
+    const info=meet(hero,npc);
+    if(npc.collected) registerNpcCollectedByHero(npc);
+    if(!hero.alive){ refreshCounters(); draw(); handleHeroDeath(info); return false; }
+    updateHeroLvl(); refreshCounters();
+  }
+  tryHeroPullK7FromWall();
+  if(!hero.alive) return false;
+  refreshCounters(); updateHeroLvl();
+  gel('hset').textContent=String(heroDisplayLvl());
+  return true;
+}
+
+/** Этап 9: ход героя как к‑2 по тикам (как у M2). */
+function stepHeroAutopilotK2(){
+  if(!heroActsLikeK2()||!hero.alive) return true;
+  const i=K2_OWNER_HERO;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  const ps=[];
+  for(const[dx,dy] of dirs){
+    let nx=hero.x+dx, ny=hero.y+dy;
+    if(useTorus()){
+      [nx,ny]=torusXY(nx,ny);
+      if(grid[ny][nx]===1) continue;
+    } else if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1) continue;
+    const owner=k2Territory[nx+','+ny];
+    if(owner!==undefined&&owner!==i) continue;
+    ps.push([nx,ny]);
+  }
+  if(!ps.length) return true;
+  const avoidOwn=ps.filter(([nx,ny])=>k2Territory[nx+','+ny]!==i);
+  let pickPool=avoidOwn.length?avoidOwn:ps;
+  if(heroWantsExitEnemyK2Paint32()) pickPool=pickBestK2ExitMoves(pickPool);
+  const[nx,ny]=pickPool[0|Math.random()*pickPool.length];
+  hero.x=nx; hero.y=ny;
+  k2Territory[nx+','+ny]=i;
+  return heroResolveCellAfterMove();
+}
+
+/** Этап 9: прямая с отражением (как M3 на плоскости); для 3 всегда, для 4 — если нет пары спутников. */
+function stepHeroAutopilotBallisticSolo(){
+  if(stage!==9||!hero||!hero.alive) return true;
+  const r=heroMovementRank();
+  if(r!==3&&!(r===4&&(!hero._satL||!hero._satR))) return true;
+  if(heroWantsExitEnemyK2Paint32()){
+    const cands=[];
+    for(const[dx,dy] of[[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=hero.x+dx, ny=hero.y+dy;
+      if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]!==0) continue;
+      cands.push([nx,ny]);
+    }
+    if(cands.length){
+      const pool=pickBestK2ExitMoves(cands);
+      const[nx,ny]=pool[0|Math.random()*pool.length];
+      hero._bdx=nx-hero.x; hero._bdy=ny-hero.y;
+      hero.x=nx; hero.y=ny;
+      return heroResolveCellAfterMove();
+    }
+  }
+  let dx=hero._bdx|0, dy=hero._bdy|0;
+  if(dx===0&&dy===0){
+    const freeDirs=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dxx,dyy])=>{
+      const x=hero.x+dxx, y=hero.y+dyy;
+      return x>=0&&x<N&&y>=0&&y<N&&grid[y][x]===0;
+    });
+    if(!freeDirs.length) return true;
+    [dx,dy]=freeDirs[0|Math.random()*freeDirs.length];
+    hero._bdx=dx; hero._bdy=dy;
+  }
+  let nx=hero.x+dx, ny=hero.y+dy;
+  if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1){
+    dx=-dx; dy=-dy; hero._bdx=dx; hero._bdy=dy;
+    nx=hero.x+dx; ny=hero.y+dy;
+  }
+  if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1){
+    const free=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dxx,dyy])=>{
+      const x=hero.x+dxx, y=hero.y+dyy;
+      return x>=0&&x<N&&y>=0&&y<N&&grid[y][x]===0;
+    });
+    if(free.length){
+      [dx,dy]=free[0|Math.random()*free.length];
+      hero._bdx=dx; hero._bdy=dy;
+      nx=hero.x+dx; ny=hero.y+dy;
+    } else return true;
+  }
+  if(nx>=0&&nx<N&&ny>=0&&ny<N&&grid[ny][nx]===0){
+    hero.x=nx; hero.y=ny;
+    return heroResolveCellAfterMove();
+  }
+  return true;
+}
+
+function stepHeroAutopilotK3(){
+  if(heroMovementRank()!==3) return true;
+  return stepHeroAutopilotBallisticSolo();
+}
+
+function stepHeroTrioSharedDir(){
+  let dx=hero._bdx|0, dy=hero._bdy|0;
+  if(dx===0&&dy===0){
+    initHeroMode4Satellites(true);
+    if(!hero._satL||!hero._satR) return stepHeroAutopilotBallisticSolo();
+    dx=hero._bdx|0; dy=hero._bdy|0;
+  }
+  function canStep(dxx,dyy){
+    const hx=hero.x+dxx, hy=hero.y+dyy;
+    const lx=hero._satL.x+dxx, ly=hero._satL.y+dyy;
+    const rx=hero._satR.x+dxx, ry=hero._satR.y+dyy;
+    if(heroNpcBlocksCell(hx,hy)||heroNpcBlocksCell(lx,ly)||heroNpcBlocksCell(rx,ry)) return false;
+    if(new Set([`${hx},${hy}`,`${lx},${ly}`,`${rx},${ry}`]).size!==3) return false;
+    return true;
+  }
+  if(heroWantsExitEnemyK2Paint32()){
+    const candDirs=[];
+    for(const d of[[1,0],[-1,0],[0,1],[0,-1]]) if(canStep(d[0],d[1])) candDirs.push(d);
+    if(candDirs.length){
+      let bestPick={b:999,p:[]};
+      for(const d of candDirs){
+        const hx=hero.x+d[0], hy=hero.y+d[1];
+        const sc=heroK2ExitStepScore(hx,hy);
+        if(sc<bestPick.b){ bestPick={b:sc,p:[d]}; }
+        else if(sc===bestPick.b) bestPick.p.push(d);
+      }
+      const[chx,chy]=bestPick.p[0|Math.random()*bestPick.p.length];
+      hero._bdx=chx; hero._bdy=chy;
+      hero.x+=chx; hero.y+=chy;
+      hero._satL.x+=chx; hero._satL.y+=chy;
+      hero._satR.x+=chx; hero._satR.y+=chy;
+      return heroResolveCellAfterMove();
+    }
+  }
+  if(!canStep(dx,dy)){
+    dx=-dx; dy=-dy; hero._bdx=dx; hero._bdy=dy;
+    if(!canStep(dx,dy)) return true;
+  }
+  hero.x+=dx; hero.y+=dy;
+  hero._satL.x+=dx; hero._satL.y+=dy;
+  hero._satR.x+=dx; hero._satR.y+=dy;
+  return heroResolveCellAfterMove();
+}
+
+function stepHeroAutopilotK4(){
+  if(heroMovementRank()!==4) return true;
+  if(!hero._satL||!hero._satR) initHeroMode4Satellites((hero._bdx|0)!==0||(hero._bdy|0)!==0);
+  if(!hero._satL||!hero._satR) return stepHeroAutopilotBallisticSolo();
+  return stepHeroTrioSharedDir();
+}
+
+/** Этап 9: герой‑5 — как к‑5 (прыжок через стену или соседний шаг без инерции луча). */
+function stepHeroAutopilotK5(){
+  if(stage!==9||!hero||!hero.alive||heroMovementRank()!==5) return true;
+  const px=hero.x, py=hero.y;
+  k5StepEntity(hero);
+  if(hero.x!==px||hero.y!==py) return heroResolveCellAfterMove();
+  return true;
+}
+
+/** Этап 9: не к‑2 — случайный ортогональный ход или ход короля (6/7). */
+function stepHeroAutopilotLoose(){
+  if(stage!==9||!hero||!hero.alive||heroImmobileLikeK1()||heroActsLikeK2()) return true;
+  const r=heroMovementRank();
+  if(r===3||r===4||r===5) return true;
+  const king=r===6||r===7;
+  const dirs=king?KING_DIRS:[[1,0],[-1,0],[0,1],[0,-1]];
+  const opts=[];
+  for(const[dx,dy] of dirs){
+    let nx=hero.x+dx, ny=hero.y+dy;
+    if(useTorus()){[nx,ny]=torusXY(nx,ny);}
+    else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+    if(grid[ny][nx]===1) continue;
+    opts.push([nx,ny]);
+  }
+  if(!opts.length) return true;
+  let pool=opts;
+  if(heroWantsExitEnemyK2Paint32()) pool=pickBestK2ExitMoves(opts);
+  const[nx,ny]=pool[0|Math.random()*pool.length];
+  hero.x=nx; hero.y=ny;
+  return heroResolveCellAfterMove();
+}
+
 function pmove(dx,dy){
   if(won||resetT||!hero.alive||paused) return;
+  if(stage===9) return;
+  if(heroImmobileLikeK1()) return;
   if(Date.now()<k5FreezeUntil) return;
+  if(Math.abs(dx)+Math.abs(dy)===2 && !heroMayMoveDiagonal()) return;
   let nx=hero.x+dx, ny=hero.y+dy;
   if(useTorus()){
     nx=((nx%N)+N)%N;
     ny=((ny%N)+N)%N;
   } else if(nx<0||nx>=N||ny<0||ny>=N) return;
   if(grid[ny][nx]===1) return;
+
+  if(heroActsLikeK2()){
+    if(!heroK2TargetAllowed(nx,ny)) return;
+    hero._k2Pulse=(hero._k2Pulse|0)+1;
+    if(hero._k2Pulse%2===1) return;
+  }
+
   // Start NPC movement on first hero move
   if(!heroMoved && stage>=3){
     heroMoved=true;
     tickT=setInterval(tick,tickMs());
   }
   hero.x=nx; hero.y=ny;
+  if(heroActsLikeK2()) k2Territory[nx+','+ny]=K2_OWNER_HERO;
   if(stage>=1&&stage<=8) movesPerStage[stage-1]++;
-  updateHeroLvl();
-
-  for(const npc of getAllNPC()){
-    if(npc.collected||npc.x!==hero.x||npc.y!==hero.y) continue;
-    const info=meet(hero,npc);
-    if(npc.collected){
-      if(npc.lvl===1){col1++;gel('c1-cnt').textContent=col1;}
-      else if(npc.lvl===2){col2++;gel('c2-cnt').textContent=col2;}
-      else if(npc.lvl===3){col3++;gel('c3-cnt').textContent=col3;}
-      else if(npc.lvl===4){col4++;gel('c4-cnt').textContent=col4;}
-      else if(npc.lvl===5){col5++;gel('c5-cnt').textContent=col5;}
-      else if(npc.lvl===6){col6++;gel('c6-cnt').textContent=col6;}
-      else if(npc.lvl===7){col7++;gel('c7-cnt').textContent=col7;}
-    }
-    if(!hero.alive){ refreshCounters(); draw(); handleHeroDeath(info); return; }
-  }
-
-  tryHeroPullK7FromWall();
-  if(!hero.alive) return;
-
-  refreshCounters(); updateHeroLvl();
-  gel('hset').textContent=[...new Set([hero.lvl,...(hero.dots||[])])].filter(d=>d>=1&&d<=MAX_DIGIT).sort((a,b)=>b-a).join('');
+  if(!heroResolveCellAfterMove()) return;
 
   draw(); checkWin();
+  if(won) draw();
 }
 
 function checkWin(){
-  if(won||hero.x!==N-1||hero.y!==N-1)return;
+  if(won) return;
+  if(stage===9){
+    if(hero.x!==finishGX()||hero.y!==finishGY()) return;
+    if(!hero.alive) return;
+    won=true;
+    clrT();
+    setMsg('Вы дошли до конца маршрута');
+    refreshCounters();
+    draw();
+    launchStageFireworks(9);
+    return;
+  }
+  if(hero.x!==finishGX()||hero.y!==finishGY()) return;
   const a1=M1.filter(m=>!m.collected).length,a2=M2.filter(m=>!m.collected).length;
   const a3=M3.filter(m=>!m.collected).length,a4=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0);
   const a5=M5.filter(m=>!m.collected).length,a6=M6.filter(m=>!m.collected).length;
@@ -1776,19 +2499,21 @@ function checkWin(){
   }
   else if(stage===8){
     if(a7>0||a6>0||a5>0||a4>0||a3>0||a2>0||a1>0) return;
-    won=true;clrT();setMsg('Все 8 этапов пройдены! ПОБЕДА! 🎉');
-    const delayMs=8*1000;
-    setTimeout(()=>launchStageFireworks(8), delayMs);
-    setTimeout(()=>{
-      saveScore(playerName, movesPerStage.slice());
-      gel('new-btn').style.display='inline-block';
-      launchFireworks();
-    }, delayMs+STAGE_SALUTE_MS);
+    won=true; setMsg('Этап 8 пройден! Открываем этап 9…');
+    scheduleNextStage(8,9);
   }
 }
 
 function isDesktopFinePointer(){
   try{ return window.matchMedia('(pointer: fine)').matches; }catch(err){ return false; }
+}
+/** Код клавиши → цифра навигации (ряд Digit* и NumPad*). */
+function keyCodeToNavDigit(code){
+  const map={
+    Digit0:0,Digit1:1,Digit2:2,Digit3:3,Digit4:4,Digit5:5,Digit6:6,Digit7:7,Digit8:8,Digit9:9,
+    Numpad0:0,Numpad1:1,Numpad2:2,Numpad3:3,Numpad4:4,Numpad5:5,Numpad6:6,Numpad7:7,Numpad8:8,Numpad9:9
+  };
+  return Object.prototype.hasOwnProperty.call(map,code)?map[code]:null;
 }
 function onKey(e){
   if(gel('extras-modal').classList.contains('open')){
@@ -1809,8 +2534,58 @@ function onKey(e){
     } catch (err) {}
     return;
   }
-  const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
-  if(map[e.key]){e.preventDefault();pmove(...map[e.key]);}
+
+  const keysNeedFocus=!gel('help-modal').classList.contains('open')&&!gel('menu-overlay').classList.contains('open')&&
+    gel('lb-modal').style.display!=='flex'&&gameStarted&&gel('game').style.display!=='none';
+
+  const canAct=keysNeedFocus&&hero&&hero.alive&&!won&&!paused;
+
+  // Этап 9: допклавиши 2/4/6/8 и 1/3/7/9 — только цифры режима, не «стрелки» NumPad.
+  if(stage===9 && canAct){
+    const navS9=keyCodeToNavDigit(e.code);
+    if(navS9!==null){
+      e.preventDefault();
+      applyHeroChosenDigit(navS9);
+      updateHeroLvl();
+      draw();
+      return;
+    }
+  }
+
+  const arrowByCode={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
+  if(arrowByCode[e.code]){
+    if(canAct){e.preventDefault();pmove(...arrowByCode[e.code]);}
+    return;
+  }
+
+  const numpadDir={Numpad8:[0,-1],Numpad2:[0,1],Numpad4:[-1,0],Numpad6:[1,0]};
+  if(numpadDir[e.code]){
+    if(canAct){e.preventDefault();pmove(...numpadDir[e.code]);}
+    return;
+  }
+
+  const numpadKing={Numpad7:[-1,-1],Numpad9:[1,-1],Numpad1:[-1,1],Numpad3:[1,1]};
+  if(numpadKing[e.code]&&canAct&&heroMayMoveDiagonal()){
+    e.preventDefault();
+    pmove(...numpadKing[e.code]);
+    return;
+  }
+
+  const navD=keyCodeToNavDigit(e.code);
+  if(navD!==null){
+    if(canAct){
+      e.preventDefault();
+      applyHeroChosenDigit(navD);
+      updateHeroLvl();
+      draw();
+    }
+    return;
+  }
+
+  const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],Up:[0,-1],Down:[0,1],Left:[-1,0],Right:[1,0]};
+  if(map[e.key]){
+    if(canAct){e.preventDefault();pmove(...map[e.key]);}
+  }
   else if(e.key==='Enter'){e.preventDefault();resetStage();}
   else if(e.key==='Escape'){hideHelp();}
 }
@@ -1832,10 +2607,19 @@ document.addEventListener('touchend',e=>{
   const dy=e.changedTouches[0].clientY-touchStartY;
   const adx=Math.abs(dx), ady=Math.abs(dy);
   if(Math.max(adx,ady)<20) return; // too small
+  if(stage===9) return;
   if(adx>ady){ pmove(dx>0?1:-1,0); }
   else { pmove(0,dy>0?1:-1); }
 },{passive:true});
-function showHelp(){ gel('help-modal').classList.add('open'); }
+function syncHelpPanelsForStage(){
+  const full=gel('help-full');
+  const s9=gel('help-stage9-only');
+  if(full&&full!==_stub&&s9&&s9!==_stub){
+    if(stage===9){ full.style.display='none'; s9.style.display='block'; }
+    else{ full.style.display='block'; s9.style.display='none'; }
+  }
+}
+function showHelp(){ syncHelpPanelsForStage(); gel('help-modal').classList.add('open'); }
 function hideHelp(){ gel('help-modal').classList.remove('open'); }
 function openMenu(){ gel('menu-overlay').classList.add('open'); }
 function closeMenu(){ gel('menu-overlay').classList.remove('open'); }
