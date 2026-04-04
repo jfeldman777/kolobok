@@ -828,11 +828,52 @@ function sortPartnersForMeet(mover, partners){
   });
 }
 
-/** Встреча двух NPC: одна клетка (этапы 1–8); этап 9 — ещё ортогональное соседство. */
+function isK7Mob(m){ return m&&!m.isHero&&m.isK7===true; }
+/** к‑7 с к‑6 или с героем с максимумом 8 — встреча и на той же клетке, и по соседству короля. */
+function k7ExtendedMeetPartner(other){
+  if(!other||other.collected) return false;
+  if(other.isHero) return maxOfSet(fullSet(other))===8;
+  return M6.includes(other);
+}
+
+/** Встреча двух NPC: одна клетка (этапы 1–8); этап 9 — ортогональное соседство; к‑7↔к‑6 / к‑7↔герой‑8 — ещё соседство по королю. */
 function npcAdjacentForMeeting(a,b){
   if(a.x===b.x&&a.y===b.y) return true;
   if(stage===9) return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)===1;
+  if((isK7Mob(a)&&k7ExtendedMeetPartner(b))||(isK7Mob(b)&&k7ExtendedMeetPartner(a)))
+    return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))<=1;
   return false;
+}
+
+/** Погибнет ли к‑7 при meet с other (без мутации). */
+function k7DiesInMeetWith(k7,other){
+  const maxK=maxOfSet(fullSet(k7)), maxO=maxOfSet(fullSet(other));
+  if(maxK===maxO) return false;
+  const senior=maxK>maxO?k7:other;
+  const junior=maxK>maxO?other:k7;
+  if(canCooptPair(senior,junior)) return junior===k7;
+  return senior===k7;
+}
+/** Избегать соседства с этим юнитом (не для к‑6 и не для героя с макс. 8). */
+function k7ShouldEvadeMob(k7,o){
+  if(!o||o===k7||o.collected) return false;
+  if(M6.includes(o)) return false;
+  if(o.isHero&&maxOfSet(fullSet(o))===8) return false;
+  return k7DiesInMeetWith(k7,o);
+}
+function k7WouldMeetAtPosition(k7,nx,ny,o){
+  if(nx===o.x&&ny===o.y) return true;
+  if(isK7Mob(k7)&&k7ExtendedMeetPartner(o))
+    return Math.max(Math.abs(nx-o.x),Math.abs(ny-o.y))<=1;
+  return false;
+}
+function k7MoveIsEvadeSafe(k7,nx,ny){
+  for(const o of getAllNPC()){
+    if(!k7ShouldEvadeMob(k7,o)) continue;
+    if(k7WouldMeetAtPosition(k7,nx,ny,o)) return false;
+  }
+  if(hero.alive&&k7ShouldEvadeMob(k7,hero)&&k7WouldMeetAtPosition(k7,nx,ny,hero)) return false;
+  return true;
 }
 
 function meet(A,B){
@@ -1448,6 +1489,7 @@ function plM7(){
   shuffle(pool);
   M7=pool.slice(0,Math.min(npcCap(7),pool.length)).map(({x,y})=>{
     const n=mkNPC(x,y,7);
+    n.isK7=true;
     n.k7Visited=new Set([`${x},${y}`]);
     return n;
   });
@@ -1765,7 +1807,9 @@ function stepM7(m){
     opts.filter(([nx,ny])=>m.k7Visited.has(k7Key(nx,ny))&&!isWall(nx,ny)),
   ];
   const pool=tiers.find(t=>t.length)||opts;
-  const pick=pool[0|Math.random()*pool.length];
+  const safe=pool.filter(([nx,ny])=>k7MoveIsEvadeSafe(m,nx,ny));
+  const pickPool=safe.length?safe:pool;
+  const pick=pickPool[0|Math.random()*pickPool.length];
   m.x=pick[0]; m.y=pick[1];
   m.k7Visited.add(k7Key(m.x,m.y));
   if(m.k7Visited.size>N*N*3) m.k7Visited=new Set([k7Key(m.x,m.y)]);
@@ -1775,6 +1819,8 @@ function stepM7(m){
 function tick(){
   if(won||resetT||paused) return;
   tickCount++;
+  // к‑6: первый проход до к‑7 и остальных
+  if(!stepAllM6()) return;
   if(stage>=8){
     for(const m of M7){
       if(m.collected) continue;
@@ -1782,8 +1828,6 @@ function tick(){
       if(!hero.alive) return;
     }
   }
-  // к‑6: первый проход королём (до остальных NPC), второй — после них
-  if(!stepAllM6()) return;
   if(stage>=3){
     // к-2: раз в два тика
     if(tickCount%2===0){
@@ -2227,12 +2271,14 @@ function tryHeroPullK7FromWall(){
   }
 }
 
-/** Герой и NPC: этапы 1–8 — только одна клетка; этап 9 — ещё ортогональное соседство. */
+/** Герой и NPC: этапы 1–8 — одна клетка; этап 8 + к‑7 + герой с макс. 8 — ещё соседство короля; этап 9 — ортогональное соседство. */
 function heroNpcManhattanMeetOk(npc){
   if(!hero||!hero.alive||!npc||npc.collected) return false;
-  const d=Math.abs(hero.x-npc.x)+Math.abs(hero.y-npc.y);
-  if(d===0) return true;
-  return stage===9&&d===1;
+  if(hero.x===npc.x&&hero.y===npc.y) return true;
+  if(stage===9) return Math.abs(hero.x-npc.x)+Math.abs(hero.y-npc.y)===1;
+  if(stage===8&&isK7Mob(npc)&&maxOfSet(fullSet(hero))===8)
+    return Math.max(Math.abs(hero.x-npc.x),Math.abs(hero.y-npc.y))<=1;
+  return false;
 }
 
 /** Встречи на клетке после шага героя; false — герой погиб (уже показана смерть). */

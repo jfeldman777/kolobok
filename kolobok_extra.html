@@ -597,6 +597,71 @@ function getDigitSeq(lvl, dots){
 
 function maxOfSet(s){ let m=0; s.forEach(v=>{if(v>m)m=v;}); return m; }
 
+function meetPriorityPair(a,b){
+  return Math.max(maxOfSet(fullSet(a)),maxOfSet(fullSet(b)));
+}
+function sortPartnersForMeet(mover, partners){
+  return [...partners].sort((x,y)=>{
+    const px=meetPriorityPair(mover,x), py=meetPriorityPair(mover,y);
+    if(py!==px) return py-px;
+    return maxOfSet(fullSet(y))-maxOfSet(fullSet(x));
+  });
+}
+
+function isK7Mob(m){ return m&&!m.isHero&&m.isK7===true; }
+function k7ExtendedMeetPartner(other){
+  if(!other||other.collected) return false;
+  if(other.isHero) return maxOfSet(fullSet(other))===8;
+  return M6.includes(other);
+}
+/** Встреча: одна клетка; к‑7↔к‑6 / к‑7↔герой‑8 — ещё соседство короля. */
+function npcAdjacentForMeeting(a,b){
+  if(a.x===b.x&&a.y===b.y) return true;
+  if((isK7Mob(a)&&k7ExtendedMeetPartner(b))||(isK7Mob(b)&&k7ExtendedMeetPartner(a)))
+    return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))<=1;
+  return false;
+}
+function k7DiesInMeetWith(k7,other){
+  const maxK=maxOfSet(fullSet(k7)), maxO=maxOfSet(fullSet(other));
+  if(maxK===maxO) return false;
+  const senior=maxK>maxO?k7:other;
+  const junior=maxK>maxO?other:k7;
+  const sSets=fullSet(senior), jSets=fullSet(junior);
+  let canC=false;
+  for(const a of sSets){ for(const b of jSets){ if(Math.abs(a-b)===1){canC=true;break;} } if(canC)break; }
+  if(canC) return junior===k7;
+  return senior===k7;
+}
+function k7ShouldEvadeMob(k7,o){
+  if(!o||o===k7||o.collected) return false;
+  if(M6.includes(o)) return false;
+  if(o.isHero&&maxOfSet(fullSet(o))===8) return false;
+  return k7DiesInMeetWith(k7,o);
+}
+function k7WouldMeetAtPosition(k7,nx,ny,o){
+  if(nx===o.x&&ny===o.y) return true;
+  if(isK7Mob(k7)&&k7ExtendedMeetPartner(o))
+    return Math.max(Math.abs(nx-o.x),Math.abs(ny-o.y))<=1;
+  return false;
+}
+function k7MoveIsEvadeSafe(k7,nx,ny){
+  for(const o of getAllNPC()){
+    if(!k7ShouldEvadeMob(k7,o)) continue;
+    if(k7WouldMeetAtPosition(k7,nx,ny,o)) return false;
+  }
+  if(hero.alive&&k7ShouldEvadeMob(k7,hero)&&k7WouldMeetAtPosition(k7,nx,ny,hero)) return false;
+  return true;
+}
+
+/** Герой и NPC: обычно одна клетка; этап 8 + к‑7 + герой с макс. 8 — соседство короля. */
+function heroNpcManhattanMeetOk(npc){
+  if(!hero||!hero.alive||!npc||npc.collected) return false;
+  if(hero.x===npc.x&&hero.y===npc.y) return true;
+  if(stage===8&&isK7Mob(npc)&&maxOfSet(fullSet(hero))===8)
+    return Math.max(Math.abs(hero.x-npc.x),Math.abs(hero.y-npc.y))<=1;
+  return false;
+}
+
 function meet(A,B){
   const aOk=A.isHero?A.alive:!A.collected;
   const bOk=B.isHero?B.alive:!B.collected;
@@ -638,31 +703,45 @@ function meet(A,B){
   }
 }
 
+function registerNpcCollectedInline(npc){
+  if(!npc||!npc.collected) return;
+  if(npc.lvl===1){col1++;gel('c1-cnt').textContent=col1;}
+  else if(npc.lvl===2){col2++;gel('c2-cnt').textContent=col2;}
+  else if(npc.lvl===3){col3++;gel('c3-cnt').textContent=col3;}
+  else if(npc.lvl===4){col4++;gel('c4-cnt').textContent=col4;}
+  else if(npc.lvl===5){col5++;gel('c5-cnt').textContent=col5;}
+  else if(npc.lvl===6){col6++;gel('c6-cnt').textContent=col6;}
+  else if(npc.lvl===7&&stage>=8){col7++;gel('c7-cnt').textContent=col7;}
+}
+
 function checkMeetings(mover){
   const ok=mover.isHero?mover.alive:!mover.collected;
   if(!ok) return;
-  if(!mover.isHero&&hero.alive&&mover.x===hero.x&&mover.y===hero.y){
+  if(!mover.isHero&&hero.alive){
     updateHeroLvl();
-    const info=meet(hero,mover); updateHeroLvl(); refreshCounters();
-    // Update col counters if NPC was absorbed by hero
-    if(mover.collected){
-      if(mover.lvl===1){col1++;gel('c1-cnt').textContent=col1;}
-      else if(mover.lvl===2){col2++;gel('c2-cnt').textContent=col2;}
-      else if(mover.lvl===3){col3++;gel('c3-cnt').textContent=col3;}
-      else if(mover.lvl===4){col4++;gel('c4-cnt').textContent=col4;}
-      else if(mover.lvl===5){col5++;gel('c5-cnt').textContent=col5;}
-      else if(mover.lvl===6){col6++;gel('c6-cnt').textContent=col6;}
-      else if(mover.lvl===7&&stage>=8){col7++;gel('c7-cnt').textContent=col7;}
+    while(hero.alive){
+      const adj=getAllNPC().filter(n=>!n.collected&&heroNpcManhattanMeetOk(n));
+      if(!adj.length) break;
+      const order=sortPartnersForMeet(hero,adj);
+      const target=order[0];
+      if(maxOfSet(fullSet(hero))===maxOfSet(fullSet(target))) break;
+      const info=meet(hero,target);
+      if(target.collected) registerNpcCollectedInline(target);
+      updateHeroLvl(); refreshCounters();
+      if(!hero.alive){ handleHeroDeath(info); return; }
     }
-    if(!hero.alive){ handleHeroDeath(info); return; }
   }
   const stillOk=mover.isHero?mover.alive:!mover.collected;
   if(!stillOk) return;
-  for(const o of getAllNPC()){
-    if(o===mover||o.collected) continue;
-    if(o.x!==mover.x||o.y!==mover.y) continue;
+  while(true){
+    const partners=getAllNPC().filter(o=>!o.collected&&o!==mover&&npcAdjacentForMeeting(mover,o));
+    if(!partners.length) break;
+    const order=sortPartnersForMeet(mover,partners);
+    const o=order[0];
+    const oWas=o.collected, mWas=mover.collected;
     meet(mover,o);
-    if(mover.isHero?!mover.alive:mover.collected) break;
+    if(o.collected===oWas&&mover.collected===mWas) break;
+    if(mover.collected) break;
   }
   refreshCounters();
 }
@@ -1137,6 +1216,7 @@ function plM7(){
   shuffle(pool);
   M7=pool.slice(0,Math.min(npcCap(7),pool.length)).map(({x,y})=>{
     const n=mkNPC(x,y,7);
+    n.isK7=true;
     n.k7Visited=new Set([`${x},${y}`]);
     return n;
   });
@@ -1339,7 +1419,10 @@ function stepM7(m){
   const pool=fresh.length?fresh:opts;
   const w=pool.filter(([nx,ny])=>isWall(nx,ny));
   const f=pool.filter(([nx,ny])=>!isWall(nx,ny));
-  const pick=w.length?w[0|Math.random()*w.length]:f.length?f[0|Math.random()*f.length]:pool[0|Math.random()*pool.length];
+  const shortlist=w.length?w:f.length?f:pool;
+  const safe=shortlist.filter(([nx,ny])=>k7MoveIsEvadeSafe(m,nx,ny));
+  const pickPool=safe.length?safe:shortlist;
+  const pick=pickPool[0|Math.random()*pickPool.length];
   m.x=pick[0]; m.y=pick[1];
   m.k7Visited.add(k7Key(m.x,m.y));
   if(m.k7Visited.size>N*N*3) m.k7Visited=new Set([k7Key(m.x,m.y)]);
@@ -1349,17 +1432,17 @@ function stepM7(m){
 function tick(){
   if(won||resetT||paused) return;
   tickCount++;
-  if(stage>=8){
-    for(const m of M7){
-      if(m.collected) continue;
-      stepM7(m);
-      if(!hero.alive) return;
-    }
-  }
   if(useTorus()){
     for(const m of M6){
       if(m.collected) continue;
       stepM6AI(m);
+      if(!hero.alive) return;
+    }
+  }
+  if(stage>=8){
+    for(const m of M7){
+      if(m.collected) continue;
+      stepM7(m);
       if(!hero.alive) return;
     }
   }
@@ -1812,17 +1895,9 @@ function pmove(dx,dy){
   updateHeroLvl();
 
   for(const npc of getAllNPC()){
-    if(npc.collected||npc.x!==hero.x||npc.y!==hero.y) continue;
+    if(npc.collected||!heroNpcManhattanMeetOk(npc)) continue;
     const info=meet(hero,npc);
-    if(npc.collected){
-      if(npc.lvl===1){col1++;gel('c1-cnt').textContent=col1;}
-      else if(npc.lvl===2){col2++;gel('c2-cnt').textContent=col2;}
-      else if(npc.lvl===3){col3++;gel('c3-cnt').textContent=col3;}
-      else if(npc.lvl===4){col4++;gel('c4-cnt').textContent=col4;}
-      else if(npc.lvl===5){col5++;gel('c5-cnt').textContent=col5;}
-      else if(npc.lvl===6){col6++;gel('c6-cnt').textContent=col6;}
-      else if(npc.lvl===7){col7++;gel('c7-cnt').textContent=col7;}
-    }
+    if(npc.collected) registerNpcCollectedInline(npc);
     if(!hero.alive){ refreshCounters(); draw(); handleHeroDeath(info); return; }
   }
 
