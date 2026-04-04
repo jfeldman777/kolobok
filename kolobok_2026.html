@@ -165,6 +165,23 @@ canvas { display: block; }
 #help-close { position:absolute; top:0.75rem; right:0.75rem; background:#333; border:none; width:28px; height:28px; border-radius:50%; font-size:14px; cursor:pointer; color:#aaa; display:flex; align-items:center; justify-content:center; }
 #extras-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4500; align-items:center; justify-content:center; }
 #extras-modal.open { display:flex; }
+#gamepad-setup-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:4550; align-items:center; justify-content:center; padding:16px; padding-bottom:max(16px, env(safe-area-inset-bottom)); }
+#gamepad-setup-modal.open { display:flex; }
+#gamepad-setup-box { position:relative; background:#152018; border:1px solid #3d6b50; border-radius:14px; max-width:480px; width:100%; max-height:88vh; overflow-y:auto; padding:1rem 1.1rem 1.15rem; box-shadow:0 8px 32px rgba(0,0,0,0.45); }
+#gamepad-setup-box h2 { font-size:16px; font-weight:700; color:#b8e8c8; margin:0 2.2rem 0.5rem 0; letter-spacing:0.03em; }
+#gamepad-setup-box .gamepad-setup-hint { font-size:12px; color:#9ab0a0; line-height:1.5; margin:0 0 0.65rem; }
+#gamepad-setup-box #gamepad-setup-pre { margin:0 0 0.75rem; padding:10px; background:#0d120e; border-radius:8px; border:1px solid #2a3d30; font-size:11px; line-height:1.45; color:#c0e0d0; white-space:pre-wrap; word-break:break-word; font-family:ui-monospace,monospace; min-height:7rem; }
+#gamepad-setup-box #gamepad-setup-done { width:100%; padding:12px; font-size:14px; font-weight:700; cursor:pointer; border-radius:10px; border:1px solid #3d6b50; background:#1a3024; color:#a8e0b8; }
+#gamepad-setup-box #gamepad-setup-done:active { filter:brightness(1.08); }
+#gamepad-setup-close { position:absolute; top:0.6rem; right:0.6rem; width:30px; height:30px; border-radius:50%; border:none; background:#333; color:#aaa; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+/* Отладка геймпада: kolobok_2026.html?gamepaddebug=1 */
+#gamepad-debug-hud {
+  display:none; position:fixed; left:max(8px, env(safe-area-inset-left)); bottom:max(8px, env(safe-area-inset-bottom));
+  max-width:min(420px, 96vw); z-index:6000; background:rgba(18,22,20,0.94); border:1px solid #4a6b4a; border-radius:10px;
+  padding:10px 12px; font-size:11px; line-height:1.45; color:#c8e8d0; pointer-events:none; box-shadow:0 4px 24px rgba(0,0,0,0.5);
+}
+#gamepad-debug-hud.is-on { display:block; }
+#gamepad-debug-hud pre { margin:0; white-space:pre-wrap; word-break:break-word; font-family:ui-monospace,monospace; }
 #extras-box { background:#1e1e1e; border-radius:14px; max-width:520px; width:92%; max-height:88vh; overflow-y:auto; padding:1.25rem 1.5rem; position:relative; border:1px solid #333; }
 #extras-box h2 { font-size:16px; font-weight:600; margin:0 0 0.5rem; color:#fff; }
 #extras-box .extras-hint { font-size:12px; color:#888; margin:0 0 1rem; line-height:1.45; }
@@ -227,6 +244,7 @@ canvas { display: block; }
       </div>
     </div>
     <button type="button" id="setup-extras-btn" onclick="showExtras()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">+ Дополнительно — число NPC</button>
+    <button type="button" id="setup-gamepad-btn" onclick="openGamepadSetup()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #3d6b50;background:#142218;color:#a8e0b8;">🎮 Геймпад — настройка и проверка</button>
     <button id="start-btn">Начать игру</button>
     <button onclick="showLeaderboard()" style="padding:10px;font-size:14px;cursor:pointer;border-radius:10px;border:1px solid #444;background:#1e1e1e;color:#aaa;">🏆 Таблица чемпионов</button>
   </div>
@@ -269,7 +287,18 @@ canvas { display: block; }
     <button onclick="fullReset();closeMenu()">⏮ В начало</button>
     <button onclick="goToSetup();closeMenu()">⚙ Настройки</button>
     <button type="button" onclick="showExtras();closeMenu()">+ Дополнительно — число NPC</button>
+    <button type="button" onclick="openGamepadSetup();closeMenu()">🎮 Геймпад — настройка</button>
     <button id="menu-close" onclick="closeMenu()">Закрыть</button>
+  </div>
+</div>
+
+<div id="gamepad-setup-modal" role="dialog" aria-modal="true" aria-labelledby="gamepad-setup-title" onclick="if(event.target===this)closeGamepadSetup()">
+  <div id="gamepad-setup-box" onclick="event.stopPropagation()">
+    <button type="button" id="gamepad-setup-close" onclick="closeGamepadSetup()" aria-label="Закрыть">✕</button>
+    <h2 id="gamepad-setup-title">Геймпад — настройка</h2>
+    <p class="gamepad-setup-hint"><b>Телефон / планшет:</b> сопрягите контроллер по Bluetooth в настройках системы, откройте эту страницу в браузере и понажимайте кнопки на геймпаде — ниже должны меняться оси и D‑pad. <b>Компьютер:</b> USB или Bluetooth; этапы 1–8 — стик и D‑pad как стрелки; этап 9 — только цифры с клавиатуры. Дополнительно можно открыть страницу с <b>?gamepaddebug=1</b> — панель в углу экрана.</p>
+    <pre id="gamepad-setup-pre">Подключите геймпад и нажмите любую кнопку…</pre>
+    <button type="button" id="gamepad-setup-done" onclick="closeGamepadSetup()">Готово</button>
   </div>
 </div>
 
@@ -286,7 +315,7 @@ canvas { display: block; }
   <h3>Цель</h3>
   <p>Провести героя из левого верхнего угла в правый нижний (ФИНИШ), собрав всех персонажей в правильном порядке.</p>
   <h3>Управление</h3>
-  <p>Стрелки на клавиатуре или кнопки ↑↓←→. <b>Enter</b> — сброс этапа. На ПК с мышью: <b>Пробел</b> — полная пауза (герой и NPC), снова <b>Пробел</b> — продолжить; страница не прокручивается, поле остаётся на экране.</p>
+  <p><b>Этапы 1–8:</b> стрелки на клавиатуре, кнопки ↑↓←→ на экране, цифры <b>8·4·6·2</b> на NumPad и диагонали <b>7·9·1·3</b> там, где разрешено. <b>Геймпад:</b> на <b>телефоне или планшете</b> сопрягите контроллер по <b>Bluetooth</b> (или USB OTG, если поддерживается) и откройте игру в браузере — левый/правый <b>стик</b> и <b>D‑pad</b> дают те же ходы, что стрелки (понажимайте кнопки на геймпаде, если поле не реагирует). <b>На компьютере</b> подключите геймпад по USB или Bluetooth в системе — то же управление; для проверки осей и кнопок откройте страницу с параметром <b>?gamepaddebug=1</b> в адресе. <b>Этап 9:</b> только цифры режима с клавиатуры. <b>Enter</b> — сброс этапа. <b>Пробел</b> (ПК) — пауза герой и NPC.</p>
   <h3>Этапы 7–8 — склейка краёв</h3>
   <p>Стороны доски соединены как у тора: шаг <b>вверх</b> с верхнего ряда переносит на нижний, <b>вниз</b> с нижнего — на верхний; шаг <b>вправо</b> с правого столбца переносит к левому краю, <b>влево</b> с левого — к правому. Так же двигаются к-2, к-3, к-4, к-5 и к-6 (и к-7, но для неё и стены проходимы). Края поля на экране обозначены оранжевым пунктиром.</p>
   <h3>Персонажи</h3>
@@ -332,6 +361,8 @@ canvas { display: block; }
 </div>
 </div>
 
+<div id="gamepad-debug-hud" aria-hidden="true"><pre id="gamepad-debug-pre"></pre></div>
+
 <!-- Дополнительно: сколько к-1 … к-7 и пар к-4 -->
 <div id="extras-modal" onclick="if(event.target===this)hideExtras()">
   <div id="extras-box" onclick="event.stopPropagation()">
@@ -363,6 +394,12 @@ let tickT=null, resetT=null, heroMoved=false;
 let k2Territory={}; // key="x,y" → index of M2 owner
 let tickCount=0;    // for k2 slow movement (every 2 ticks)
 let graveyard=[];   // maxOfSet of each absorbed NPC
+/** Отладка геймпада: kolobok_2026.html?gamepaddebug=1 */
+const GAMEPAD_DEBUG=(function(){try{const v=new URLSearchParams(location.search).get('gamepaddebug');return v==='1'||v==='true';}catch(e){return false;}})();
+const GAMEPAD_DEAD_ZONE=0.38;
+const GAMEPAD_REPEAT_MS=145;
+let gamepadHeldKey=null;
+let gamepadLastStepAt=0;
 // CELL: fill screen width with the board (N tiles)
 // Use screen width divided by N, capped for desktop
 const _N_default = 15;
@@ -2503,6 +2540,152 @@ function pmove(dx,dy){
   if(won) draw();
 }
 
+function gamepadSetupModalIsOpen(){
+  const m=gel('gamepad-setup-modal');
+  return !!(m&&m!==_stub&&m.classList.contains('open'));
+}
+function openGamepadSetup(){
+  const m=gel('gamepad-setup-modal');
+  if(!m||m===_stub) return;
+  m.classList.add('open');
+  const btn=gel('gamepad-setup-close');
+  if(btn&&btn!==_stub) requestAnimationFrame(()=>{ try{ btn.focus(); }catch(e){} });
+}
+function closeGamepadSetup(){
+  const m=gel('gamepad-setup-modal');
+  if(m&&m!==_stub) m.classList.remove('open');
+  gamepadHeldKey=null;
+  gamepadLastStepAt=0;
+}
+
+function gamepadMovementAllowed(){
+  if(!gameStarted||gel('game').style.display==='none') return false;
+  if(gel('help-modal').classList.contains('open')) return false;
+  if(gel('menu-overlay').classList.contains('open')) return false;
+  if(gel('lb-modal').style.display==='flex') return false;
+  if(gel('extras-modal').classList.contains('open')) return false;
+  if(gamepadSetupModalIsOpen()) return false;
+  if(stage===9) return false;
+  if(!hero||!hero.alive||won||paused) return false;
+  return true;
+}
+function dpadDeltaFromGamepad(gp){
+  if(!gp.buttons||gp.buttons.length<16) return null;
+  const b=gp.buttons;
+  if(b[12]?.pressed) return [0,-1];
+  if(b[13]?.pressed) return [0,1];
+  if(b[14]?.pressed) return [-1,0];
+  if(b[15]?.pressed) return [1,0];
+  return null;
+}
+function stickToDeltaHero(ax,ay){
+  const dz=GAMEPAD_DEAD_ZONE;
+  const x=Math.abs(ax)<dz?0:ax;
+  const y=Math.abs(ay)<dz?0:ay;
+  if(x===0&&y===0) return null;
+  const sx=x===0?0:(x>0?1:-1);
+  const sy=y===0?0:(y>0?1:-1);
+  if(sx!==0&&sy!==0){
+    if(!heroMayMoveDiagonal()){
+      if(Math.abs(ax)>=Math.abs(ay)) return [sx,0];
+      return [0,sy];
+    }
+    return [sx,sy];
+  }
+  return [sx,sy];
+}
+function tryGamepadPmove(dx,dy){
+  if(!gamepadMovementAllowed()) return;
+  if(dx===0&&dy===0) return;
+  pmove(dx,dy);
+}
+function renderGamepadDebugHud(gp,dThis){
+  if(!GAMEPAD_DEBUG) return;
+  const pre=gel('gamepad-debug-pre');
+  if(!pre||pre===_stub) return;
+  const lines=[];
+  lines.push('gamepaddebug=1 · Колобок и его команда');
+  lines.push('Этапы 1–8: стик / D-pad; этап 9 — только цифры на клавиатуре.');
+  if(typeof navigator.getGamepads!=='function'){
+    lines.push('navigator.getGamepads недоступен.');
+    pre.textContent=lines.join('\n'); return;
+  }
+  if(!gp){
+    lines.push('Геймпад не найден.');
+    pre.textContent=lines.join('\n'); return;
+  }
+  lines.push('id: '+(gp.id||'—'));
+  lines.push('index='+gp.index+' mapping='+(gp.mapping||'—'));
+  lines.push('оси: '+(gp.axes||[]).map((v,i)=>i+'='+(typeof v==='number'?v.toFixed(2):String(v))).join(' '));
+  if(gp.buttons&&gp.buttons.length>=16)
+    lines.push('dpad 12–15: '+[12,13,14,15].map(i=>(gp.buttons[i]?.pressed?'1':'0')).join(' '));
+  lines.push('ход: '+(dThis?dThis[0]+','+dThis[1]:'—'));
+  lines.push('движение: '+(gamepadMovementAllowed()?'да':'нет'));
+  pre.textContent=lines.join('\n');
+}
+function renderGamepadSetupPanel(gp,dThis){
+  if(!gamepadSetupModalIsOpen()) return;
+  const pre=gel('gamepad-setup-pre');
+  if(!pre||pre===_stub) return;
+  const lines=[];
+  lines.push('— Сигнал с геймпада (обновляется постоянно) —');
+  if(typeof navigator.getGamepads!=='function'){
+    lines.push('Браузер не отдаёт Gamepad API (getGamepads).');
+    pre.textContent=lines.join('\n'); return;
+  }
+  if(!gp){
+    lines.push('Состояние: контроллер не виден.');
+    lines.push('Включите геймпад, сопрягите по Bluetooth или USB, затем нажмите несколько кнопок.');
+    pre.textContent=lines.join('\n'); return;
+  }
+  lines.push('Состояние: OK');
+  lines.push('Устройство: '+(gp.id||'—'));
+  lines.push('index='+gp.index+' · mapping='+(gp.mapping||'—'));
+  lines.push('Оси: '+(gp.axes||[]).map((v,i)=>i+'='+(typeof v==='number'?v.toFixed(2):String(v))).join(' '));
+  if(gp.buttons&&gp.buttons.length>=16)
+    lines.push('D-pad (хват 12–15): '+[12,13,14,15].map(i=>(gp.buttons[i]?.pressed?'ON ':'· ')).join(''));
+  lines.push('Направление как в игре: '+(dThis&&!(dThis[0]===0&&dThis[1]===0)?dThis[0]+','+dThis[1]:'—'));
+  lines.push('Ходы на поле сейчас: '+(gamepadMovementAllowed()?'да (идёт игра, меню закрыто)':'нет (настройка / меню / этап 9 / пауза…)'));
+  pre.textContent=lines.join('\n');
+}
+function pollGamepadHero(){
+  const refreshUi=(gp,d)=>{ if(GAMEPAD_DEBUG) renderGamepadDebugHud(gp,d); if(gamepadSetupModalIsOpen()) renderGamepadSetupPanel(gp,d); };
+  if(typeof navigator.getGamepads!=='function'){ refreshUi(null,null); return; }
+  const pads=navigator.getGamepads();
+  let gp=null;
+  for(let i=0;i<pads.length;i++){ if(pads[i]){ gp=pads[i]; break; } }
+  let dThis=null;
+  if(gp){
+    dThis=dpadDeltaFromGamepad(gp);
+    if(!dThis){
+      dThis=stickToDeltaHero(gp.axes[0]??0,gp.axes[1]??0);
+      if(!dThis&&gp.axes.length>=4)
+        dThis=stickToDeltaHero(gp.axes[2]??0,gp.axes[3]??0);
+    }
+  }
+  if(!gp){ gamepadHeldKey=null; refreshUi(null,null); return; }
+  const now=performance.now();
+  if(!dThis||dThis[0]===0&&dThis[1]===0){
+    gamepadHeldKey=null; gamepadLastStepAt=0; refreshUi(gp,null); return;
+  }
+  const key=dThis[0]+','+dThis[1];
+  if(!gamepadMovementAllowed()){ refreshUi(gp,dThis); return; }
+  if(gamepadHeldKey!==key){
+    gamepadHeldKey=key; gamepadLastStepAt=now;
+    tryGamepadPmove(dThis[0],dThis[1]);
+    refreshUi(gp,dThis); return;
+  }
+  if(now-gamepadLastStepAt>=GAMEPAD_REPEAT_MS){
+    gamepadLastStepAt=now;
+    tryGamepadPmove(dThis[0],dThis[1]);
+  }
+  refreshUi(gp,dThis);
+}
+function gamepadLoop(){
+  pollGamepadHero();
+  requestAnimationFrame(gamepadLoop);
+}
+
 function checkWin(){
   if(won) return;
   if(stage===9){
@@ -2564,6 +2747,10 @@ function keyCodeToNavDigit(code){
 function onKey(e){
   if(gel('extras-modal').classList.contains('open')){
     if(e.key==='Escape'){e.preventDefault();hideExtras();}
+    return;
+  }
+  if(gamepadSetupModalIsOpen()){
+    if(e.key==='Escape'){ e.preventDefault(); closeGamepadSetup(); }
     return;
   }
   if(isDesktopFinePointer() && e.code==='Space'){
@@ -2647,6 +2834,7 @@ document.addEventListener('touchend',e=>{
   if(!gameStarted||gel('game').style.display==='none') return;
   if(gel('help-modal').classList.contains('open')) return;
   if(gel('extras-modal').classList.contains('open')) return;
+  if(gamepadSetupModalIsOpen()) return;
   if(gel('menu-overlay').classList.contains('open')) return;
   if(gel('lb-modal').style.display==='flex') return;
   const dx=e.changedTouches[0].clientX-touchStartX;
@@ -2770,6 +2958,15 @@ function clearLeaderboard(){
   const cv = document.getElementById('c');
   if (cv) cv.addEventListener('click', function () { this.focus({ preventScroll: true }); });
 })();
+window.addEventListener('gamepadconnected', function (ev) {
+  try { gel('c')?.focus({ preventScroll: true }); } catch (e) {}
+  if (GAMEPAD_DEBUG && ev.gamepad) console.log('[gamepaddebug]', ev.gamepad.id, ev.gamepad.index);
+});
+requestAnimationFrame(gamepadLoop);
+if (GAMEPAD_DEBUG) {
+  const h = gel('gamepad-debug-hud');
+  if (h && h !== _stub) { h.classList.add('is-on'); h.removeAttribute('aria-hidden'); }
+}
 loadNpcCounts();
 bindExtrasSliders();
 </script>
