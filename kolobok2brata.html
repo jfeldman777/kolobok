@@ -55,21 +55,39 @@ html, body {
   justify-content: space-between;
   gap: 8px;
 }
+/* Подсказки управления в одной строке с A / B и пеналами */
+.controls-hint-a,
+.controls-hint-b {
+  font-size: clamp(7px, 2vw, 10px);
+  font-weight: 600;
+  line-height: 1.15;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.controls-hint-a {
+  text-align: left;
+  color: #9fa8da;
+}
+.controls-hint-b {
+  text-align: right;
+  color: #e1bee7;
+}
 .title-players-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  margin-top: 5px;
-  padding-top: 5px;
+  margin-top: 4px;
+  padding-top: 4px;
   border-top: 1px solid rgba(232, 160, 32, 0.22);
 }
 .title-penal-group {
   display: flex;
   align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  max-width: 42%;
+  gap: 4px;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 46%;
 }
 .title-penal-group-b {
   flex-direction: row;
@@ -393,6 +411,118 @@ html, body {
   cursor: pointer;
 }
 #rules-open:active { filter: brightness(1.12); }
+#history-open {
+  width: 100%;
+  flex: 0 0 100%;
+  padding: 10px 14px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: 1px solid #6a5a8a;
+  background: #231828;
+  color: #d1b4e0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+#history-open:active { filter: brightness(1.12); }
+#history-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 4950;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+#history-modal.open { display: flex; }
+#history-panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(88vh, 640px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 16px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 14px;
+}
+#history-panel h1 {
+  font-size: clamp(1rem, 2.6vw, 1.15rem);
+  font-weight: 700;
+  color: #d1b4e0;
+  letter-spacing: 0.04em;
+  margin: 0 36px 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+}
+#history-scroll {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  margin-top: 4px;
+}
+#history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  color: #bbb;
+}
+#history-table th {
+  text-align: left;
+  font-weight: 800;
+  color: #9a8a78;
+  padding: 8px 6px 6px;
+  border-bottom: 1px solid #444;
+  position: sticky;
+  top: 0;
+  background: #1a1a1a;
+}
+#history-table td {
+  padding: 8px 6px;
+  vertical-align: top;
+  border-bottom: 1px solid #2c2c2c;
+}
+#history-table .col-stage { white-space: nowrap; }
+#history-table .col-result { color: #c8c8c8; }
+#history-empty {
+  font-size: 13px;
+  color: #666;
+  padding: 12px 4px;
+}
+#history-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+#history-clear {
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #888;
+}
+#history-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
 #rules-modal {
   display: none;
   position: fixed;
@@ -465,9 +595,8 @@ html, body {
   width: 100%;
 }
 .side-panel {
-  flex: 0 0 clamp(48px, 11vw, 64px);
-  min-width: 44px;
-  max-width: 72px;
+  flex: 0 0 36px;
+  min-width: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -502,21 +631,6 @@ html, body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 6px;
-}
-.side-controls-hint {
-  font-size: clamp(7px, 1.85vw, 9px);
-  font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-  hyphens: auto;
-  word-break: break-word;
-}
-.side-panel-a .side-controls-hint {
-  color: rgba(200, 202, 238, 0.82);
-}
-.side-panel-b .side-controls-hint {
-  color: rgba(238, 210, 245, 0.82);
 }
 .side-marker {
   font-size: clamp(16px, 4.2vw, 20px);
@@ -530,6 +644,7 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   min-height: 22px;
   min-width: 1.75em;
   max-width: min(200px, 38vw);
@@ -755,21 +870,11 @@ html, body {
     flex: 0 0 auto;
     flex-direction: row;
     width: 100%;
-    max-width: none;
     border-right: none !important;
     border-left: none !important;
     border-bottom: 1px solid #2a2a2a;
     padding: 8px 12px;
-    justify-content: center;
-  }
-  .side-panel-inner {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .side-controls-hint {
-    font-size: clamp(10px, 2.8vw, 12px);
-    text-align: center;
+    justify-content: space-around;
   }
   .side-panel:last-of-type {
     border-top: 1px solid #2a2a2a;
@@ -807,11 +912,13 @@ html, body {
     <div class="title-players-row">
       <div class="title-penal-group title-penal-group-a" aria-label="Игрок A: пенал с цифрами уровня и коопта (образно — школьная коробочка для мелочей)">
         <span class="title-penal-letter">A</span>
+        <span class="controls-hint-a">Управляется буквами WASD</span>
         <span id="panel-a-lvl" class="player-penal player-penal-a" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя A">1</span>
       </div>
       <span id="live-stage">Этап 1 из 8</span>
       <div class="title-penal-group title-penal-group-b" aria-label="Игрок B: пенал с цифрами уровня и коопта (образно — школьная коробочка для мелочей)">
         <span id="panel-b-lvl" class="player-penal player-penal-b" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя B">1</span>
+        <span class="controls-hint-b">Стрелки или I J K L</span>
         <span class="title-penal-letter">B</span>
       </div>
     </div>
@@ -852,6 +959,31 @@ html, body {
       <span id="grid-out" class="menu-grid-out"></span>
       <button type="button" id="extras-open" onclick="showExtras()">Число персонажей (к‑1 … к‑7)…</button>
       <button type="button" id="rules-open">Правила игры</button>
+      <button type="button" id="history-open">ИСТОРИЯ ИГР</button>
+    </div>
+  </div>
+
+  <div id="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title">
+    <div id="history-panel">
+      <button type="button" id="history-close" aria-label="Закрыть историю">×</button>
+      <h1 id="history-title">История игр</h1>
+      <div id="history-scroll">
+        <div id="history-empty">Пока нет записей. Завершённые этапы и партии будут появляться здесь.</div>
+        <table id="history-table" hidden>
+          <thead>
+            <tr>
+              <th>Когда</th>
+              <th class="col-stage">Этап</th>
+              <th>Вид</th>
+              <th>Результат</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+      <div id="history-toolbar">
+        <button type="button" id="history-clear">Очистить историю</button>
+      </div>
     </div>
   </div>
 
@@ -860,7 +992,7 @@ html, body {
       <button type="button" id="rules-close" aria-label="Закрыть правила">×</button>
       <h1 id="rules-title">Правила</h1>
       <p class="sub">
-        Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки. <b>Пауза поля</b> — <b>двойной клик</b> по чёрному полю; ещё двойной клик — продолжить (один клик только переключает фокус на поле для клавиш).
+        Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки или <b>I J K L</b> (I вверх, K вниз, J влево, L вправо). <b>Пауза поля</b> — <b>двойной клик</b> по чёрному полю; ещё двойной клик — продолжить (один клик только переключает фокус на поле для клавиш).
         <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила: сравниваются множества цифр в пеналах. <b>В начале</b> в пенале у каждого <b>одна цифра — уровень</b>. У игрока он <b>совпадает с номером этапа</b>; у фишки задаётся при появлении и <b>всегда меньше номера этапа</b>. <b>Уровень определяет поведение</b> фишки. <b>При кооптации</b> два пенала <b>сливаются в один</b>: цифры объединяют, наибольшая становится новым <b>уровнем на поле</b>, остальные — <b>кооптированные, по убыванию</b> (как в алгоритме игры); две фишки дают одну. Если максимумы двух сторон <b>равны</b> — проход насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего (кооптация, см. выше). Иначе — максимумы по-прежнему разные, но <b>кооптация невозможна</b> (нет пары с разностью 1 между множествами; напр. <b>654</b> и <b>21</b>) — <b>гибнет старший</b>.
       </p>
       <p class="sub">
@@ -877,10 +1009,9 @@ html, body {
   </div>
 
   <div id="play-row">
-    <aside id="panel-a" class="side-panel side-panel-a" aria-label="Игрок A: слева, управление WASD">
+    <aside id="panel-a" class="side-panel side-panel-a" aria-label="Сторона игрока A">
       <div class="side-panel-inner">
         <span class="side-marker">A</span>
-        <span class="side-controls-hint">Управляется буквами WASD</span>
       </div>
     </aside>
     <div id="center-stack">
@@ -890,10 +1021,9 @@ html, body {
         <canvas id="c" width="400" height="400" tabindex="0" aria-label="Игровое поле"></canvas>
       </div>
     </div>
-    <aside id="panel-b" class="side-panel side-panel-b" aria-label="Игрок B: справа, управление стрелками">
+    <aside id="panel-b" class="side-panel side-panel-b" aria-label="Сторона игрока B">
       <div class="side-panel-inner">
         <span class="side-marker">B</span>
-        <span class="side-controls-hint">Управляется стрелками</span>
       </div>
     </aside>
   </div>
@@ -919,6 +1049,8 @@ html, body {
 <script>
 const LS_NPC = 'kolobok2brata_npc_counts';
 const LS_CELL = 'kolobok2brata_cell_slider';
+const LS_HISTORY = 'kolobok2brata_game_history';
+const MAX_HISTORY_ROWS = 80;
 const NPC_KEYS = ['n1', 'n2', 'n3', 'p4', 'n5', 'n6', 'n7'];
 const DEFAULT_NPC = { n1: 3, n2: 3, n3: 3, p4: 2, n5: 3, n6: 3, n7: 3 };
 const SLIDER_MAP = { n1: 'x-n1', n2: 'x-n2', n3: 'x-n3', p4: 'x-p4', n5: 'x-n5', n6: 'x-n6', n7: 'x-n7' };
@@ -941,6 +1073,8 @@ let grid = [];
 let wallPct = 14;
 let CELL = 40;
 let gameMode = 'competition';
+/** Счётчик ходов игроков (A/B) с начала текущей попытки этапа; для записи в историю при кооперации. */
+let sessionPlayerMoves = 0;
 /** В конкуренции: порядок победителей по завершённым этапам ('A' | 'B'); белый/чёрный шар у каждого в шапке. В кооперации не используется. */
 let compStageWinners = [];
 let posA = { x: 0, y: 0 };
@@ -1063,6 +1197,7 @@ function closeGameMenu() {
   const m = gel('menu-modal');
   if (m) m.classList.remove('open');
   closeRules();
+  closeHistory();
   try {
     const cv = gel('c');
     if (cv) cv.focus({ preventScroll: true });
@@ -1081,6 +1216,88 @@ function closeRules() {
   if (!m || !m.classList.contains('open')) return;
   m.classList.remove('open');
   if (gel('menu-modal')?.classList.contains('open')) gel('rules-open')?.focus();
+}
+
+function loadGameHistory() {
+  try {
+    const raw = localStorage.getItem(LS_HISTORY);
+    const arr = JSON.parse(raw || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveGameHistory(arr) {
+  try {
+    localStorage.setItem(LS_HISTORY, JSON.stringify(arr.slice(0, MAX_HISTORY_ROWS)));
+  } catch (e) {}
+}
+
+/** Запись в историю: новые сверху. payload: { stage, mode, result, who?, moves? } */
+function appendGameHistory(payload) {
+  const row = { t: Date.now(), ...payload };
+  const arr = loadGameHistory();
+  arr.unshift(row);
+  saveGameHistory(arr);
+}
+
+function formatHistoryResult(r) {
+  if (r.mode === 'competition') {
+    if (r.result === 'draw') return 'Ничья';
+    if (r.result === 'winner' && r.who) return 'Победитель ' + r.who;
+    return '—';
+  }
+  if (r.result === 'both' && typeof r.moves === 'number') return r.moves + ' ходов';
+  if (r.result === 'advance' && typeof r.moves === 'number') return r.moves + ' ходов';
+  if (r.result === 'fail' && typeof r.moves === 'number') return 'Проигрыш, ' + r.moves + ' ходов';
+  return '—';
+}
+
+function renderGameHistoryTable() {
+  const list = loadGameHistory();
+  const emptyEl = gel('history-empty');
+  const table = gel('history-table');
+  const tbody = gel('history-tbody');
+  if (!emptyEl || !table || !tbody) return;
+  if (!list.length) {
+    emptyEl.hidden = false;
+    table.hidden = true;
+    tbody.innerHTML = '';
+    return;
+  }
+  emptyEl.hidden = true;
+  table.hidden = false;
+  tbody.innerHTML = list.map((r) => {
+    const when = new Date(r.t).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+    const modeLabel = r.mode === 'cooperation' ? 'Кооперация' : 'Конкуренция';
+    const res = formatHistoryResult(r);
+    const st = typeof r.stage === 'number' ? r.stage : '—';
+    return '<tr><td>' + when + '</td><td class="col-stage">' + st + '</td><td>' + modeLabel + '</td><td class="col-result">' + res + '</td></tr>';
+  }).join('');
+}
+
+function openHistory() {
+  const m = gel('history-modal');
+  if (!m) return;
+  renderGameHistoryTable();
+  m.classList.add('open');
+  const btn = gel('history-close');
+  if (btn) requestAnimationFrame(() => btn.focus());
+}
+
+function closeHistory() {
+  const m = gel('history-modal');
+  if (!m || !m.classList.contains('open')) return;
+  m.classList.remove('open');
+  if (gel('menu-modal')?.classList.contains('open')) gel('history-open')?.focus();
+}
+
+function clearGameHistory() {
+  try {
+    localStorage.removeItem(LS_HISTORY);
+  } catch (e) {}
+  renderGameHistoryTable();
 }
 
 function updateTitleMode() {
@@ -1170,6 +1387,7 @@ function resetNpcDefaults() {
 function selectStartStage(n) {
   startStage = n;
   currentStage = n;
+  sessionPlayerMoves = 0;
   campaignDone = false;
   gameWinner = null;
   coopDeathAwaitKey = false;
@@ -2809,6 +3027,7 @@ function restartStageAfterDraw() {
   gameWinner = null;
   saluteAnim = null;
   worldPaused = false;
+  sessionPlayerMoves = 0;
   layoutBoard();
   genGridWithTokens();
   updateLiveStage();
@@ -2826,6 +3045,7 @@ function restartCoopStageFromDeath() {
   gameWinner = null;
   saluteAnim = null;
   worldPaused = false;
+  sessionPlayerMoves = 0;
   layoutBoard();
   genGridWithTokens();
   updateLiveStage();
@@ -2864,6 +3084,12 @@ function resolveEndgame() {
     }
     if (cannotEverWin('A') && cannotEverWin('B')) {
       gameWinner = 'cooplose';
+      appendGameHistory({
+        stage: currentStage,
+        mode: 'cooperation',
+        result: 'fail',
+        moves: sessionPlayerMoves,
+      });
       stopNpcStepTimer();
       saluteAnim = null;
       updateGameStatus();
@@ -2892,6 +3118,11 @@ function resolveEndgame() {
 
   if ((!aliveA && !aliveB) || (cannotEverWin('A') && cannotEverWin('B'))) {
     gameWinner = 'draw';
+    appendGameHistory({
+      stage: currentStage,
+      mode: 'competition',
+      result: 'draw',
+    });
     drawAwaitKey = true;
     stopNpcStepTimer();
     saluteAnim = null;
@@ -2927,6 +3158,19 @@ function scheduleAfterStageWin() {
   drawAwaitKey = false;
   worldPaused = false;
   const prevWinner = gameWinner;
+  const stageCompleted = currentStage;
+  const movesDone = sessionPlayerMoves;
+  const modeSnap = gameMode;
+
+  if (modeSnap === 'competition' && (prevWinner === 'A' || prevWinner === 'B')) {
+    appendGameHistory({ stage: stageCompleted, mode: 'competition', result: 'winner', who: prevWinner });
+  } else if (modeSnap === 'cooperation') {
+    if (prevWinner === 'coop') appendGameHistory({ stage: stageCompleted, mode: 'cooperation', result: 'both', moves: movesDone });
+    else if (prevWinner === 'A' || prevWinner === 'B')
+      appendGameHistory({ stage: stageCompleted, mode: 'cooperation', result: 'advance', moves: movesDone });
+  }
+  sessionPlayerMoves = 0;
+
   if (currentStage >= MAX_CAMPAIGN_STAGE) {
     if (gameMode === 'competition' && (prevWinner === 'A' || prevWinner === 'B')) compStageWinners.push(prevWinner);
     campaignDone = true;
@@ -3051,6 +3295,7 @@ function tryMove(who, dx, dy) {
   }
   pos.x = nx;
   pos.y = ny;
+  sessionPlayerMoves++;
   resolveTokenMeet(who);
   if (gameMode === 'cooperation' && (!aliveA || !aliveB)) {
     coopDeathAwaitKey = true;
@@ -3081,6 +3326,13 @@ function onKeyDown(e) {
     if (e.key === 'Escape') {
       e.preventDefault();
       hideExtras();
+    }
+    return;
+  }
+  if (gel('history-modal')?.classList.contains('open')) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeHistory();
     }
     return;
   }
@@ -3118,12 +3370,25 @@ function onKeyDown(e) {
     else if (code === 'ArrowDown') tryMove('B', 0, 1);
     else if (code === 'ArrowLeft') tryMove('B', -1, 0);
     else tryMove('B', 1, 0);
+  } else if (code === 'KeyI' || code === 'KeyJ' || code === 'KeyK' || code === 'KeyL') {
+    handled = true;
+    if (code === 'KeyI') tryMove('B', 0, -1);
+    else if (code === 'KeyK') tryMove('B', 0, 1);
+    else if (code === 'KeyJ') tryMove('B', -1, 0);
+    else tryMove('B', 1, 0);
   } else if (code === 'KeyW' || code === 'KeyA' || code === 'KeyS' || code === 'KeyD') {
     handled = true;
     if (code === 'KeyW') tryMove('A', 0, -1);
     else if (code === 'KeyS') tryMove('A', 0, 1);
     else if (code === 'KeyA') tryMove('A', -1, 0);
     else tryMove('A', 1, 0);
+  } else if (k === 'i' || k === 'I' || k === 'j' || k === 'J' || k === 'k' || k === 'K' || k === 'l' || k === 'L') {
+    handled = true;
+    const c = k.toLowerCase();
+    if (c === 'i') tryMove('B', 0, -1);
+    else if (c === 'k') tryMove('B', 0, 1);
+    else if (c === 'j') tryMove('B', -1, 0);
+    else tryMove('B', 1, 0);
   } else if (k === 'w' || k === 'W' || k === 'a' || k === 'A' || k === 's' || k === 'S' || k === 'd' || k === 'D') {
     handled = true;
     const c = k.toLowerCase();
@@ -3164,6 +3429,7 @@ function torusOrthAdjacent(ax, ay, bx, by) {
 function setGameMode(m) {
   if (m === gameMode) return;
   worldPaused = false;
+  sessionPlayerMoves = 0;
   gameMode = m;
   gel('mode-competition').classList.toggle('active', m === 'competition');
   gel('mode-cooperation').classList.toggle('active', m === 'cooperation');
@@ -3579,6 +3845,7 @@ function runGenerate() {
   closeGameMenu();
   wallPct = parseInt(gel('wall-slider').value, 10);
   gel('wall-out').textContent = wallPct + '%';
+  sessionPlayerMoves = 0;
   currentStage = startStage;
   campaignDone = false;
   gameWinner = null;
@@ -3627,6 +3894,12 @@ gel('rules-modal')?.addEventListener('click', function (e) {
 });
 gel('rules-close')?.addEventListener('click', closeRules);
 gel('rules-open')?.addEventListener('click', openRules);
+gel('history-modal')?.addEventListener('click', function (e) {
+  if (e.target === this) closeHistory();
+});
+gel('history-close')?.addEventListener('click', closeHistory);
+gel('history-open')?.addEventListener('click', openHistory);
+gel('history-clear')?.addEventListener('click', clearGameHistory);
 gel('title-mode')?.addEventListener('click', function () {
   setGameMode(gameMode === 'competition' ? 'cooperation' : 'competition');
 });
