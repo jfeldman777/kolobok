@@ -281,7 +281,7 @@ canvas { display: block; }
   <h3>Цель</h3>
   <p>Провести героя из левого верхнего угла в правый нижний (ФИНИШ), собрав всех персонажей в правильном порядке. Уровни <b>чужих</b> фишек на поле <b>не видны</b> — у каждой NPC своя <b>латинская буква</b>; у колобка картинка как в обычной игре, цифры «команды» — в <b>вашем пенале</b>.</p>
   <h3>Управление</h3>
-  <p>Стрелки на клавиатуре или кнопки ↑↓←→. <b>Enter</b> — сброс этапа. На ПК с мышью: <b>Пробел</b> — полная пауза (герой и NPC), снова <b>Пробел</b> — продолжить; страница не прокручивается, поле остаётся на экране.</p>
+  <p>Кампания — <b>этапы 1–8</b> (девятого этапа и режима «цифр», как в основной малой игре, здесь нет). <b>Стрелки</b> на клавиатуре или кнопки ↑↓←→ на экране; на NumPad ортогональные ходы <b>8·4·6·2</b>, на этапе 7 при движении героя как у к‑6/к‑7 — ещё диагонали <b>7·9·1·3</b> (как в основной игре). <b>Геймпад:</b> USB или Bluetooth (на телефоне — сопряжение в системе, затем браузер); <b>левый стик</b> и <b>D‑pad</b> дают те же ходы, что стрелки; диагональ со стика возможна там же, где разрешена NumPad‑диагональ. <b>Enter</b> — сброс этапа. На ПК с мышью: <b>Пробел</b> — полная пауза (герой и NPC), снова <b>Пробел</b> — продолжить; страница не прокручивается, поле остаётся на экране.</p>
   <h3>Этапы 7–8 — склейка краёв</h3>
   <p>Стороны доски соединены как у тора: шаг <b>вверх</b> с верхнего ряда переносит на нижний, <b>вниз</b> с нижнего — на верхний; шаг <b>вправо</b> с правого столбца переносит к левому краю, <b>влево</b> с левого — к правому. Так же двигаются к-2, к-3, к-4, к-5 и к-6 (и к-7, но для неё и стены проходимы). Края поля на экране обозначены оранжевым пунктиром.</p>
   <h3>Персонажи</h3>
@@ -472,6 +472,14 @@ const K2_TERRITORY_TINTS=[
 let hero={x:0,y:0,lvl:2,dots:[],alive:true,isHero:true};
 let darkMode=true; // always dark
 let gameStarted=false;
+/** После гибели героя: ждём клавишу/клик/кнопку геймпада (см. completeHeroDeathRestart). */
+let heroDeathAwaitKey=false;
+let heroDeathUnlisten=null;
+let gamepadHeroDeathLatch=false;
+const GAMEPAD_DEAD_ZONE=0.22;
+const GAMEPAD_REPEAT_MS=145;
+let gamepadHeldKey=null;
+let gamepadLastStepAt=0;
 /** Пеналь вроде «43» на фишке и в панели: по очереди 4, 3, 4, 3… (не две цифры разом). */
 let animFrame=0;
 setInterval(()=>{
@@ -578,6 +586,18 @@ function updateHeroLvl(){
   drawPanels();
 }
 
+function heroMovementRank(){
+  if(!hero||!hero.alive) return 0;
+  const L=hero.lvl|0;
+  if(L>=1&&L<=MAX_DIGIT) return L;
+  return Math.min(Math.max(1,L),MAX_DIGIT);
+}
+function heroMayMoveDiagonal(){
+  if(!hero||!hero.alive) return false;
+  const r=heroMovementRank();
+  if(r!==6&&r!==7) return false;
+  return stage>=7&&stage<=8;
+}
 
 function fullSet(obj){
   // dots contains all digits: own starting lvl + all absorbed
@@ -746,9 +766,25 @@ function checkMeetings(mover){
   refreshCounters();
 }
 
+function completeHeroDeathRestart(){
+  gamepadHeroDeathLatch=false;
+  if(heroDeathUnlisten){
+    try{ heroDeathUnlisten(); }catch(e){}
+    heroDeathUnlisten=null;
+  }
+  heroDeathAwaitKey=false;
+  resetStage();
+}
+
 function handleHeroDeath(info){
   clrT(); // stop tick and animation timers
   draw();
+  if(heroDeathUnlisten){
+    try{ heroDeathUnlisten(); }catch(e){}
+    heroDeathUnlisten=null;
+  }
+  heroDeathAwaitKey=false;
+  gamepadHeroDeathLatch=false;
   // Gray overlay on entire canvas
   const cv=gel('c');
   const ctx=cv.getContext('2d');
@@ -765,19 +801,21 @@ function handleHeroDeath(info){
   }
   ctx.font=`${0|CELL*0.32}px system-ui,sans-serif`;
   ctx.fillStyle='rgba(255,255,255,0.6)';
-  ctx.fillText('нажми любую клавишу', cv.width/2, cv.height/2+CELL*1.0);
+  ctx.fillText('нажми любую клавишу, клик или кнопку геймпада', cv.width/2, cv.height/2+CELL*1.0);
   setMsg('');
 
-  // Wait for any key to restart stage — minimum 1 second
-  function onAnyKey(e){
+  function unlisten(){
     document.removeEventListener('keydown', onAnyKey);
-    document.removeEventListener('click', onAnyKey);
-    resetStage();
+    document.removeEventListener('click', onAnyClick);
   }
+  function onAnyKey(e){ completeHeroDeathRestart(); }
+  function onAnyClick(e){ completeHeroDeathRestart(); }
   setTimeout(()=>{
     document.addEventListener('keydown', onAnyKey);
-    document.addEventListener('click', onAnyKey);
-  }, 1000);
+    document.addEventListener('click', onAnyClick);
+    heroDeathUnlisten=unlisten;
+    heroDeathAwaitKey=true;
+  },1000);
 }
 
 function getAllNPC(){
@@ -1876,9 +1914,111 @@ function tryHeroPullK7FromWall(){
   }
 }
 
+function gamepadMovementAllowed(){
+  if(!gameStarted||gel('game').style.display==='none') return false;
+  if(gel('help-modal').classList.contains('open')) return false;
+  if(gel('menu-overlay').classList.contains('open')) return false;
+  if(gel('lb-modal').style.display==='flex') return false;
+  if(gel('extras-modal').classList.contains('open')) return false;
+  if(!hero||!hero.alive||won||paused) return false;
+  return true;
+}
+function dpadDeltaFromGamepad(gp){
+  if(!gp.buttons||gp.buttons.length<16) return null;
+  const b=gp.buttons;
+  if(b[12]?.pressed) return [0,-1];
+  if(b[13]?.pressed) return [0,1];
+  if(b[14]?.pressed) return [-1,0];
+  if(b[15]?.pressed) return [1,0];
+  return null;
+}
+function stickToDeltaHero(ax,ay){
+  const dz=GAMEPAD_DEAD_ZONE;
+  const x=Math.abs(ax)<dz?0:ax;
+  const y=Math.abs(ay)<dz?0:ay;
+  if(x===0&&y===0) return null;
+  const sx=x===0?0:(x>0?1:-1);
+  const sy=y===0?0:(y>0?1:-1);
+  if(sx!==0&&sy!==0){
+    if(!heroMayMoveDiagonal()){
+      if(Math.abs(ax)>=Math.abs(ay)) return [sx,0];
+      return [0,sy];
+    }
+    return [sx,sy];
+  }
+  return [sx,sy];
+}
+function tryGamepadPmove(dx,dy){
+  if(!gamepadMovementAllowed()) return;
+  if(dx===0&&dy===0) return;
+  pmove(dx,dy);
+}
+function pollGamepadHero(){
+  if(typeof navigator.getGamepads!=='function') return;
+  const pads=navigator.getGamepads();
+  let gp=null;
+  for(let i=0;i<pads.length;i++){ if(pads[i]){ gp=pads[i]; break; } }
+
+  if(heroDeathAwaitKey){
+    if(!gp){
+      gamepadHeroDeathLatch=false;
+      return;
+    }
+    let anyPressed=false;
+    for(let i=0;i<(gp.buttons?.length||0);i++){
+      if(gp.buttons[i]?.pressed){ anyPressed=true; break; }
+    }
+    if(anyPressed){
+      if(!gamepadHeroDeathLatch){
+        gamepadHeroDeathLatch=true;
+        completeHeroDeathRestart();
+      }
+    } else {
+      gamepadHeroDeathLatch=false;
+    }
+    return;
+  }
+  gamepadHeroDeathLatch=false;
+
+  if(!gp){
+    gamepadHeldKey=null;
+    gamepadLastStepAt=0;
+    return;
+  }
+  let dThis=dpadDeltaFromGamepad(gp);
+  if(!dThis){
+    dThis=stickToDeltaHero(gp.axes[0]??0,gp.axes[1]??0);
+    if(!dThis&&gp.axes.length>=4)
+      dThis=stickToDeltaHero(gp.axes[2]??0,gp.axes[3]??0);
+  }
+  const now=performance.now();
+  if(!dThis||dThis[0]===0&&dThis[1]===0){
+    gamepadHeldKey=null;
+    gamepadLastStepAt=0;
+    return;
+  }
+  const key=dThis[0]+','+dThis[1];
+  if(!gamepadMovementAllowed()) return;
+  if(gamepadHeldKey!==key){
+    gamepadHeldKey=key;
+    gamepadLastStepAt=now;
+    tryGamepadPmove(dThis[0],dThis[1]);
+    return;
+  }
+  if(now-gamepadLastStepAt>=GAMEPAD_REPEAT_MS){
+    gamepadLastStepAt=now;
+    tryGamepadPmove(dThis[0],dThis[1]);
+  }
+}
+function gamepadLoop(){
+  pollGamepadHero();
+  requestAnimationFrame(gamepadLoop);
+}
+
 function pmove(dx,dy){
   if(won||resetT||!hero.alive||paused) return;
   if(Date.now()<k5FreezeUntil) return;
+  if(Math.abs(dx)+Math.abs(dy)===2 && !heroMayMoveDiagonal()) return;
   let nx=hero.x+dx, ny=hero.y+dy;
   if(useTorus()){
     nx=((nx%N)+N)%N;
@@ -1974,8 +2114,34 @@ function onKey(e){
     } catch (err) {}
     return;
   }
-  const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
-  if(map[e.key]){e.preventDefault();pmove(...map[e.key]);}
+
+  const keysNeedFocus=!gel('help-modal').classList.contains('open')&&!gel('menu-overlay').classList.contains('open')&&
+    gel('lb-modal').style.display!=='flex'&&gameStarted&&gel('game').style.display!=='none';
+  const canAct=keysNeedFocus&&hero&&hero.alive&&!won&&!paused;
+
+  const arrowByCode={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
+  if(arrowByCode[e.code]){
+    if(canAct){ e.preventDefault(); pmove(...arrowByCode[e.code]); }
+    return;
+  }
+
+  const numpadDir={Numpad8:[0,-1],Numpad2:[0,1],Numpad4:[-1,0],Numpad6:[1,0]};
+  if(numpadDir[e.code]){
+    if(canAct){ e.preventDefault(); pmove(...numpadDir[e.code]); }
+    return;
+  }
+
+  const numpadKing={Numpad7:[-1,-1],Numpad9:[1,-1],Numpad1:[-1,1],Numpad3:[1,1]};
+  if(numpadKing[e.code]&&canAct&&heroMayMoveDiagonal()){
+    e.preventDefault();
+    pmove(...numpadKing[e.code]);
+    return;
+  }
+
+  const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],Up:[0,-1],Down:[0,1],Left:[-1,0],Right:[1,0]};
+  if(map[e.key]){
+    if(canAct){ e.preventDefault(); pmove(...map[e.key]); }
+  }
   else if(e.key==='Enter'){e.preventDefault(); if(won) return; resetStage();}
   else if(e.key==='Escape'){hideHelp();}
 }
@@ -2025,6 +2191,12 @@ function resumeTick(){
 function goToSetup(){
   clearWinSaluteTimers();
   clrT(); paused=false;
+  if(heroDeathUnlisten){
+    try{ heroDeathUnlisten(); }catch(e){}
+    heroDeathUnlisten=null;
+  }
+  heroDeathAwaitKey=false;
+  gamepadHeroDeathLatch=false;
   const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
   gel('game').style.display='none';
   gel('setup').style.display='flex';
@@ -2108,6 +2280,7 @@ function clearLeaderboard(){
   const cv = document.getElementById('c');
   if (cv) cv.addEventListener('click', function () { this.focus({ preventScroll: true }); });
 })();
+requestAnimationFrame(gamepadLoop);
 loadNpcCounts();
 bindExtrasSliders();
 </script>

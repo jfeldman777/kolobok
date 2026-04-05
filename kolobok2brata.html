@@ -912,13 +912,13 @@ html, body {
     <div class="title-players-row">
       <div class="title-penal-group title-penal-group-a" aria-label="Игрок A: пенал с цифрами уровня и коопта (образно — школьная коробочка для мелочей)">
         <span class="title-penal-letter">A</span>
-        <span class="controls-hint-a">Управляется буквами WASD</span>
+        <span class="controls-hint-a">WASD или левый стик геймпада</span>
         <span id="panel-a-lvl" class="player-penal player-penal-a" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя A">1</span>
       </div>
       <span id="live-stage">Этап 1 из 8</span>
       <div class="title-penal-group title-penal-group-b" aria-label="Игрок B: пенал с цифрами уровня и коопта (образно — школьная коробочка для мелочей)">
         <span id="panel-b-lvl" class="player-penal player-penal-b" title="Пенал — как школьная прямоугольная коробочка (ластик, точилка…); здесь цифры «команды» героя B">1</span>
-        <span class="controls-hint-b">Стрелки или I J K L</span>
+        <span class="controls-hint-b">Стрелки, I J K L или D‑pad / правый стик</span>
         <span class="title-penal-letter">B</span>
       </div>
     </div>
@@ -992,12 +992,12 @@ html, body {
       <button type="button" id="rules-close" aria-label="Закрыть правила">×</button>
       <h1 id="rules-title">Правила</h1>
       <p class="sub">
-        Старт: A слева, B справа; FIN — центр низа. <b>A:</b> WASD, <b>B:</b> стрелки или <b>I J K L</b> (I вверх, K вниз, J влево, L вправо). <b>Пауза поля</b> — <b>двойной клик</b> по чёрному полю; ещё двойной клик — продолжить (один клик только переключает фокус на поле для клавиш).
+        Старт: A слева, B справа; FIN — центр низа. Кампания — <b>только этапы 1–8</b> (девятого этапа в этой игре нет, в отличие от «Колобок и его команда»). <b>A:</b> WASD, <b>B:</b> стрелки или <b>I J K L</b> (I вверх, K вниз, J влево, L вправо). <b>Геймпад:</b> сопрягите контроллер по USB или Bluetooth (на телефоне — в системе, затем откройте игру в браузере). <b>Левый стик</b> — ходы <b>A</b> (как WASD); <b>D‑pad</b> или <b>правый стик</b> — ходы <b>B</b> (как стрелки). Если у геймпада только один стик — он у <b>A</b>, а <b>B</b> остаётся за <b>D‑pad</b>. Шаги только по горизонтали и вертикали, как с клавиатуры. <b>Пауза поля</b> — <b>двойной клик</b> по чёрному полю; ещё двойной клик — продолжить (один клик только переключает фокус на поле для клавиш).
         <b>Встреча</b> (игрок–фишка и фишка–фишка) — одни и те же правила: сравниваются множества цифр в пеналах. <b>В начале</b> в пенале у каждого <b>одна цифра — уровень</b>. У игрока он <b>совпадает с номером этапа</b>; у фишки задаётся при появлении и <b>всегда меньше номера этапа</b>. <b>Уровень определяет поведение</b> фишки. <b>При кооптации</b> два пенала <b>сливаются в один</b>: цифры объединяют, наибольшая становится новым <b>уровнем на поле</b>, остальные — <b>кооптированные, по убыванию</b> (как в алгоритме игры); две фишки дают одну. Если максимумы двух сторон <b>равны</b> — проход насквозь, без коопта. Если <b>различны</b>: старший и младший по максимуму; есть ли между двумя множествами пара цифр с разностью <b>1</b> — старший <b>поглощает</b> младшего (кооптация, см. выше). Иначе — максимумы по-прежнему разные, но <b>кооптация невозможна</b> (нет пары с разностью 1 между множествами; напр. <b>654</b> и <b>21</b>) — <b>гибнет старший</b>.
       </p>
       <p class="sub">
-        <b>Кооперация:</b> <b>каждый набирает себе команду</b> (поглощает фишки по правилам встречи, пенал как у «Колобок и его команда»); победа, когда <b>оба</b> на FIN и у <b>каждого</b> в пенале есть <b>1</b>, а <b>максимум цифр = номеру этапа</b> (этап 1 — «1»; этап 2 — как «21»; полностью к одной «1» снижать не обязательно). <b>Всех персонажей на поле собирать не нужно.</b> Оба на FIN одновременно (ход на FIN вдвоём). <b>Погиб один</b> — любая клавиша, тот же этап заново. Проигрыш вдвоём — если <b>оба</b> не могут выиграть.
-        <b>Конкуренция:</b> тоже <b>каждый набирает себе команду</b>, но этап за первым на FIN, у кого в пенале есть <b>1</b> и <b>максимум цифр = номеру этапа</b> (этап 1 — пенал «1»; этап 2 — например «21»; полностью к одной «1» снижать не обязательно) — <b>игра и NPC сразу замирают</b>, салют, затем переход на следующий этап; <b>оба</b> получают новое поле (проигравший на этапе воскрешается). Пока в кооперации у второго нет цели на FIN — этап не засчитан, игра продолжается. В первой строке шапки у A и B — шарики по завершённым этапам: <b>белый</b> = победа на этапе, <b>чёрный</b> = поражение. Переключение конкуренция ↔ кооперация: откат к <b>выбранному стартовому этапу</b>, новое поле, шарики конкуренции сбрасываются (в кооперации строки шариков нет).         <b>Ничья</b> (только конкуренция): оба мертвы или у обоих живых нет пути к победе на этапе. Нажмите любую клавишу — тот же этап с новым полём.
+        <b>Кооперация:</b> <b>каждый набирает себе команду</b> (поглощает фишки по правилам встречи, пенал как у «Колобок и его команда»); победа, когда <b>оба</b> на FIN и у <b>каждого</b> в пенале есть <b>1</b>, а <b>максимум цифр = номеру этапа</b> (этап 1 — «1»; этап 2 — как «21»; полностью к одной «1» снижать не обязательно). <b>Всех персонажей на поле собирать не нужно.</b> Оба на FIN одновременно (ход на FIN вдвоём). <b>Погиб один</b> — любая клавиша или <b>любая кнопка геймпада</b>, тот же этап заново. Проигрыш вдвоём — если <b>оба</b> не могут выиграть.
+        <b>Конкуренция:</b> тоже <b>каждый набирает себе команду</b>, но этап за первым на FIN, у кого в пенале есть <b>1</b> и <b>максимум цифр = номеру этапа</b> (этап 1 — пенал «1»; этап 2 — например «21»; полностью к одной «1» снижать не обязательно) — <b>игра и NPC сразу замирают</b>, салют, затем переход на следующий этап; <b>оба</b> получают новое поле (проигравший на этапе воскрешается). Пока в кооперации у второго нет цели на FIN — этап не засчитан, игра продолжается. В первой строке шапки у A и B — шарики по завершённым этапам: <b>белый</b> = победа на этапе, <b>чёрный</b> = поражение. Переключение конкуренция ↔ кооперация: откат к <b>выбранному стартовому этапу</b>, новое поле, шарики конкуренции сбрасываются (в кооперации строки шариков нет).         <b>Ничья</b> (только конкуренция): оба мертвы или у обоих живых нет пути к победе на этапе. Нажмите любую клавишу или кнопку на геймпаде — тот же этап с новым полём.
         <b>Салют</b> на поле только при приходе на FIN с победой: в <b>кооперации</b> — когда <b>оба</b> на FIN с целью этапа в пенале (есть 1, макс. цифра = номеру этапа); в <b>конкуренции</b> — когда <b>один</b> первым на FIN с той же целью (при ничьей и кооп‑проигрыше без победы на FIN салюта нет).
         <b>к‑7</b> на этапе 8: ход как у шахматного короля по полу и стенам, с уклоном в клетки-стены и без возврата на уже посещённые клетки, пока есть куда сходить.
       </p>
@@ -1116,6 +1116,16 @@ const NPC_STEP_INTERVAL_MS = 450;
 let npcStepTimerId = null;
 /** Пауза мира: двойной клик по canvas (первый клик — только фокус для клавиш). */
 let worldPaused = false;
+
+/** Геймпад: левый стик → A, D‑pad / правый стик → B (кампания 1–8, без режима «цифр» как в первой игре). */
+const GAMEPAD_DEAD_ZONE = 0.22;
+const GAMEPAD_REPEAT_MS = 145;
+let gamepadHeldA = null;
+let gamepadHeldB = null;
+let gamepadLastA = 0;
+let gamepadLastB = 0;
+/** Удержание «любая кнопка» после кооп-смерти / ничьей, чтобы сработал только один перезапуск. */
+let gamepadAwaitLatch = false;
 
 const K2_TERRITORY_TINTS = [
   'hsla(0,   82%, 52%, 0.34)',
@@ -3277,6 +3287,129 @@ function drawSalute(ctx, pw, ph, kind, elapsedMs) {
   }
 }
 
+function gamepadPlayAllowed() {
+  if (gel('menu-modal')?.classList.contains('open')) return false;
+  if (gel('rules-modal')?.classList.contains('open')) return false;
+  if (gel('history-modal')?.classList.contains('open')) return false;
+  if (gel('extras-modal')?.classList.contains('open')) return false;
+  return true;
+}
+function dpadDeltaFromGamepad(gp) {
+  if (!gp.buttons || gp.buttons.length < 16) return null;
+  const b = gp.buttons;
+  if (b[12]?.pressed) return [0, -1];
+  if (b[13]?.pressed) return [0, 1];
+  if (b[14]?.pressed) return [-1, 0];
+  if (b[15]?.pressed) return [1, 0];
+  return null;
+}
+/** Только ортогональные шаги, как у клавиатуры (без диагоналей на поле). */
+function stickOrtho(ax, ay) {
+  const dz = GAMEPAD_DEAD_ZONE;
+  const x = Math.abs(ax) < dz ? 0 : ax;
+  const y = Math.abs(ay) < dz ? 0 : ay;
+  if (x === 0 && y === 0) return null;
+  const sx = x === 0 ? 0 : (x > 0 ? 1 : -1);
+  const sy = y === 0 ? 0 : (y > 0 ? 1 : -1);
+  if (sx !== 0 && sy !== 0) {
+    if (Math.abs(ax) >= Math.abs(ay)) return [sx, 0];
+    return [0, sy];
+  }
+  return [sx, sy];
+}
+function tryGamepadMove(who, dx, dy) {
+  if (!gamepadPlayAllowed()) return;
+  if (dx === 0 && dy === 0) return;
+  tryMove(who, dx, dy);
+}
+function pollGamepad() {
+  if (typeof navigator.getGamepads !== 'function') return;
+  const pads = navigator.getGamepads();
+  let gp = null;
+  for (let i = 0; i < pads.length; i++) {
+    if (pads[i]) {
+      gp = pads[i];
+      break;
+    }
+  }
+  if (!gp) {
+    gamepadHeldA = null;
+    gamepadHeldB = null;
+    gamepadLastA = 0;
+    gamepadLastB = 0;
+    gamepadAwaitLatch = false;
+    return;
+  }
+  if (coopDeathAwaitKey || drawAwaitKey) {
+    let anyPressed = false;
+    for (let i = 0; i < (gp.buttons?.length || 0); i++) {
+      if (gp.buttons[i]?.pressed) {
+        anyPressed = true;
+        break;
+      }
+    }
+    if (anyPressed) {
+      if (!gamepadAwaitLatch) {
+        gamepadAwaitLatch = true;
+        if (coopDeathAwaitKey) restartCoopStageFromDeath();
+        else restartStageAfterDraw();
+      }
+    } else {
+      gamepadAwaitLatch = false;
+    }
+    gamepadHeldA = null;
+    gamepadHeldB = null;
+    gamepadLastA = 0;
+    gamepadLastB = 0;
+    return;
+  }
+  gamepadAwaitLatch = false;
+  if (!gamepadPlayAllowed()) {
+    gamepadHeldA = null;
+    gamepadHeldB = null;
+    gamepadLastA = 0;
+    gamepadLastB = 0;
+    return;
+  }
+  const now = performance.now();
+  const dA = stickOrtho(gp.axes[0] ?? 0, gp.axes[1] ?? 0);
+  let dB = dpadDeltaFromGamepad(gp);
+  if (!dB || (dB[0] === 0 && dB[1] === 0)) dB = stickOrtho(gp.axes[2] ?? 0, gp.axes[3] ?? 0);
+
+  if (!dA || (dA[0] === 0 && dA[1] === 0)) {
+    gamepadHeldA = null;
+    gamepadLastA = 0;
+  } else {
+    const keyA = dA[0] + ',' + dA[1];
+    if (gamepadHeldA !== keyA) {
+      gamepadHeldA = keyA;
+      gamepadLastA = now;
+      tryGamepadMove('A', dA[0], dA[1]);
+    } else if (now - gamepadLastA >= GAMEPAD_REPEAT_MS) {
+      gamepadLastA = now;
+      tryGamepadMove('A', dA[0], dA[1]);
+    }
+  }
+  if (!dB || (dB[0] === 0 && dB[1] === 0)) {
+    gamepadHeldB = null;
+    gamepadLastB = 0;
+  } else {
+    const keyB = dB[0] + ',' + dB[1];
+    if (gamepadHeldB !== keyB) {
+      gamepadHeldB = keyB;
+      gamepadLastB = now;
+      tryGamepadMove('B', dB[0], dB[1]);
+    } else if (now - gamepadLastB >= GAMEPAD_REPEAT_MS) {
+      gamepadLastB = now;
+      tryGamepadMove('B', dB[0], dB[1]);
+    }
+  }
+}
+function gamepadLoop() {
+  pollGamepad();
+  requestAnimationFrame(gamepadLoop);
+}
+
 function tryMove(who, dx, dy) {
   if (worldPaused || gameWinner || coopDeathAwaitKey || drawAwaitKey) return;
   if (who === 'A' && !aliveA) return;
@@ -3935,6 +4068,7 @@ setInterval(function () {
   } catch (e) {}
 }, NPC_DIGIT_BLINK_MS);
 document.addEventListener('keydown', onKeyDown);
+requestAnimationFrame(gamepadLoop);
 (function () {
   const cv = gel('c');
   if (!cv) return;
