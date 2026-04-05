@@ -139,11 +139,19 @@ canvas { display: block; }
 
 /* Controls: 2 rows, только touch; снизу у доски, не у safe-area как отдельной панели на весь экран */
 #ctrl { display: none; flex-direction: column; gap: 4px; padding: 6px 6px 0; margin-top: 2px; background: #0a0a0a; flex-shrink: 0; width: 100%; box-sizing: border-box; border-radius: 0 0 10px 10px; }
+#ctrl-dpad { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 #ctrl-row1 { display: flex; justify-content: center; }
 #ctrl-row2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
 #ctrl button { height: 50px; font-size: 26px; font-weight: 900; cursor: pointer; border-radius: 10px; border: none; background: #1565c0; color: #fff; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-tap-highlight-color: transparent; }
 #ctrl-row1 button { width: 33vw; max-width: 130px; }
 #ctrl button:active { filter: brightness(1.4); transform: scale(0.92); }
+/* Этап 9: сетка 3×3 как на телефоне + 0; выбранная ячейка (геймпад / фокус) */
+#ctrl-s9pad { display: none; flex-direction: column; gap: 4px; width: 100%; }
+#ctrl-s9-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+#ctrl-s9pad .s9-key { height: 46px; font-size: 22px; font-weight: 900; cursor: pointer; border-radius: 10px; border: none; background: #1b5e20; color: #fff; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+#ctrl-s9pad .s9-key:active { filter: brightness(1.25); transform: scale(0.96); }
+#ctrl-s9pad .s9-key.s9-selected { box-shadow: 0 0 0 3px #E8A020, inset 0 0 0 2px rgba(255,255,255,0.25); background: #2e7d32; color: #fff; }
+#ctrl-s9pad .s9-key-zero { grid-column: 1 / -1; height: 44px; }
 #new-btn { display: none; }
 
 /* Overlays */
@@ -263,11 +271,27 @@ canvas { display: block; }
       <div id="board-stack">
         <canvas id="c" tabindex="0" aria-label="Игровое поле"></canvas>
         <div id="ctrl">
-          <div id="ctrl-row1"><button id="btn-up" onclick="pmove(0,-1)">↑</button></div>
-          <div id="ctrl-row2">
-            <button id="btn-left"  onclick="pmove(-1,0)">←</button>
-            <button id="btn-down"  onclick="pmove(0,1)">↓</button>
-            <button id="btn-right" onclick="pmove(1,0)">→</button>
+          <div id="ctrl-dpad">
+            <div id="ctrl-row1"><button type="button" id="btn-up" onclick="pmove(0,-1)">↑</button></div>
+            <div id="ctrl-row2">
+              <button type="button" id="btn-left"  onclick="pmove(-1,0)">←</button>
+              <button type="button" id="btn-down"  onclick="pmove(0,1)">↓</button>
+              <button type="button" id="btn-right" onclick="pmove(1,0)">→</button>
+            </div>
+          </div>
+          <div id="ctrl-s9pad" aria-label="Цифры режима этапа 9">
+            <div id="ctrl-s9-grid">
+              <button type="button" class="s9-key" data-s9ix="0" onclick="pressS9PadIndex(0)">1</button>
+              <button type="button" class="s9-key" data-s9ix="1" onclick="pressS9PadIndex(1)">2</button>
+              <button type="button" class="s9-key" data-s9ix="2" onclick="pressS9PadIndex(2)">3</button>
+              <button type="button" class="s9-key" data-s9ix="3" onclick="pressS9PadIndex(3)">4</button>
+              <button type="button" class="s9-key" data-s9ix="4" onclick="pressS9PadIndex(4)">5</button>
+              <button type="button" class="s9-key" data-s9ix="5" onclick="pressS9PadIndex(5)">6</button>
+              <button type="button" class="s9-key" data-s9ix="6" onclick="pressS9PadIndex(6)">7</button>
+              <button type="button" class="s9-key" data-s9ix="7" onclick="pressS9PadIndex(7)">8</button>
+              <button type="button" class="s9-key" data-s9ix="8" onclick="pressS9PadIndex(8)">9</button>
+              <button type="button" class="s9-key s9-key-zero" data-s9ix="9" onclick="pressS9PadIndex(9)">0</button>
+            </div>
           </div>
         </div>
       </div>
@@ -296,7 +320,7 @@ canvas { display: block; }
   <div id="gamepad-setup-box" onclick="event.stopPropagation()">
     <button type="button" id="gamepad-setup-close" onclick="closeGamepadSetup()" aria-label="Закрыть">✕</button>
     <h2 id="gamepad-setup-title">Геймпад — настройка</h2>
-    <p class="gamepad-setup-hint"><b>Телефон / планшет:</b> сопрягите контроллер по Bluetooth в настройках системы, откройте эту страницу в браузере и понажимайте кнопки на геймпаде — ниже должны меняться оси и D‑pad. <b>Компьютер:</b> USB или Bluetooth; этапы 1–8 — стик и D‑pad как стрелки; этап 9 — только цифры с клавиатуры. Дополнительно можно открыть страницу с <b>?gamepaddebug=1</b> — панель в углу экрана.</p>
+    <p class="gamepad-setup-hint"><b>Телефон / планшет:</b> сопрягите контроллер по Bluetooth в настройках системы, откройте эту страницу в браузере и понажимайте кнопки на геймпаде — ниже должны меняться оси и D‑pad. <b>Компьютер:</b> USB или Bluetooth; этапы 1–8 — стик и D‑pad как стрелки; этап 9 — D‑pad/стик подсвечивают ячейку на экране, кнопка <b>A</b> выбирает цифру (или цифры с клавиатуры). Дополнительно можно открыть страницу с <b>?gamepaddebug=1</b> — панель в углу экрана.</p>
     <pre id="gamepad-setup-pre">Подключите геймпад и нажмите любую кнопку…</pre>
     <button type="button" id="gamepad-setup-done" onclick="closeGamepadSetup()">Готово</button>
   </div>
@@ -315,7 +339,7 @@ canvas { display: block; }
   <h3>Цель</h3>
   <p>Провести героя из левого верхнего угла в правый нижний (ФИНИШ), собрав всех персонажей в правильном порядке.</p>
   <h3>Управление</h3>
-  <p><b>Этапы 1–8:</b> стрелки на клавиатуре, кнопки ↑↓←→ на экране, цифры <b>8·4·6·2</b> на NumPad и диагонали <b>7·9·1·3</b> там, где разрешено. <b>Геймпад:</b> на <b>телефоне или планшете</b> сопрягите контроллер по <b>Bluetooth</b> (или USB OTG, если поддерживается) и откройте игру в браузере — левый/правый <b>стик</b> и <b>D‑pad</b> дают те же ходы, что стрелки (понажимайте кнопки на геймпаде, если поле не реагирует). <b>На компьютере</b> подключите геймпад по USB или Bluetooth в системе — то же управление; для проверки осей и кнопок откройте страницу с параметром <b>?gamepaddebug=1</b> в адресе. <b>Этап 9:</b> только цифры режима с клавиатуры. <b>Enter</b> — сброс этапа. <b>Пробел</b> (ПК) — пауза герой и NPC.</p>
+  <p><b>Этапы 1–8:</b> стрелки на клавиатуре, кнопки ↑↓←→ на экране, цифры <b>8·4·6·2</b> на NumPad и диагонали <b>7·9·1·3</b> там, где разрешено. <b>Геймпад:</b> на <b>телефоне или планшете</b> сопрягите контроллер по <b>Bluetooth</b> (или USB OTG, если поддерживается) и откройте игру в браузере — левый/правый <b>стик</b> и <b>D‑pad</b> дают те же ходы, что стрелки (понажимайте кнопки на геймпаде, если поле не реагирует). <b>На компьютере</b> подключите геймпад по USB или Bluetooth в системе — то же управление; для проверки осей и кнопок откройте страницу с параметром <b>?gamepaddebug=1</b> в адресе. <b>Этап 9:</b> цифры режима — с клавиатуры или сетка <b>1…9</b> и <b>0</b> на экране (телефон); на геймпаде <b>D‑pad</b> / стик двигают подсветку, кнопка <b>A</b> (нижняя лицевая) подтверждает выбор. <b>Enter</b> — сброс этапа. <b>Пробел</b> (ПК) — пауза герой и NPC.</p>
   <h3>Этапы 7–8 — склейка краёв</h3>
   <p>Стороны доски соединены как у тора: шаг <b>вверх</b> с верхнего ряда переносит на нижний, <b>вниз</b> с нижнего — на верхний; шаг <b>вправо</b> с правого столбца переносит к левому краю, <b>влево</b> с левого — к правому. Так же двигаются к-2, к-3, к-4, к-5 и к-6 (и к-7, но для неё и стены проходимы). Края поля на экране обозначены оранжевым пунктиром.</p>
   <h3>Персонажи</h3>
@@ -334,7 +358,7 @@ canvas { display: block; }
   <h3>Этап 9 — к‑1 и к‑2</h3>
   <p>На поле одна <b>к‑1</b> и одна <b>к‑2</b>, FIN в центре. Сброс уровня героя: <b>0</b> или уровень этапа <b>9</b>. <b>1</b> — замереть как к‑1; <b>2</b> — ходить и закрашивать как к‑2 (см. таблицу ниже).</p>
   <h3>Движение фишек и героя на этапе 9 (клавиши 1…8, 0 — сброс к уровню этапа)</h3>
-  <p><b>NPC</b> — как в тике игры; <b>герой</b> — ваши шаги стрелками / 8·4·6·2 на NumPad; уровни <b>6</b> и <b>7</b> дают ещё диагонали NumPad 7·9·1·3.</p>
+  <p><b>NPC</b> — как в тике игры; <b>герой</b> — на этапе 9 режим задаётся <b>цифрами 0…9</b> (клавиатура, сетка на телефоне, геймпад — см. выше); <b>на этапах 1–8</b> — шаги стрелками / 8·4·6·2 на NumPad; уровни <b>6</b> и <b>7</b> дают ещё диагонали NumPad 7·9·1·3.</p>
   <ul style="margin-top:0.4rem;padding-left:1.2rem;">
     <li><b>к‑1</b> — не ходят, сидят в углу/закутке. <b>Герой «1»</b> на этапе&nbsp;9: <b>не ходит</b> — остаётся там, где перешёл в режим «1» (как неподвижная к‑1).</li>
     <li><b>к‑2</b> — в два раза медленнее остальных, закрашивают клетки своим цветом, не на чужую раскраску, по возможности не на свою уже закрашенную. <b>Герой «2»</b> на этапе&nbsp;9 — то же: <b>каждый второй</b> ваш ортогональный ход срабатывает, закраска как у первой к‑2 (красный оттенок), те же ограничения по клеткам.</li>
@@ -400,6 +424,11 @@ const GAMEPAD_DEAD_ZONE=0.38;
 const GAMEPAD_REPEAT_MS=145;
 let gamepadHeldKey=null;
 let gamepadLastStepAt=0;
+/** Этап 9: фокус на сетке 1…9 / 0 (индекс 0…8 → цифры 1…9, 9 → 0). */
+let s9PadFocusIx=9;
+let gamepadS9PrevA=false;
+let gamepadS9HeldNav=null;
+let gamepadS9LastNavAt=0;
 // CELL: fill screen width with the board (N tiles)
 // Use screen width divided by N, capped for desktop
 const _N_default = 15;
@@ -1260,6 +1289,10 @@ function loadStage(){
   hero._stageStartDots=[...dots];
   drawPanels();
   draw();
+  syncCtrlMode();
+  gamepadS9PrevA=false;
+  gamepadS9HeldNav=null;
+  gamepadS9LastNavAt=0;
 }
 
 /** Все клетки пола (grid===0) в одной 4-связной компоненте с (sx,sy) — нет «карманов» за замкнутым контуром стен. */
@@ -2507,6 +2540,73 @@ function stepHeroAutopilotLoose(){
   return heroResolveCellAfterMove();
 }
 
+function s9IxToDigit(ix){
+  if(ix===9) return 0;
+  if(ix>=0&&ix<=8) return ix+1;
+  return 5;
+}
+function digitToS9Ix(d){
+  const v=d|0;
+  if(v===0) return 9;
+  if(v>=1&&v<=9) return v-1;
+  return 4;
+}
+function s9MoveFocus(dx,dy){
+  if(dx===0&&dy===0) return;
+  const ix=s9PadFocusIx;
+  if(ix===9){
+    if(dy===-1) s9PadFocusIx=7;
+    return;
+  }
+  const r=(ix/3)|0, c=ix%3;
+  if(r===2&&dy===1){
+    if(c===1) s9PadFocusIx=9;
+    return;
+  }
+  const nc=c+dx, nr=r+dy;
+  if(nr<0||nr>2||nc<0||nc>2) return;
+  s9PadFocusIx=nr*3+nc;
+}
+function updateS9PadDomHighlight(){
+  const grid=gel('ctrl-s9-grid');
+  if(!grid||grid===_stub) return;
+  grid.querySelectorAll('.s9-key').forEach(btn=>{
+    const ix=parseInt(btn.getAttribute('data-s9ix'),10);
+    btn.classList.toggle('s9-selected',ix===s9PadFocusIx);
+  });
+}
+function syncS9PadFocusFromHero(){
+  if(stage!==9||!hero) return;
+  s9PadFocusIx=digitToS9Ix(hero.navDigit|0);
+}
+function syncCtrlMode(){
+  const dpad=gel('ctrl-dpad');
+  const s9=gel('ctrl-s9pad');
+  if(!dpad||dpad===_stub||!s9||s9===_stub) return;
+  if(stage===9){
+    dpad.style.display='none';
+    s9.style.display='flex';
+    syncS9PadFocusFromHero();
+    updateS9PadDomHighlight();
+  } else {
+    dpad.style.display='flex';
+    s9.style.display='none';
+  }
+}
+function pressS9PadIndex(ix){
+  if(stage!==9||won||resetT||!hero||!hero.alive||paused) return;
+  if(gel('help-modal').classList.contains('open')) return;
+  if(gel('menu-overlay').classList.contains('open')) return;
+  if(gel('lb-modal').style.display==='flex') return;
+  if(gel('extras-modal').classList.contains('open')) return;
+  if(gamepadSetupModalIsOpen()) return;
+  s9PadFocusIx=ix|0;
+  applyHeroChosenDigit(s9IxToDigit(s9PadFocusIx));
+  updateHeroLvl();
+  draw();
+  updateS9PadDomHighlight();
+}
+
 function pmove(dx,dy){
   if(won||resetT||!hero.alive||paused) return;
   if(stage===9) return;
@@ -2556,6 +2656,9 @@ function closeGamepadSetup(){
   if(m&&m!==_stub) m.classList.remove('open');
   gamepadHeldKey=null;
   gamepadLastStepAt=0;
+  gamepadS9PrevA=false;
+  gamepadS9HeldNav=null;
+  gamepadS9LastNavAt=0;
 }
 
 function gamepadMovementAllowed(){
@@ -2594,6 +2697,16 @@ function stickToDeltaHero(ax,ay){
   }
   return [sx,sy];
 }
+/** Направление для сетки цифр этапа 9 (включая диагональ со стика). */
+function stickToDeltaGrid(ax,ay){
+  const dz=GAMEPAD_DEAD_ZONE;
+  const x=Math.abs(ax)<dz?0:ax;
+  const y=Math.abs(ay)<dz?0:ay;
+  if(x===0&&y===0) return null;
+  const sx=x===0?0:(x>0?1:-1);
+  const sy=y===0?0:(y>0?1:-1);
+  return [sx,sy];
+}
 function tryGamepadPmove(dx,dy){
   if(!gamepadMovementAllowed()) return;
   if(dx===0&&dy===0) return;
@@ -2605,7 +2718,7 @@ function renderGamepadDebugHud(gp,dThis){
   if(!pre||pre===_stub) return;
   const lines=[];
   lines.push('gamepaddebug=1 · Колобок и его команда');
-  lines.push('Этапы 1–8: стик / D-pad; этап 9 — только цифры на клавиатуре.');
+  lines.push('Этапы 1–8: стик / D-pad; этап 9 — сетка на экране + D-pad/стик и A, либо цифры на клавиатуре.');
   if(typeof navigator.getGamepads!=='function'){
     lines.push('navigator.getGamepads недоступен.');
     pre.textContent=lines.join('\n'); return;
@@ -2645,15 +2758,89 @@ function renderGamepadSetupPanel(gp,dThis){
   if(gp.buttons&&gp.buttons.length>=16)
     lines.push('D-pad (хват 12–15): '+[12,13,14,15].map(i=>(gp.buttons[i]?.pressed?'ON ':'· ')).join(''));
   lines.push('Направление как в игре: '+(dThis&&!(dThis[0]===0&&dThis[1]===0)?dThis[0]+','+dThis[1]:'—'));
-  lines.push('Ходы на поле сейчас: '+(gamepadMovementAllowed()?'да (идёт игра, меню закрыто)':'нет (настройка / меню / этап 9 / пауза…)'));
+  lines.push('Ходы на поле сейчас: '+(stage===9?'этап 9 — сетка цифр (A)':(gamepadMovementAllowed()?'да (идёт игра, меню закрыто)':'нет (настройка / меню / пауза…)')));
   pre.textContent=lines.join('\n');
 }
+function gamepadStage9NavAllowed(){
+  if(!gameStarted||gel('game').style.display==='none') return false;
+  if(gel('help-modal').classList.contains('open')) return false;
+  if(gel('menu-overlay').classList.contains('open')) return false;
+  if(gel('lb-modal').style.display==='flex') return false;
+  if(gel('extras-modal').classList.contains('open')) return false;
+  if(gamepadSetupModalIsOpen()) return false;
+  if(!hero||!hero.alive||won||paused) return false;
+  return stage===9;
+}
+function pollGamepadStage9(gp){
+  let nav=dpadDeltaFromGamepad(gp);
+  if(!nav||nav[0]===0&&nav[1]===0){
+    nav=stickToDeltaGrid(gp.axes[0]??0,gp.axes[1]??0);
+    if((!nav||nav[0]===0&&nav[1]===0)&&gp.axes.length>=4)
+      nav=stickToDeltaGrid(gp.axes[2]??0,gp.axes[3]??0);
+  }
+  const now=performance.now();
+  const nKey=nav&&!(nav[0]===0&&nav[1]===0)?nav[0]+','+nav[1]:null;
+  if(!nKey){
+    gamepadS9HeldNav=null;
+    gamepadS9LastNavAt=0;
+  } else if(gamepadStage9NavAllowed()){
+    if(gamepadS9HeldNav!==nKey){
+      gamepadS9HeldNav=nKey;
+      gamepadS9LastNavAt=now;
+      s9MoveFocus(nav[0],nav[1]);
+      updateS9PadDomHighlight();
+    } else if(now-gamepadS9LastNavAt>=GAMEPAD_REPEAT_MS){
+      gamepadS9LastNavAt=now;
+      s9MoveFocus(nav[0],nav[1]);
+      updateS9PadDomHighlight();
+    }
+  }
+  const aPressed=!!(gp.buttons&&gp.buttons[0]?.pressed);
+  if(gamepadStage9NavAllowed()&&aPressed&&!gamepadS9PrevA){
+    applyHeroChosenDigit(s9IxToDigit(s9PadFocusIx));
+    updateHeroLvl();
+    draw();
+    syncS9PadFocusFromHero();
+    updateS9PadDomHighlight();
+  }
+  gamepadS9PrevA=aPressed;
+  if(GAMEPAD_DEBUG){
+    const pre=gel('gamepad-debug-pre');
+    if(pre&&pre!==_stub){
+      const lines=['gamepaddebug=1 · этап 9','фокус: '+s9IxToDigit(s9PadFocusIx)+' (ячейка '+s9PadFocusIx+')','A (кн. 0): выбрать цифру'];
+      pre.textContent=lines.join('\n');
+    }
+  }
+  if(gamepadSetupModalIsOpen()) renderGamepadSetupPanel(gp,nav);
+}
 function pollGamepadHero(){
-  const refreshUi=(gp,d)=>{ if(GAMEPAD_DEBUG) renderGamepadDebugHud(gp,d); if(gamepadSetupModalIsOpen()) renderGamepadSetupPanel(gp,d); };
+  const refreshUi=(gp,d)=>{ if(GAMEPAD_DEBUG&&stage!==9) renderGamepadDebugHud(gp,d); if(gamepadSetupModalIsOpen()&&stage!==9) renderGamepadSetupPanel(gp,d); };
   if(typeof navigator.getGamepads!=='function'){ refreshUi(null,null); return; }
   const pads=navigator.getGamepads();
   let gp=null;
   for(let i=0;i<pads.length;i++){ if(pads[i]){ gp=pads[i]; break; } }
+  if(stage===9){
+    if(!gp){
+      gamepadHeldKey=null;
+      gamepadLastStepAt=0;
+      gamepadS9HeldNav=null;
+      gamepadS9LastNavAt=0;
+      gamepadS9PrevA=false;
+      if(GAMEPAD_DEBUG){
+        const pre=gel('gamepad-debug-pre');
+        if(pre&&pre!==_stub) pre.textContent='gamepaddebug=1 · этап 9\nгеймпад не найден';
+      }
+      if(gamepadSetupModalIsOpen()) renderGamepadSetupPanel(null,null);
+      return;
+    }
+    pollGamepadStage9(gp);
+    gamepadHeldKey=null;
+    gamepadLastStepAt=0;
+    return;
+  }
+  gamepadS9PrevA=false;
+  gamepadS9HeldNav=null;
+  gamepadS9LastNavAt=0;
   let dThis=null;
   if(gp){
     dThis=dpadDeltaFromGamepad(gp);
@@ -2663,7 +2850,7 @@ function pollGamepadHero(){
         dThis=stickToDeltaHero(gp.axes[2]??0,gp.axes[3]??0);
     }
   }
-  if(!gp){ gamepadHeldKey=null; refreshUi(null,null); return; }
+  if(!gp){ gamepadHeldKey=null; gamepadLastStepAt=0; refreshUi(null,null); return; }
   const now=performance.now();
   if(!dThis||dThis[0]===0&&dThis[1]===0){
     gamepadHeldKey=null; gamepadLastStepAt=0; refreshUi(gp,null); return;
@@ -2781,6 +2968,8 @@ function onKey(e){
       applyHeroChosenDigit(navS9);
       updateHeroLvl();
       draw();
+      syncS9PadFocusFromHero();
+      updateS9PadDomHighlight();
       return;
     }
   }
