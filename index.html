@@ -410,10 +410,13 @@ body.modal-open { overflow: hidden; }
   background: #000;
   border: 1px solid #333;
 }
-.video-wrap video {
+.video-wrap video,
+.video-wrap iframe {
   display: block;
   width: 100%;
   max-height: min(56vh, 520px);
+  aspect-ratio: 16 / 9;
+  border: 0;
   vertical-align: middle;
 }
 .video-foot {
@@ -482,6 +485,8 @@ body.modal-open { overflow: hidden; }
     </div>
   </article>
 
+  <!-- Четвёртая игра пока без карточки: razogrev.html можно открыть по прямой ссылке. -->
+
   <article id="donate" class="card card-donate">
     <h2>Поддержка автора</h2>
     <p>
@@ -534,52 +539,53 @@ body.modal-open { overflow: hidden; }
 
   <section id="video" class="page-section" aria-labelledby="video-heading">
     <h2 class="section-heading" id="video-heading">Видео</h2>
-  <!-- Видео: game.webm (~80 МБ) в корне репозитория рядом с index.html. GitHub обычно принимает файлы до 100 МБ. -->
   <article class="card card-video">
     <h2>Колобок и его команда</h2>
     <p>Рассказывает автор.</p>
     <div class="video-wrap">
-      <video controls playsinline preload="metadata"
-        aria-label="Видео: Колобок и его команда">
-        <source src="game.webm" type="video/webm">
-        <a href="game.webm">Скачать видео (game.webm)</a> — если браузер не воспроизводит WebM.
-      </video>
+      <iframe
+        src="https://www.youtube.com/embed/5zXp-s8HPnc"
+        title="Колобок и его команда — видео на YouTube"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
-    <p class="video-foot">WebM отлично идёт в Chrome, Firefox, Edge. В старом Safari на части iPhone/iPad может не заиграть — тогда добавьте копию в .mp4 вторым &lt;source&gt; или выложите ролик на YouTube.</p>
+    <p class="video-foot">Встроенный плеер YouTube. Если не открывается — <a href="https://youtu.be/5zXp-s8HPnc" rel="noopener noreferrer">смотреть по ссылке</a>.</p>
   </article>
 
   <hr class="video-sep" aria-hidden="true">
 
   <article class="card card-video">
     <h2>Колобок-экстрасенс</h2>
-    <p>Рассказывает автор. <span class="soon-mark">(Скоро)</span></p>
-    <!-- ПОКА: положите ролик рядом с index.html как game_extra.webm
+    <p>Рассказывает автор.</p>
     <div class="video-wrap">
-      <video controls playsinline preload="metadata"
-        aria-label="Видео: Колобок-экстрасенс">
-        <source src="game_extra.webm" type="video/webm">
-        <a href="game_extra.webm">Скачать видео (game_extra.webm)</a> — если браузер не воспроизводит WebM.
-      </video>
+      <iframe
+        src="https://www.youtube.com/embed/-1GvC-o9d6o"
+        title="Колобок-экстрасенс — видео на YouTube"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
-    <p class="video-foot">Тот же формат, что у первого ролика. Файл должен лежать в одной папке с этой страницей.</p>
-    -->
+    <p class="video-foot">Встроенный плеер YouTube. Если не открывается — <a href="https://youtu.be/-1GvC-o9d6o" rel="noopener noreferrer">смотреть по ссылке</a>.</p>
   </article>
 
   <hr class="video-sep" aria-hidden="true">
 
   <article class="card card-video">
     <h2>Два брата-колобка</h2>
-    <p>Рассказывает автор. <span class="soon-mark">(Скоро)</span></p>
-    <!-- ПОКА: положите ролик рядом с index.html как game_2brata.webm
+    <p>Рассказывает автор.</p>
     <div class="video-wrap">
-      <video controls playsinline preload="metadata"
-        aria-label="Видео: Два брата-колобка">
-        <source src="game_2brata.webm" type="video/webm">
-        <a href="game_2brata.webm">Скачать видео (game_2brata.webm)</a> — если браузер не воспроизводит WebM.
-      </video>
+      <iframe
+        src="https://www.youtube.com/embed/_P8Z8iM12ds"
+        title="Два брата-колобка — видео на YouTube"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
-    <p class="video-foot">Тот же формат, что у первого ролика. Файл должен лежать в одной папке с этой страницей.</p>
-    -->
+    <p class="video-foot">Встроенный плеер YouTube. Если не открывается — <a href="https://youtu.be/_P8Z8iM12ds" rel="noopener noreferrer">смотреть по ссылке</a>.</p>
   </article>
   </section>
 

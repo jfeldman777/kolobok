@@ -1,0 +1,4 @@
+# Large media (videos hosted on YouTube, not in repo)
+*.webm
+*.mp4
+*.mov

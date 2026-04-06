@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#121218">
+<title>Разогрев</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #121218; color: #e8e8ec; font-family: system-ui, sans-serif; overflow: hidden; }
+#app { display: flex; flex-direction: column; height: 100%; max-width: 720px; margin: 0 auto; }
+.top-bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 8px 10px;
+  padding-top: max(8px, env(safe-area-inset-top));
+  background: #1a1a22;
+  border-bottom: 1px solid #2a2a38;
+}
+.top-bar a { color: #7eb8e8; font-size: 13px; font-weight: 600; }
+h1 { font-size: 15px; font-weight: 800; color: #E8A020; flex: 1; min-width: 120px; }
+.mode-row { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.mode-row label { font-size: 12px; color: #888; }
+.mode-row button {
+  padding: 6px 10px; font-size: 12px; font-weight: 700; border-radius: 8px;
+  border: 1px solid #444; background: #2a2a36; color: #ccc; cursor: pointer;
+}
+.mode-row button.active { border-color: #E8A020; color: #E8A020; background: #2a2218; }
+.hint { flex-shrink: 0; font-size: 11px; color: #6a6a78; padding: 6px 10px; line-height: 1.45; background: #16161c; border-bottom: 1px solid #2a2a38; }
+.pane-label {
+  flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5a5a68; padding: 4px 10px 2px;
+}
+#canvas-ref-wrap {
+  flex: 1; min-height: 0; position: relative; background: #fafafa; border-bottom: 2px solid #333;
+}
+#canvas-play-wrap {
+  flex: 1; min-height: 0; position: relative; background: #f5f5f7; border-bottom: 2px solid #333;
+}
+canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; }
+.axis-cap-t { position: absolute; bottom: 18px; right: 10px; font-size: 10px; color: #333; pointer-events: none; }
+.controls {
+  flex-shrink: 0;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center;
+  padding: 10px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: #1a1a22;
+}
+.controls button {
+  padding: 12px 18px; font-size: 15px; font-weight: 800; border-radius: 10px; border: none;
+  cursor: pointer; min-height: 48px;
+}
+#btn-mountain { background: #1565c0; color: #fff; }
+#btn-mountain:active { filter: brightness(1.12); }
+.digits { display: flex; gap: 6px; }
+.digits button {
+  width: 48px; padding: 10px; font-size: 18px; font-weight: 900; border-radius: 10px;
+  border: 2px solid #444; background: #2a2a36; color: #fff;
+}
+.digits button.on { border-color: #E8A020; box-shadow: 0 0 0 2px rgba(232,160,32,0.35); }
+#msg {
+  width: 100%; text-align: center; font-size: 13px; font-weight: 600; min-height: 1.4em;
+}
+#msg.ok { color: #7ed695; }
+#msg.bad { color: #ff8a80; }
+#msg.info { color: #9cb8e8; }
+.stats { font-size: 11px; color: #666; text-align: center; width: 100%; }
+@media (min-width: 600px) {
+  #app { max-width: 900px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top-bar">
+    <h1>Разогрев</h1>
+    <a href="index.html">На главную</a>
+    <div class="mode-row">
+      <span class="mode-row-label"><label>Режим</label></span>
+      <button type="button" id="m-train" class="active">Тренировка</button>
+      <button type="button" id="m-play">Игра</button>
+    </div>
+  </div>
+  <p class="hint" id="hint-text">
+    Сначала <b>тренировка</b>: сверху четыре эталона (1–4). Пробел или «Гора» — новая гора внизу.
+    Цифры <b>1–4</b> накладывают кривую на гору; угадали — галочка и новая гора. <b>Игра</b>: после вершины или в зазоре — 1–4, кривая и удар; <b>↑↓</b>; 20.
+  </p>
+  <div class="pane-label">Эталоны (↑ высота, → время)</div>
+  <div id="canvas-ref-wrap">
+    <canvas id="ref-c" aria-label="Эталонные кривые"></canvas>
+    <span class="axis-cap-t">время →</span>
+  </div>
+  <div class="pane-label" id="play-area-label">Ваша гора и выбранная кривая</div>
+  <div id="canvas-play-wrap">
+    <canvas id="play-c" aria-label="Гора и наложение"></canvas>
+    <span class="axis-cap-t">время →</span>
+  </div>
+  <div class="controls">
+    <button type="button" id="btn-mountain">Гора</button>
+    <div class="digits" id="digits"></div>
+  </div>
+  <p id="msg" class="info"></p>
+  <p class="stats" id="stats"></p>
+</div>
+<script>
+(function(){
+  const COLORS = {
+    1: '#d32f2f',
+    2: '#388e3c',
+    3: '#1976d2',
+    4: '#c2185b',
+  };
+  /** Контрольные точки [0,1]×[0,1]; начало и конец на нуле по y на краях (форма «горки»). */
+  const RAW = {
+    1: [[0,0],[0.1,0.9],[0.26,0.9],[0.42,0],[1,0]],
+    2: [[0,0],[0.14,0.64],[0.48,0.64],[0.66,0],[1,0]],
+    3: [[0,0],[0.28,0.44],[0.74,0.44],[1,0]],
+    4: [[0,0],[0.1,0.24],[0.3,0.24],[0.37,0.98],[0.44,0.24],[0.68,0.24],[1,0]],
+  };
+
+  function interpY(pts, x){
+    if(x<=0) return pts[0][1];
+    if(x>=1) return pts[pts.length-1][1];
+    for(let i=0;i<pts.length-1;i++){
+      const x0=pts[i][0], x1=pts[i+1][0];
+      if(x>=x0 && x<=x1){
+        const t=x1===x0?0:(x-x0)/(x1-x0);
+        return pts[i][1]+t*(pts[i+1][1]-pts[i][1]);
+      }
+    }
+    return 0;
+  }
+
+  function sampleCurve(id, n){
+    const pts=RAW[id];
+    const out=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      const x=i/(n-1);
+      out[i]=Math.max(0,Math.min(1,interpY(pts,x)));
+    }
+    return out;
+  }
+
+  function sampleCurveAt(id, t){
+    const s=sampleCurve(id, 256);
+    t=Math.max(0,Math.min(1,t));
+    const x=t*(s.length-1);
+    const i0=x|0;
+    const i1=Math.min(s.length-1,i0+1);
+    const f=x-i0;
+    return s[i0]*(1-f)+s[i1]*f;
+  }
+
+  /** Доля u до конца «плато вершины» — после этого можно жать 1–4. */
+  function peakPassU(hill){
+    let mx=-1;
+    for(let i=0;i<hill.length;i++) if(hill[i]>mx) mx=hill[i];
+    let lastIx=0;
+    for(let i=0;i<hill.length;i++) if(hill[i]>=mx-1e-6) lastIx=i;
+    return lastIx/Math.max(1,hill.length-1);
+  }
+
+  function mountainSampleAt(arr, t){
+    const n=arr.length;
+    if(n<2) return arr[0]||0;
+    t=Math.max(0,Math.min(1,t));
+    const x=t*(n-1);
+    const i0=x|0;
+    const i1=Math.min(n-1,i0+1);
+    const f=x-i0;
+    return arr[i0]*(1-f)+arr[i1]*f;
+  }
+
+  function mse(a, b){
+    let s=0;
+    for(let i=0;i<a.length;i++){ const d=a[i]-b[i]; s+=d*d; }
+    return s/a.length;
+  }
+
+  function bestMatch(mountain, n){
+    let best=1, bestE=Infinity;
+    for(let id=1;id<=4;id++){
+      const t=sampleCurve(id,n);
+      const e=mse(mountain,t);
+      if(e<bestE){ bestE=e; best=id; }
+    }
+    return { id: best, err: bestE };
+  }
+
+  let mode='train';
+  let mountain=null;
+  let generatedFrom=0;
+  let choice=0;
+  let trainRounds=0, trainOk=0;
+  /** Пока true — на канвасе галочка, скоро следующая гора. */
+  let showSuccessMark=false;
+  let successTimer=null;
+  const N=120;
+
+  /** Режим «Игра»: цепочка гор, колобок и наезд по кривой. */
+  let playStreak=0;
+  /** { hill, left, correctId } — left уменьшается, слева уходит за край, справа нарастают новые. */
+  let playSegments=[];
+  /** Горка, для которой можно выбрать 1–4 (после вершины или в зазоре). */
+  let mountainAwaitingId=null;
+  let prevOverlapSeg=null;
+  let jumpPick=0;
+  let playRideActive=false;
+  let rideSegRef=null;
+  let rideTargetCorrectId=1;
+  const STRIKE_GAP=0.042;
+  let playRaf=null;
+  let lastPlayTs=0;
+  /** После неверного ответа один кадр «разбился». */
+  let playOutcome=null;
+  let playContinueTimer=null;
+  let playSpeedPx=78;
+  const PLAY_SPEED_MIN=22;
+  const PLAY_SPEED_MAX=220;
+  const PLAY_SPEED_STEP=11;
+  /** Доля ширины пол между горами (было ~0.055). */
+  const PLAY_GAP_FRAC=0.14;
+  let playPaused=false;
+
+  function clearPlayContinueTimer(){
+    if(playContinueTimer){
+      clearTimeout(playContinueTimer);
+      playContinueTimer=null;
+    }
+  }
+
+  function noiseAmp(){ return 0.045 + Math.random()*0.035; }
+
+  /** Шум не обрезаем по краю: точка остаётся в [0,1] целиком. */
+  function addBoundedNoise(arr, amp){
+    for(let i=0;i<N;i++){
+      const v0=arr[i];
+      const maxDown=v0;
+      const maxUp=1-v0;
+      let d=(Math.random()-0.5)*2*amp;
+      if(d>0) d=Math.min(d, maxUp);
+      else d=Math.max(d, -maxDown);
+      arr[i]=v0+d;
+    }
+  }
+
+  function generatePlaySegment(){
+    const base=1+((Math.random()*4)|0);
+    generatedFrom=base;
+    let arr;
+    let guard=0;
+    const amp0=noiseAmp();
+    do{
+      arr=sampleCurve(base, N);
+      addBoundedNoise(arr, amp0);
+      guard++;
+    }while(bestMatch(arr,N).id!==base && guard<60);
+    if(bestMatch(arr,N).id!==base) arr=sampleCurve(base, N);
+    return {hill:arr, correctId:bestMatch(arr,N).id};
+  }
+
+  function initPlaySegments(w, iw, padL){
+    const mW=iw*0.58;
+    const gap=iw*PLAY_GAP_FRAC;
+    playSegments=[];
+    let x=padL-mW*0.28;
+    for(let i=0;i<7;i++){
+      const g=generatePlaySegment();
+      playSegments.push({hill:g.hill, left:x, correctId:g.correctId});
+      x+=mW+gap;
+    }
+  }
+
+  function playStatsLine(){
+    const base='Скорость ↑↓: '+Math.round(playSpeedPx)+' · 20 гор · пробел/0 пауза';
+    return playPaused?('⏸ Стоит · пробел/0 дальше · '+base):base;
+  }
+
+  function continueAfterPlayRound(){
+    clearPlayContinueTimer();
+    jumpPick=0;
+    playRideActive=false;
+    rideSegRef=null;
+    playOutcome=null;
+    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+    setMsg('Серия: '+playStreak+' / 20. После вершины или в зазоре — 1–4, кривая и удар. Пробел/0 пауза. ↑↓', '');
+    gel('stats').textContent=playStatsLine();
+    if(mode==='play' && !playRaf) playRaf=requestAnimationFrame(playTick);
+  }
+
+  function failPlayFullRestart(msg){
+    clearPlayContinueTimer();
+    if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
+    playStreak=0;
+    playPaused=false;
+    mountainAwaitingId=null;
+    prevOverlapSeg=null;
+    jumpPick=0;
+    playRideActive=false;
+    rideSegRef=null;
+    playOutcome='crash';
+    drawPlay();
+    setMsg(msg+' Начинаем сначала.', 'bad');
+    gel('stats').textContent=playStatsLine();
+    playContinueTimer=setTimeout(()=>{
+      playContinueTimer=null;
+      playOutcome=null;
+      playSegments=[];
+      makeMountain();
+    }, 1150);
+  }
+
+  function playAnswerSuccess(){
+    clearPlayContinueTimer();
+    mountainAwaitingId=null;
+    prevOverlapSeg=null;
+    jumpPick=0;
+    playRideActive=false;
+    rideSegRef=null;
+    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+    playStreak++;
+    if(playStreak>=20){
+      setMsg('Победа! 20 гор подряд.', 'ok');
+      gel('stats').textContent='Серия выдержана. Новая лента гор.';
+      playStreak=0;
+      playSegments=[];
+      if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
+      playContinueTimer=setTimeout(()=>{
+        playContinueTimer=null;
+        makeMountain();
+      }, 2400);
+    } else {
+      setMsg('✓ Верно ('+playStreak+' / 20).', 'ok');
+      playContinueTimer=setTimeout(()=>{ playContinueTimer=null; continueAfterPlayRound(); }, 480);
+    }
+  }
+
+  function makeMountain(){
+    if(mode==='train'){
+      if(successTimer){ clearTimeout(successTimer); successTimer=null; }
+      showSuccessMark=false;
+      const base=1+((Math.random()*4)|0);
+      generatedFrom=base;
+      let arr;
+      let guard=0;
+      const amp0=noiseAmp();
+      do{
+        arr=sampleCurve(base, N);
+        addBoundedNoise(arr, amp0);
+        guard++;
+      }while(bestMatch(arr,N).id!==base && guard<60);
+      if(bestMatch(arr,N).id!==base) arr=sampleCurve(base, N);
+      mountain=arr;
+      choice=0;
+      jumpPick=0;
+      [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+      setMsg('Цифры 1–4 — какая кривая совпала с горой.', '');
+      drawPlay();
+      return;
+    }
+    clearPlayContinueTimer();
+    if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
+    playOutcome=null;
+    playPaused=false;
+    mountain=null;
+    choice=0;
+    jumpPick=0;
+    mountainAwaitingId=null;
+    prevOverlapSeg=null;
+    playRideActive=false;
+    rideSegRef=null;
+    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+    const wrap=gel('canvas-play-wrap');
+    const w=wrap.clientWidth|0;
+    const padL=36, padR=14;
+    const iw=w-padL-padR;
+    if(!playSegments.length) initPlaySegments(w, iw, padL);
+    lastPlayTs=0;
+    setMsg('Серия: '+playStreak+' / 20. 1–4 после вершины или в зазоре; неверная кривая — удар. Пробел/0 пауза. ↑↓', '');
+    gel('stats').textContent=playStatsLine();
+    drawPlay();
+    playRaf=requestAnimationFrame(playTick);
+  }
+
+  function playTick(ts){
+    if(mode!=='play'||!playSegments.length||playOutcome){
+      playRaf=null;
+      return;
+    }
+    if(playPaused){
+      lastPlayTs=ts;
+      drawPlay();
+      playRaf=requestAnimationFrame(playTick);
+      return;
+    }
+
+    const lt=lastPlayTs||ts;
+    const dt=Math.min(0.048,(ts-lt)/1000);
+    lastPlayTs=ts;
+
+    const w=gel('canvas-play-wrap').clientWidth|0;
+    const padL=36, padR=14;
+    const iw=w-padL-padR;
+    const heroX=padL+iw*0.24;
+    const mW=iw*0.58;
+    const gap=iw*PLAY_GAP_FRAC;
+    const clipLeft=padL-24;
+    const spd=playSpeedPx*dt;
+
+    for(let i=0;i<playSegments.length;i++) playSegments[i].left-=spd;
+
+    for(let i=playSegments.length-1;i>=0;i--){
+      const s=playSegments[i];
+      if(s.left+mW<clipLeft) playSegments.splice(i,1);
+    }
+
+    if(playRideActive && playSegments.indexOf(rideSegRef)<0){
+      failPlayFullRestart('Не ответил вовремя — гора уехала.');
+      return;
+    }
+    if(mountainAwaitingId && !playRideActive && playSegments.indexOf(mountainAwaitingId)<0){
+      failPlayFullRestart('Не ответил вовремя — гора уехала.');
+      return;
+    }
+
+    let maxR=-1e9;
+    for(let i=0;i<playSegments.length;i++)
+      maxR=Math.max(maxR, playSegments[i].left+mW);
+    while(maxR<w+mW*2.2){
+      const g=generatePlaySegment();
+      playSegments.push({hill:g.hill, left:maxR+gap, correctId:g.correctId});
+      maxR+=mW+gap;
+    }
+
+    let overlapSeg=null;
+    for(const s of playSegments){
+      if(heroX>=s.left && heroX<=s.left+mW){ overlapSeg=s; break; }
+    }
+
+    if(!playRideActive && mountainAwaitingId && overlapSeg && overlapSeg!==mountainAwaitingId){
+      failPlayFullRestart('Поздно — следующая гора уже под колобком.');
+      return;
+    }
+    if(playRideActive && overlapSeg && overlapSeg!==rideSegRef){
+      failPlayFullRestart('Поздно — следующая гора уже под колобком.');
+      return;
+    }
+
+    if(!playRideActive && overlapSeg){
+      const ua=(heroX-overlapSeg.left)/mW;
+      if(ua>peakPassU(overlapSeg.hill)+1e-5) mountainAwaitingId=overlapSeg;
+    }
+    prevOverlapSeg=overlapSeg;
+
+    if(playRideActive && rideSegRef){
+      const ur=(heroX-rideSegRef.left)/mW;
+      if(ur>=0 && ur<=1){
+        const cv=sampleCurveAt(jumpPick,ur);
+        const mv=mountainSampleAt(rideSegRef.hill,ur);
+        if(jumpPick!==rideTargetCorrectId && cv+STRIKE_GAP<mv){
+          failPlayFullRestart('Удар: кривая оказалась ниже горы.');
+          return;
+        }
+      }
+      if(rideSegRef.left+mW<heroX-10){
+        playRideActive=false;
+        rideSegRef=null;
+        if(jumpPick===rideTargetCorrectId){
+          playAnswerSuccess();
+          drawPlay();
+        } else {
+          failPlayFullRestart('Не тот тип кривой.');
+        }
+        return;
+      }
+    }
+
+    drawPlay();
+    if(mode!=='play' || !playSegments.length){
+      playRaf=null;
+      return;
+    }
+    playRaf=requestAnimationFrame(playTick);
+  }
+
+  function tryPlayJump(d){
+    if(mode!=='play'||!playSegments.length||playOutcome||playRideActive) return;
+    const w=gel('canvas-play-wrap').clientWidth|0;
+    const padL=36, padR=14;
+    const iw=w-padL-padR;
+    const heroX=padL+iw*0.24;
+    const mW=iw*0.58;
+    let overlapSeg=null;
+    for(const s of playSegments){
+      if(heroX>=s.left && heroX<=s.left+mW){ overlapSeg=s; break; }
+    }
+    if(!mountainAwaitingId) return;
+    if(overlapSeg && overlapSeg!==mountainAwaitingId) return;
+    const pk=peakPassU(mountainAwaitingId.hill);
+    const uHero=(heroX-mountainAwaitingId.left)/mW;
+    const inGap=!overlapSeg;
+    const afterPeakOnHill=overlapSeg===mountainAwaitingId && uHero>pk+1e-5;
+    if(!inGap && !afterPeakOnHill) return;
+
+    jumpPick=d;
+    rideTargetCorrectId=mountainAwaitingId.correctId;
+    rideSegRef=mountainAwaitingId;
+    playRideActive=true;
+    mountainAwaitingId=null;
+    [...gel('digits').querySelectorAll('button')].forEach(x=>{
+      x.classList.toggle('on', x.dataset.d===String(d));
+    });
+  }
+
+  function setMsg(text, kind){
+    const e=gel('msg');
+    e.textContent=text;
+    e.className=kind==='ok'?'ok':kind==='bad'?'bad':'info';
+  }
+
+  function gel(id){ return document.getElementById(id); }
+
+  function drawRef(){
+    const cv=gel('ref-c');
+    const wrap=gel('canvas-ref-wrap');
+    const w=wrap.clientWidth|0, h=wrap.clientHeight|0;
+    if(w<10||h<10) return;
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    cv.width=w*dpr; cv.height=h*dpr;
+    cv.style.width=w+'px'; cv.style.height=h+'px';
+    const ctx=cv.getContext('2d');
+    ctx.scale(dpr,dpr);
+    ctx.fillStyle='#fafafa';
+    ctx.fillRect(0,0,w,h);
+    const padL=36, padR=14, padT=28, padB=32;
+    const iw=w-padL-padR, ih=h-padT-padB;
+    ctx.strokeStyle='#ccc';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT); ctx.lineTo(padL, padT+ih); ctx.lineTo(w-padR, padT+ih);
+    ctx.stroke();
+    ctx.fillStyle='#333';
+    ctx.font='600 11px system-ui,sans-serif';
+    ctx.textAlign='center';
+    for(let id=1;id<=4;id++){
+      ctx.strokeStyle=COLORS[id];
+      ctx.lineWidth=2.2;
+      ctx.beginPath();
+      const samp=sampleCurve(id, 140);
+      for(let i=0;i<samp.length;i++){
+        const x=padL+(i/(samp.length-1))*iw;
+        const y=padT+ih-samp[i]*ih;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      let peak=0, pix=0;
+      for(let i=0;i<samp.length;i++) if(samp[i]>=peak){ peak=samp[i]; pix=i; }
+      const px=padL+(pix/(samp.length-1))*iw;
+      const py=padT+ih-peak*ih-10;
+      ctx.fillStyle=COLORS[id];
+      ctx.font='900 14px system-ui,sans-serif';
+      ctx.fillText(String(id), px, Math.max(padT+12, py));
+    }
+    ctx.fillStyle='#555';
+    ctx.font='600 10px system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('четыре типа кривых', w/2, h-10);
+  }
+
+  function drawKolobok(ctx, cx, cy, r, broken){
+    if(broken){
+      ctx.fillStyle='#8d6e63';
+      ctx.beginPath();
+      ctx.ellipse(cx-r*0.5,cy+r*0.15,r*0.55,r*0.35,0.3,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle='#bdbdbd';
+      ctx.beginPath();
+      ctx.arc(cx+r*0.35,cy-r*0.1,r*0.28,0,Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle='#e53935';
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(cx-r*0.8,cy-r*0.9);
+      ctx.lineTo(cx+r*0.9,cy+r*0.4);
+      ctx.moveTo(cx+r*0.5,cy-r*0.95);
+      ctx.lineTo(cx-r*0.85,cy+r*0.35);
+      ctx.stroke();
+      return;
+    }
+    ctx.fillStyle='#ffcc66';
+    ctx.strokeStyle='#c49040';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    const eye=r*0.14;
+    ctx.fillStyle='#222';
+    ctx.beginPath();
+    ctx.arc(cx-r*0.35*r,cy-r*0.15*r,eye,0,Math.PI*2);
+    ctx.arc(cx+r*0.35*r,cy-r*0.15*r,eye,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle='#333';
+    ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.arc(cx,cy+r*0.08*r,r*0.38,0.22,Math.PI-0.22);
+    ctx.stroke();
+  }
+
+  function drawPlay(){
+    const cv=gel('play-c');
+    const wrap=gel('canvas-play-wrap');
+    const w=wrap.clientWidth|0, h=wrap.clientHeight|0;
+    if(w<10||h<10) return;
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    cv.width=w*dpr; cv.height=h*dpr;
+    cv.style.width=w+'px'; cv.style.height=h+'px';
+    const ctx=cv.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const padL=36, padR=14, padT=28, padB=32;
+    const iw=w-padL-padR, ih=h-padT-padB;
+    const groundY=padT+ih;
+
+    if(mode==='play'){
+      ctx.fillStyle='#e8eaf0';
+      ctx.fillRect(0,0,w,h);
+      ctx.strokeStyle='#9e9e9e';
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(padL,groundY);
+      ctx.lineTo(w-padR,groundY);
+      ctx.stroke();
+      if(!playSegments.length){
+        ctx.fillStyle='#666';
+        ctx.font='600 15px system-ui,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('Загрузка…', w/2, h/2);
+        return;
+      }
+      const mW=iw*0.58;
+      const hillH=ih*0.88;
+      for(let si=0;si<playSegments.length;si++){
+        const seg=playSegments[si];
+        ctx.beginPath();
+        ctx.moveTo(seg.left,groundY);
+        for(let i=0;i<seg.hill.length;i++){
+          const mx=seg.left+(i/(seg.hill.length-1))*mW;
+          const my=groundY-seg.hill[i]*hillH;
+          ctx.lineTo(mx,my);
+        }
+        ctx.lineTo(seg.left+mW,groundY);
+        ctx.closePath();
+        ctx.fillStyle='rgba(80,90,110,0.35)';
+        ctx.fill();
+        ctx.strokeStyle='#444';
+        ctx.lineWidth=2.5;
+        ctx.stroke();
+      }
+      const heroX=padL+iw*0.24;
+      const heroR=Math.min(iw,ih)*0.056;
+      if(playRideActive && rideSegRef && jumpPick>=1 && jumpPick<=4){
+        const samp=sampleCurve(jumpPick, N);
+        ctx.strokeStyle=COLORS[jumpPick];
+        ctx.globalAlpha=0.88;
+        ctx.lineWidth=3.2;
+        ctx.setLineDash([5,4]);
+        ctx.beginPath();
+        for(let i=0;i<N;i++){
+          const mx=rideSegRef.left+(i/(N-1))*mW;
+          const my=groundY-samp[i]*hillH;
+          if(i===0) ctx.moveTo(mx,my); else ctx.lineTo(mx,my);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha=1;
+      }
+      let canAnswer=false;
+      if(mountainAwaitingId && !playRideActive){
+        let segU=null;
+        for(const s of playSegments){
+          if(heroX>=s.left && heroX<=s.left+mW){ segU=s; break; }
+        }
+        if(!segU) canAnswer=true;
+        else if(segU===mountainAwaitingId){
+          const uu=(heroX-mountainAwaitingId.left)/mW;
+          if(uu>peakPassU(mountainAwaitingId.hill)+1e-5) canAnswer=true;
+        }
+      }
+      if(canAnswer){
+        ctx.fillStyle='rgba(46,125,50,0.2)';
+        ctx.fillRect(padL,padT,iw,ih*0.92);
+      }
+      let jumpY=0;
+      if(playRideActive && rideSegRef){
+        const ur=(heroX-rideSegRef.left)/mW;
+        if(ur>=0 && ur<=1) jumpY=hillH*sampleCurveAt(jumpPick,ur);
+      }
+      const heroCy=groundY-heroR-jumpY;
+      drawKolobok(ctx, heroX, heroCy, heroR, playOutcome==='crash');
+      ctx.fillStyle='#555';
+      ctx.font='600 10px system-ui,sans-serif';
+      ctx.textAlign='left';
+      ctx.fillText('колобок', heroX-heroR, groundY+14);
+      return;
+    }
+
+    ctx.fillStyle='#f5f5f7';
+    ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='#bbb';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT); ctx.lineTo(padL, padT+ih); ctx.lineTo(w-padR, padT+ih);
+    ctx.stroke();
+    if(!mountain){
+      ctx.fillStyle='#888';
+      ctx.font='48px system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('Пробел или «Гора»', w/2, h/2);
+      return;
+    }
+    ctx.strokeStyle='#333';
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let i=0;i<mountain.length;i++){
+      const x=padL+(i/(mountain.length-1))*iw;
+      const y=padT+ih-mountain[i]*ih;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    if(choice>=1&&choice<=4){
+      const samp=sampleCurve(choice, N);
+      ctx.strokeStyle=COLORS[choice];
+      ctx.globalAlpha=0.55;
+      ctx.lineWidth=2.8;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      for(let i=0;i<samp.length;i++){
+        const x=padL+(i/(samp.length-1))*iw;
+        const y=padT+ih-samp[i]*ih;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha=1;
+    }
+    if(showSuccessMark){
+      const cx=padL+iw*0.72, cy=padT+ih*0.22, s=Math.min(iw,ih)*0.14;
+      ctx.strokeStyle='#1b5e20';
+      ctx.fillStyle='rgba(129,199,132,0.92)';
+      ctx.lineWidth=Math.max(3,s*0.09);
+      ctx.beginPath();
+      ctx.arc(cx,cy,s*0.92,0,Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle='#fff';
+      ctx.lineWidth=Math.max(2.5,s*0.07);
+      ctx.lineCap='round';
+      ctx.lineJoin='round';
+      ctx.beginPath();
+      ctx.moveTo(cx-s*0.38,cy);
+      ctx.lineTo(cx-s*0.06,cy+s*0.32);
+      ctx.lineTo(cx+s*0.42,cy-s*0.36);
+      ctx.stroke();
+    }
+  }
+
+  function evalChoice(){
+    if(mode!=='train'||!mountain||choice<1||choice>4||showSuccessMark) return;
+    const { id: closest } = bestMatch(mountain, N);
+    if(choice!==closest) return;
+
+    trainRounds++;
+    trainOk++;
+    let text='✓ Верно! Тип '+closest+' — эта кривая и есть основа горы (с шумом).';
+    setMsg(text,'ok');
+    gel('stats').textContent='Тренировка: '+trainOk+' / '+trainRounds+' верно';
+
+    showSuccessMark=true;
+    drawPlay();
+    if(successTimer) clearTimeout(successTimer);
+    successTimer=setTimeout(()=>{
+      successTimer=null;
+      makeMountain();
+    }, 720);
+  }
+
+  function setMode(m){
+    if(successTimer){ clearTimeout(successTimer); successTimer=null; }
+    clearPlayContinueTimer();
+    if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
+    showSuccessMark=false;
+    playOutcome=null;
+    mode=m;
+    gel('m-train').classList.toggle('active', m==='train');
+    gel('m-play').classList.toggle('active', m==='play');
+    gel('btn-mountain').style.display=m==='train'?'':'none';
+    gel('play-area-label').textContent=m==='train'
+      ? 'Ваша гора и выбранная кривая'
+      : 'Колобок — после вершины, зазор, кривая и удар';
+    gel('hint-text').innerHTML=m==='train'
+      ? 'Сначала <b>тренировка</b>: сверху четыре эталона (1–4). Пробел или «Гора» — новая гора. Цифры накладывают кривую; угадали — галочка и следующая гора.'
+      : '<b>Игра</b>: лента гор. <b>1–4</b> после <b>вершины</b> (спуск) или в зазоре — накладывается кривая, колобок едет по ней; чужая кривая где ниже горы — <b>удар</b>, доехал не той кривой — с нуля. Пробел/0 — пауза. <b>↑↓</b> скорость, <b>20</b> подряд.';
+    gel('stats').textContent='';
+    if(m==='train'){
+      playSegments=[];
+      mountain=null;
+      trainRounds=0;
+      trainOk=0;
+      choice=0;
+      setMsg('Пробел или «Гора» для тренировочной горы.', '');
+    } else {
+      playStreak=0;
+      playSegments=[];
+      makeMountain();
+    }
+    drawPlay();
+  }
+
+  const digitsEl=gel('digits');
+  for(let d=1;d<=4;d++){
+    const b=document.createElement('button');
+    b.type='button';
+    b.textContent=String(d);
+    b.dataset.d=String(d);
+    b.addEventListener('click',()=>{
+      if(mode==='train'){
+        [...digitsEl.querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        choice=d;
+        drawPlay();
+        evalChoice();
+      } else {
+        tryPlayJump(d);
+      }
+    });
+    digitsEl.appendChild(b);
+  }
+
+  gel('btn-mountain').addEventListener('click', makeMountain);
+  gel('m-train').addEventListener('click',()=>setMode('train'));
+  gel('m-play').addEventListener('click',()=>setMode('play'));
+
+  window.addEventListener('keydown',e=>{
+    if(e.target&&e.target.tagName==='INPUT') return;
+    if(e.code==='Space'){
+      e.preventDefault();
+      if(mode==='train') makeMountain();
+      else {
+        playPaused=!playPaused;
+        gel('stats').textContent=playStatsLine();
+        if(!playRaf&&mode==='play'&&playSegments.length&&!playOutcome)
+          playRaf=requestAnimationFrame(playTick);
+      }
+      return;
+    }
+    if(mode==='play'&&(e.code==='Digit0'||e.code==='Numpad0')){
+      e.preventDefault();
+      playPaused=!playPaused;
+      gel('stats').textContent=playStatsLine();
+      if(!playRaf&&playSegments.length&&!playOutcome)
+        playRaf=requestAnimationFrame(playTick);
+      return;
+    }
+    if(mode==='play'){
+      if(e.code==='ArrowUp'){
+        e.preventDefault();
+        playSpeedPx=Math.min(PLAY_SPEED_MAX, playSpeedPx+PLAY_SPEED_STEP);
+        gel('stats').textContent=playStatsLine();
+        return;
+      }
+      if(e.code==='ArrowDown'){
+        e.preventDefault();
+        playSpeedPx=Math.max(PLAY_SPEED_MIN, playSpeedPx-PLAY_SPEED_STEP);
+        gel('stats').textContent=playStatsLine();
+        return;
+      }
+    }
+    if(e.key>='1'&&e.key<='4'){
+      const d=e.key|0;
+      if(mode==='train'){
+        choice=d;
+        [...digitsEl.querySelectorAll('button')].forEach(x=>{
+          x.classList.toggle('on', x.dataset.d===e.key);
+        });
+        if(mountain){
+          drawPlay();
+          evalChoice();
+        }
+      } else {
+        tryPlayJump(d);
+      }
+      return;
+    }
+  });
+
+  let rt=null;
+  function onResize(){
+    cancelAnimationFrame(rt);
+    rt=requestAnimationFrame(()=>{ drawRef(); drawPlay(); });
+  }
+  window.addEventListener('resize', onResize);
+  if(window.ResizeObserver){
+    new ResizeObserver(onResize).observe(gel('canvas-ref-wrap'));
+    new ResizeObserver(onResize).observe(gel('canvas-play-wrap'));
+  }
+  setMode('train');
+  onResize();
+  window.addEventListener('load',()=>{ requestAnimationFrame(onResize); });
+})();
+</script>
+</body>
+</html>
