@@ -200,8 +200,23 @@ canvas { display: block; }
 #extras-box #extras-apply:active { filter:brightness(1.15); }
 #extras-box #extras-reset { margin-top:8px; width:100%; padding:12px; font-size:14px; cursor:pointer; border-radius:10px; border:1px solid #555; background:#2a2a2a; color:#ccc; }
 #extras-close { position:absolute; top:0.65rem; right:0.65rem; background:#333; border:none; width:28px; height:28px; border-radius:50%; font-size:14px; cursor:pointer; color:#aaa; display:flex; align-items:center; justify-content:center; }
-#victory-overlay,#confetti-canvas { display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; }
-#confetti-canvas { z-index:1000; }
+#victory-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10050; box-sizing:border-box; }
+#victory-overlay.victory-open { display:flex !important; pointer-events:auto; align-items:flex-start; justify-content:center; overflow-y:auto; padding:max(12px, env(safe-area-inset-top, 0px)) 12px max(24px, env(safe-area-inset-bottom, 0px)); background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); }
+#victory-box { margin-top:8px; background:#1a1a1a; border:1px solid #444; border-radius:14px; max-width:min(520px, 100%); width:100%; padding:18px 20px 20px; color:#ddd; box-shadow:0 16px 48px rgba(0,0,0,0.55); }
+#victory-box h2 { margin:0 0 10px; font-size:1.2rem; font-weight:800; color:#fff; }
+#victory-box .vic-lead { font-size:13px; color:#b0b0b0; line-height:1.5; margin-bottom:12px; }
+#victory-box .vic-stats { font-size:13px; line-height:1.55; color:#c8c8c8; margin-bottom:10px; }
+#victory-box .vic-stats em { font-style:normal; color:#888; font-size:11px; }
+#victory-box h3 { margin:14px 0 6px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#8a7848; }
+#victory-box #victory-log { margin:0; padding-left:1.15rem; font-size:12px; color:#aaa; line-height:1.5; max-height:min(38vh,300px); overflow-y:auto; }
+#victory-box #victory-log li { margin-bottom:4px; }
+#victory-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+#victory-actions a.vic-btn-home, #victory-actions button.vic-btn-setup { flex:1 1 auto; min-width:140px; text-align:center; padding:12px 14px; font-size:14px; font-weight:700; border-radius:10px; cursor:pointer; text-decoration:none; border:1px solid #555; }
+#victory-actions a.vic-btn-home { background:#1565c0; border-color:#2e6bb8; color:#fff; }
+#victory-actions a.vic-btn-home:active { filter:brightness(1.08); }
+#victory-actions button.vic-btn-setup { background:#2a2a2a; color:#e0e0e0; }
+#victory-actions button.vic-btn-setup:active { filter:brightness(1.12); }
+#confetti-canvas { display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1000; }
 
 /* Desktop */
 @media (hover: hover) and (pointer: fine) {
@@ -411,6 +426,12 @@ let N=15, wallPct=14, grid=[], won=false, stage=1, paused=false, startStage=1;
 let playerName='Игрок';
 /** Ходы героя по этапам 1–8 (индекс 0 = этап 1) */
 let movesPerStage=[0,0,0,0,0,0,0,0];
+/** Этап 9: ходы героя (включая повторы после гибели). */
+let movesStage9=0;
+/** Все ходы героя за сессию кампании (1–8 в pmove, этап 9 — в heroResolveCellAfterMove). */
+let campaignMovesTotal=0;
+/** Строки журнала: старт, переходы этапов, гибели, финиш. */
+let campaignHistory=[];
 let killedCount=0;
 let M1=[], M2=[], M3=[], P4=[], M5=[], M6=[], M7=[];
 let col1=0,col2=0,col3=0,col4=0,col5=0,col6=0,col7=0;
@@ -589,11 +610,87 @@ function selectStage(s){
   });
 }
 
+function initCampaignSession(){
+  movesStage9=0;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  const n0=parseInt(gel('n-slider').value)||15;
+  const w0=parseInt(gel('wall-slider').value)||14;
+  campaignHistory.push('Старт кампании: этап '+startStage+' (поле '+n0+'×'+n0+', стены '+w0+'%). Войти можно не с 1-го этапа.');
+}
+
+function hideVictoryOverlay(){
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  ov.classList.remove('victory-open');
+  ov.innerHTML='';
+  ov.style.display='none';
+}
+
+function showFinalVictoryScreen(){
+  campaignHistory.push('Финиш этапа 9 — маршрут завершён.');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  const stageLines=[];
+  for(let i=0;i<8;i++){
+    const st=i+1;
+    if(st<startStage) continue;
+    stageLines.push('этап '+st+': '+movesPerStage[i]);
+  }
+  const box=document.createElement('div');
+  box.id='victory-box';
+  const h2=document.createElement('h2');
+  h2.textContent='Вы дошли до конца маршрута';
+  box.appendChild(h2);
+  const lead=document.createElement('p');
+  lead.className='vic-lead';
+  lead.textContent='Краткая история этой кампании и ходы. Игрок: '+((gel('player-name').value||'').trim()||'Игрок')+'.';
+  box.appendChild(lead);
+  const stats=document.createElement('div');
+  stats.className='vic-stats';
+  stats.innerHTML='<div><strong>Всего ходов героя</strong> (включая после гибелей и повторы этапов): <strong>'+campaignMovesTotal+'</strong></div>'
+    +'<div style="margin-top:6px"><strong>Ходы на этапе 9</strong> (все попытки): <strong>'+movesStage9+'</strong></div>'
+    +'<div style="margin-top:8px"><strong>По этапам 1–8</strong> <em>(после гибели на этапе счётчик этого этапа обнулялся)</em>: '+(
+      stageLines.length?stageLines.join(' · '):'—'
+    )+'</div>';
+  box.appendChild(stats);
+  const h3=document.createElement('h3');
+  h3.textContent='Журнал';
+  box.appendChild(h3);
+  const ul=document.createElement('ul');
+  ul.id='victory-log';
+  for(const line of campaignHistory){
+    const li=document.createElement('li');
+    li.textContent=line;
+    ul.appendChild(li);
+  }
+  box.appendChild(ul);
+  const actions=document.createElement('div');
+  actions.id='victory-actions';
+  const aHome=document.createElement('a');
+  aHome.className='vic-btn-home';
+  aHome.href='index.html';
+  aHome.textContent='Ко всем играм';
+  const btnSetup=document.createElement('button');
+  btnSetup.type='button';
+  btnSetup.className='vic-btn-setup';
+  btnSetup.textContent='В меню этой игры';
+  btnSetup.onclick=()=>{ goToSetup(); };
+  actions.appendChild(aHome);
+  actions.appendChild(btnSetup);
+  box.appendChild(actions);
+  ov.appendChild(box);
+}
+
 function startGame(){
   playerName=(gel('player-name').value||'').trim()||'Игрок';
   movesPerStage=[0,0,0,0,0,0,0,0];
   N=parseInt(gel('n-slider').value);
   wallPct=parseInt(gel('wall-slider').value);
+  initCampaignSession();
   gel('setup').style.display='none';
   gel('game').style.display='flex';
   gameStarted=true;
@@ -1054,6 +1151,10 @@ function checkMeetings(mover){
 }
 
 function handleHeroDeath(info){
+  let deathLine='Погиб: этап '+stage;
+  if(info&&info.seniorSets&&info.juniorSets)
+    deathLine+=' — старший ['+info.seniorSets.join(' ')+'] vs младший ['+info.juniorSets.join(' ')+']';
+  campaignHistory.push(deathLine);
   clrT(); // stop tick and animation timers
   draw();
   // Gray overlay on entire canvas
@@ -1228,6 +1329,7 @@ function refreshCounters(){
 }
 
 function loadStage(){
+  hideVictoryOverlay();
   clrT(); won=false; paused=false; M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
   col1=0;col2=0;col3=0;col4=0;col5=0;col6=0;col7=0;
   // Герой: уровень = номер этапа; на поле и в панели — одна цифра (без пенала)
@@ -2249,6 +2351,9 @@ function scheduleNextStage(completedStage,nextStage){
   clrT();
   launchStageFireworks(completedStage);
   setTimeout(()=>{
+    const idx=completedStage-1;
+    const mvc=(idx>=0&&idx<8)?movesPerStage[idx]:0;
+    campaignHistory.push('Этап '+completedStage+' завершён (ходов на этапе: '+mvc+'). Переход на этап '+nextStage+'.');
     stage=nextStage;
     loadStage();
   }, STAGE_SALUTE_MS);
@@ -2354,6 +2459,10 @@ function heroNpcManhattanMeetOk(npc){
 /** Встречи на клетке после шага героя; false — герой погиб (уже показана смерть). */
 function heroResolveCellAfterMove(){
   if(!hero||!hero.alive) return false;
+  if(stage===9){
+    movesStage9++;
+    campaignMovesTotal++;
+  }
   updateHeroLvl();
   while(hero.alive){
     const adj=getAllNPC().filter(n=>!n.collected&&heroNpcManhattanMeetOk(n));
@@ -2633,7 +2742,10 @@ function pmove(dx,dy){
   }
   hero.x=nx; hero.y=ny;
   if(heroActsLikeK2()) k2Territory[nx+','+ny]=K2_OWNER_HERO;
-  if(stage>=1&&stage<=8) movesPerStage[stage-1]++;
+  if(stage>=1&&stage<=8){
+    movesPerStage[stage-1]++;
+    campaignMovesTotal++;
+  }
   if(!heroResolveCellAfterMove()) return;
 
   draw(); checkWin();
@@ -2884,6 +2996,7 @@ function checkWin(){
     refreshCounters();
     draw();
     launchStageFireworks(9);
+    showFinalVictoryScreen();
     return;
   }
   if(hero.x!==finishGX()||hero.y!==finishGY()) return;
@@ -3035,7 +3148,12 @@ function showHelp(){ syncHelpPanelsForStage(); gel('help-modal').classList.add('
 function hideHelp(){ gel('help-modal').classList.remove('open'); }
 function openMenu(){ gel('menu-overlay').classList.add('open'); }
 function closeMenu(){ gel('menu-overlay').classList.remove('open'); }
-function restartFull(){ clrT(); stage=startStage; paused=false; movesPerStage=[0,0,0,0,0,0,0,0]; const sb=gel('stop-btn'); if(sb){sb.classList.remove('active');sb.textContent='⏸ Стоп';} loadStage(); }
+function restartFull(){
+  clrT(); stage=startStage; paused=false; movesPerStage=[0,0,0,0,0,0,0,0];
+  initCampaignSession();
+  const sb=gel('stop-btn'); if(sb){sb.classList.remove('active');sb.textContent='⏸ Стоп';}
+  loadStage();
+}
 function toggleStop(){
   paused=!paused;
   const btn=gel('stop-btn');
@@ -3053,6 +3171,8 @@ function resumeTick(){
   if(stage>=3 && heroMoved) tickT=setInterval(tick, tickMs());
 }
 function goToSetup(){
+  hideVictoryOverlay();
+  won=false;
   clrT(); paused=false;
   const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
   gel('game').style.display='none';
@@ -3060,6 +3180,10 @@ function goToSetup(){
 }
 function fullReset(){
   clrT(); paused=false; stage=1; startStage=1; won=false; movesPerStage=[0,0,0,0,0,0,0,0];
+  hideVictoryOverlay();
+  movesStage9=0;
+  campaignMovesTotal=0;
+  campaignHistory=[];
   const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
   document.querySelectorAll('.stage-sel').forEach((b,i)=>b.classList.toggle('active',i===0));
   gel('game').style.display='none';
