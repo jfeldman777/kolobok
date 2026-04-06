@@ -509,6 +509,138 @@ html, body {
   background: #2a2a2a;
   color: #888;
 }
+#campaign-done-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 5000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+#campaign-done-modal.open {
+  display: flex;
+}
+#campaign-done-panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(90vh, 680px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 16px;
+  background: #15151a;
+  border: 1px solid #5a4a2a;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+#campaign-done-panel h1 {
+  font-size: clamp(1rem, 2.8vw, 1.2rem);
+  font-weight: 800;
+  color: #e8a020;
+  margin: 0 40px 8px 0;
+  letter-spacing: 0.03em;
+}
+#campaign-done-summary {
+  font-size: 13px;
+  color: #c4c4c4;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+#campaign-done-summary p {
+  margin: 0 0 8px;
+}
+#campaign-done-scroll {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  margin-top: 4px;
+}
+#campaign-done-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  color: #bbb;
+}
+#campaign-done-table th {
+  text-align: left;
+  font-weight: 800;
+  color: #9a8a78;
+  padding: 8px 6px 6px;
+  border-bottom: 1px solid #444;
+  position: sticky;
+  top: 0;
+  background: #15151a;
+}
+#campaign-done-table td {
+  padding: 8px 6px;
+  vertical-align: top;
+  border-bottom: 1px solid #2c2c2c;
+}
+#campaign-done-table .col-stage {
+  white-space: nowrap;
+}
+#campaign-done-table .col-result {
+  color: #c8c8c8;
+}
+#campaign-done-empty {
+  font-size: 13px;
+  color: #666;
+  padding: 12px 4px;
+}
+#campaign-done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+#campaign-done-actions a,
+#campaign-done-actions button {
+  flex: 1 1 auto;
+  min-width: 140px;
+  text-align: center;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  font-family: inherit;
+}
+#campaign-done-home {
+  background: #1565c0;
+  border: 1px solid #2e6bb8;
+  color: #fff;
+}
+#campaign-done-home:active {
+  filter: brightness(1.08);
+}
+#campaign-done-menu {
+  background: #2a2618;
+  border: 1px solid #6a5a28;
+  color: #e8a020;
+}
+#campaign-done-menu:active {
+  filter: brightness(1.1);
+}
+#campaign-done-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: #aaa;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
 #history-close {
   position: absolute;
   top: 10px;
@@ -987,6 +1119,35 @@ html, body {
     </div>
   </div>
 
+  <div id="campaign-done-modal" role="dialog" aria-modal="true" aria-labelledby="campaign-done-title">
+    <div id="campaign-done-panel" onclick="event.stopPropagation()">
+      <button type="button" id="campaign-done-close" aria-label="Закрыть">×</button>
+      <h1 id="campaign-done-title">Кампания завершена</h1>
+      <p class="menu-game-status" style="margin:0 0 8px;font-size:13px;color:#b8b8b8">
+        Этапы 1–8 пройдены. Ниже — сохранённая история партий; новая кампания — «Пуск» в меню.
+      </p>
+      <div id="campaign-done-summary"></div>
+      <div id="campaign-done-scroll">
+        <div id="campaign-done-empty">Пока нет записей в истории.</div>
+        <table id="campaign-done-table" hidden>
+          <thead>
+            <tr>
+              <th>Когда</th>
+              <th class="col-stage">Этап</th>
+              <th>Вид</th>
+              <th>Результат</th>
+            </tr>
+          </thead>
+          <tbody id="campaign-done-tbody"></tbody>
+        </table>
+      </div>
+      <div id="campaign-done-actions">
+        <a href="index.html" id="campaign-done-home">Ко всем играм</a>
+        <button type="button" id="campaign-done-menu">В меню (новая кампания)</button>
+      </div>
+    </div>
+  </div>
+
   <div id="rules-modal" role="dialog" aria-modal="true" aria-labelledby="rules-title">
     <div id="rules-panel">
       <button type="button" id="rules-close" aria-label="Закрыть правила">×</button>
@@ -1197,6 +1358,7 @@ function saveCellPref() {
 }
 
 function openGameMenu() {
+  closeCampaignDoneModal();
   const m = gel('menu-modal');
   if (!m) return;
   m.classList.add('open');
@@ -1308,6 +1470,85 @@ function clearGameHistory() {
     localStorage.removeItem(LS_HISTORY);
   } catch (e) {}
   renderGameHistoryTable();
+}
+
+function campaignDoneModalIsOpen() {
+  return !!gel('campaign-done-modal')?.classList.contains('open');
+}
+function closeCampaignDoneModal() {
+  const m = gel('campaign-done-modal');
+  if (!m || !m.classList.contains('open')) return;
+  m.classList.remove('open');
+  try {
+    const cv = gel('c');
+    if (cv) cv.focus({ preventScroll: true });
+  } catch (err) {}
+}
+function getCampaignDoneSummaryHtml() {
+  const modeLabel = gameMode === 'cooperation' ? 'кооперация' : 'конкуренция';
+  let html =
+    '<p><strong>Режим:</strong> ' +
+    modeLabel +
+    '. <strong>Старт этой кампании:</strong> этап ' +
+    startStage +
+    '.</p>';
+  if (gameMode === 'competition' && compStageWinners.length) {
+    const na = compStageWinners.filter((w) => w === 'A').length;
+    const nb = compStageWinners.filter((w) => w === 'B').length;
+    html +=
+      '<p><strong>Итог конкуренции</strong> (победы по этапам до 8-го): <strong>A</strong> — ' +
+      na +
+      ', <strong>B</strong> — ' +
+      nb +
+      '.</p>';
+  }
+  html +=
+    '<p style="font-size:12px;color:#888;margin:0">Таблица совпадает с разделом «ИСТОРИЯ ИГР» в меню (данные в браузере).</p>';
+  return html;
+}
+function renderCampaignDoneHistory() {
+  const list = loadGameHistory();
+  const emptyEl = gel('campaign-done-empty');
+  const table = gel('campaign-done-table');
+  const tbody = gel('campaign-done-tbody');
+  if (!emptyEl || !table || !tbody) return;
+  if (!list.length) {
+    emptyEl.hidden = false;
+    table.hidden = true;
+    tbody.innerHTML = '';
+    return;
+  }
+  emptyEl.hidden = true;
+  table.hidden = false;
+  tbody.innerHTML = list
+    .map((r) => {
+      const when = new Date(r.t).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+      const modeLabel = r.mode === 'cooperation' ? 'Кооперация' : 'Конкуренция';
+      const res = formatHistoryResult(r);
+      const st = typeof r.stage === 'number' ? r.stage : '—';
+      return (
+        '<tr><td>' +
+        when +
+        '</td><td class="col-stage">' +
+        st +
+        '</td><td>' +
+        modeLabel +
+        '</td><td class="col-result">' +
+        res +
+        '</td></tr>'
+      );
+    })
+    .join('');
+}
+function showCampaignDoneModal() {
+  const m = gel('campaign-done-modal');
+  if (!m) return;
+  const sum = gel('campaign-done-summary');
+  if (sum) sum.innerHTML = getCampaignDoneSummaryHtml();
+  renderCampaignDoneHistory();
+  m.classList.add('open');
+  const btn = gel('campaign-done-close');
+  if (btn) requestAnimationFrame(() => btn.focus());
 }
 
 function updateTitleMode() {
@@ -3190,6 +3431,7 @@ function scheduleAfterStageWin() {
     updateGameStatus();
     drawPanels();
     draw();
+    showCampaignDoneModal();
     return;
   }
   if (gameMode === 'competition' && (prevWinner === 'A' || prevWinner === 'B')) compStageWinners.push(prevWinner);
@@ -3213,7 +3455,12 @@ function updateGameStatus() {
     return;
   }
   if (gameWinner === 'campaign') {
-    el.textContent = 'Этапы 1–' + MAX_CAMPAIGN_STAGE + ' пройдены (старт с ' + startStage + ')! 🎉 Нажмите «Пуск» для новой кампании.';
+    el.textContent =
+      'Этапы 1–' +
+      MAX_CAMPAIGN_STAGE +
+      ' пройдены (старт с ' +
+      startStage +
+      ')! Откройте окно с историей — «Ко всем играм» или «В меню»; новая кампания — «Пуск».';
     return;
   }
   if (gameWinner === 'cooplose') {
@@ -3292,6 +3539,7 @@ function gamepadPlayAllowed() {
   if (gel('rules-modal')?.classList.contains('open')) return false;
   if (gel('history-modal')?.classList.contains('open')) return false;
   if (gel('extras-modal')?.classList.contains('open')) return false;
+  if (campaignDoneModalIsOpen()) return false;
   return true;
 }
 function dpadDeltaFromGamepad(gp) {
@@ -3459,6 +3707,14 @@ function onKeyDown(e) {
     if (e.key === 'Escape') {
       e.preventDefault();
       hideExtras();
+    }
+    return;
+  }
+  if (campaignDoneModalIsOpen()) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeCampaignDoneModal();
+      openGameMenu();
     }
     return;
   }
@@ -3975,6 +4231,7 @@ function draw() {
 }
 
 function runGenerate() {
+  closeCampaignDoneModal();
   closeGameMenu();
   wallPct = parseInt(gel('wall-slider').value, 10);
   gel('wall-out').textContent = wallPct + '%';
@@ -4033,6 +4290,13 @@ gel('history-modal')?.addEventListener('click', function (e) {
 gel('history-close')?.addEventListener('click', closeHistory);
 gel('history-open')?.addEventListener('click', openHistory);
 gel('history-clear')?.addEventListener('click', clearGameHistory);
+gel('campaign-done-modal')?.addEventListener('click', function (e) {
+  if (e.target === this) closeCampaignDoneModal();
+});
+gel('campaign-done-close')?.addEventListener('click', closeCampaignDoneModal);
+gel('campaign-done-menu')?.addEventListener('click', function () {
+  openGameMenu();
+});
 gel('title-mode')?.addEventListener('click', function () {
   setGameMode(gameMode === 'competition' ? 'cooperation' : 'competition');
 });
