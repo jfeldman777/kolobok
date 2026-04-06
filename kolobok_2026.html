@@ -112,6 +112,29 @@ input[type=range] { flex: 1; accent-color: #E8A020; }
 /* Panels */
 #panels-bar { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding: 3px 6px; background: #0d0d0d; flex-shrink: 0; height: 28px; align-items: center; scrollbar-width: none; }
 #panels-bar::-webkit-scrollbar { display: none; }
+/* Просмотр записи партии */
+.replay-toolbar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(232, 160, 32, 0.1);
+  border-bottom: 1px solid #3a3220;
+  flex-shrink: 0;
+}
+.replay-toolbar.open { display: flex; }
+.replay-toolbar button {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #2a2a2a;
+  color: #fff;
+}
+.replay-toolbar button:active { filter: brightness(1.12); }
 .panel { display:inline-flex; align-items:center; height:20px; padding:0 5px; border-radius:4px; font-size:11px; font-weight:700; border:1.5px solid; white-space:nowrap; flex-shrink:0; }
 .panel.done { opacity:0.4; }
 .panel-dead { display:inline-flex; align-items:center; height:20px; padding:0 5px; border-radius:4px; font-size:11px; font-weight:700; border:1.5px solid #444; background:#1a1a1a; color:#555; white-space:nowrap; flex-shrink:0; }
@@ -268,6 +291,19 @@ canvas { display: block; }
     </div>
     <button type="button" id="setup-extras-btn" onclick="showExtras()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">+ Дополнительно — число NPC</button>
     <button type="button" id="setup-gamepad-btn" onclick="openGamepadSetup()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #3d6b50;background:#142218;color:#a8e0b8;">🎮 Геймпад — настройка и проверка</button>
+    <div class="row" style="align-items:flex-start;">
+      <label style="padding-top:4px;">Запись</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;">
+          <input type="checkbox" id="replay-record-check" style="width:18px;height:18px;accent-color:#E8A020;flex-shrink:0;">
+          <span style="color:#ddd;font-size:13px;line-height:1.35;">Писать партию — потом <b>«Сохранить запись»</b> в меню игры и отправить файл в мессенджер</span>
+        </label>
+        <button type="button" id="replay-pick-file-btn" style="padding:10px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #4a5a78;background:#151a28;color:#9eb8e8;">Открыть запись (.json) — просмотр на этом устройстве</button>
+        <input type="file" id="replay-file-input" accept="application/json,.json" style="display:none;">
+        <button type="button" id="setup-save-replay" onclick="exportReplayRecording()" style="display:none;padding:10px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">💾 Сохранить накопленную запись (.json)</button>
+        <p style="font-size:11px;color:#888;margin:0;line-height:1.45;">Файл можно прикрепить в Telegram / почту и открыть на телефоне или ПК через кнопку выше. В просмотре: стрелки ◀ ▶ на клавиатуре, кнопки на панели.</p>
+      </div>
+    </div>
     <button id="start-btn">Начать игру</button>
     <button onclick="showLeaderboard()" style="padding:10px;font-size:14px;cursor:pointer;border-radius:10px;border:1px solid #444;background:#1e1e1e;color:#aaa;">🏆 Таблица чемпионов</button>
   </div>
@@ -282,6 +318,14 @@ canvas { display: block; }
       <button type="button" id="mobile-menu-btn" onclick="openMenu()" aria-label="Меню">☰</button>
     </div>
     <div id="panels-bar"><!-- panels drawn by JS --></div>
+    <div id="replay-toolbar" class="replay-toolbar" aria-label="Просмотр записи">
+      <button type="button" onclick="replaySeek(-1)" title="Кадр назад (←)">◀</button>
+      <button type="button" onclick="replaySeek(1)" title="Кадр вперёд (→)">▶</button>
+      <button type="button" id="replay-auto-btn" onclick="toggleReplayAuto(this)" title="Автопрокрутка кадров">▶ Авто</button>
+      <span id="replay-pos" style="font-size:12px;color:#E8A020;font-weight:700;white-space:nowrap;">1 / 1</span>
+      <span id="replay-tag" style="font-size:11px;color:#888;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+      <button type="button" onclick="exitReplayToSetup()" style="margin-left:auto;">Выход</button>
+    </div>
     <div id="canvas-wrap">
       <div id="board-stack">
         <canvas id="c" tabindex="0" aria-label="Игровое поле"></canvas>
@@ -327,6 +371,7 @@ canvas { display: block; }
     <button onclick="goToSetup();closeMenu()">⚙ Настройки</button>
     <button type="button" onclick="showExtras();closeMenu()">+ Дополнительно — число NPC</button>
     <button type="button" onclick="openGamepadSetup();closeMenu()">🎮 Геймпад — настройка</button>
+    <button type="button" id="menu-save-replay" onclick="exportReplayRecording();closeMenu();" style="display:none">💾 Сохранить запись для отправки (.json)</button>
     <button id="menu-close" onclick="closeMenu()">Закрыть</button>
   </div>
 </div>
@@ -439,6 +484,18 @@ let tickT=null, resetT=null, heroMoved=false;
 let k2Territory={}; // key="x,y" → index of M2 owner
 let tickCount=0;    // for k2 slow movement (every 2 ticks)
 let graveyard=[];   // maxOfSet of each absorbed NPC
+/** Запись / просмотр партии (экспорт JSON) */
+let replayRecording=false;
+let replayMode=false;
+let replayFrames=[];
+let replayIndex=0;
+let _replayLastJson='';
+let replayMeta={startStage:1,N:15,wallPct:14,npcCounts:{}};
+let _replayUiMsg='';
+let _replayUiMsgWarn=false;
+let replayAutoTimer=null;
+const REPLAY_SET_MARK='__ks';
+let keydownBound=false;
 /** Отладка геймпада: kolobok_2026.html?gamepaddebug=1 */
 const GAMEPAD_DEBUG=(function(){try{const v=new URLSearchParams(location.search).get('gamepaddebug');return v==='1'||v==='true';}catch(e){return false;}})();
 const GAMEPAD_DEAD_ZONE=0.38;
@@ -529,6 +586,7 @@ function resetNpcCountsDefaults(){
 }
 /** Пересобрать текущий этап с выбранными лимитами NPC (счётчик ходов этапа обнуляется). */
 function applyNpcCountsToBoard(){
+  if(replayMode) return;
   saveNpcCounts();
   hideExtras();
   if(!gameStarted||gel('game').style.display==='none') return;
@@ -627,8 +685,8 @@ function hideVictoryOverlay(){
   ov.style.display='none';
 }
 
-function showFinalVictoryScreen(){
-  campaignHistory.push('Финиш этапа 9 — маршрут завершён.');
+function showFinalVictoryScreen(skipHistoryPush){
+  if(!skipHistoryPush) campaignHistory.push('Финиш этапа 9 — маршрут завершён.');
   const ov=gel('victory-overlay');
   if(!ov||ov===_stub) return;
   hideVictoryOverlay();
@@ -690,14 +748,25 @@ function startGame(){
   movesPerStage=[0,0,0,0,0,0,0,0];
   N=parseInt(gel('n-slider').value);
   wallPct=parseInt(gel('wall-slider').value);
+  replayMeta={
+    startStage,
+    N,
+    wallPct,
+    npcCounts:{...npcCounts},
+  };
+  _replayLastJson='';
+  replayFrames=[];
+  replayRecording=!!(gel('replay-record-check')&&gel('replay-record-check').checked);
   initCampaignSession();
   gel('setup').style.display='none';
   gel('game').style.display='flex';
   gameStarted=true;
   paused=false;
+  replayMode=false;
   layoutCellSize();
   stage=startStage; loadStage();
-  document.addEventListener('keydown',onKey,{capture:true});
+  ensureKeydown();
+  updateReplayMenuButtons();
   try {
     const cv = gel('c');
     if (cv) cv.focus({ preventScroll: true });
@@ -710,6 +779,279 @@ const _stub={style:{},classList:{add:()=>{},remove:()=>{},toggle:()=>{},contains
 Object.defineProperty(_stub,'textContent',{set:()=>{},get:()=>''});
 function gel(id){ return document.getElementById(id)||_stub; }
 function setMsg(t,w){ const e=gel('msg'); if(e){e.textContent=t; e.className=w?'warn':'';} }
+function markSetsForJson(val){
+  if(val===null||val===undefined) return val;
+  const t=typeof val;
+  if(t==='number'||t==='string'||t==='boolean') return val;
+  if(val instanceof Set) return { [REPLAY_SET_MARK]:1, v:[...val].map(markSetsForJson) };
+  if(Array.isArray(val)) return val.map(markSetsForJson);
+  if(t==='object'){
+    const o={};
+    for(const k of Object.keys(val)) o[k]=markSetsForJson(val[k]);
+    return o;
+  }
+  return val;
+}
+function reviveMarkedSets(val){
+  if(val===null||val===undefined) return val;
+  if(typeof val!=='object') return val;
+  if(val[REPLAY_SET_MARK]===1 && Array.isArray(val.v)) return new Set(val.v.map(reviveMarkedSets));
+  if(Array.isArray(val)) return val.map(reviveMarkedSets);
+  const o={};
+  for(const k of Object.keys(val)) o[k]=reviveMarkedSets(val[k]);
+  return o;
+}
+function cloneHeroSnapshot(h){
+  try{
+    if(!h||typeof h!=='object') return h;
+    return JSON.parse(JSON.stringify(h));
+  }catch(e){
+    return {
+      x:h.x|0,y:h.y|0,lvl:h.lvl|0,peakLvl:h.peakLvl|0,
+      dots:Array.isArray(h.dots)?h.dots.slice():[],
+      displayDots:Array.isArray(h.displayDots)?h.displayDots.slice():[],
+      absorbed:Array.isArray(h.absorbed)?h.absorbed.map(ch=>Array.isArray(ch)?ch.slice():[]):[],
+      alive:!!h.alive,isHero:!!h.isHero,navDigit:h.navDigit|0,
+    };
+  }
+}
+function buildGameStateSnapshot(){
+  const msgEl=gel('msg');
+  let uiMsg='', uiMsgWarn=false;
+  if(msgEl&&msgEl!==_stub){ uiMsg=msgEl.textContent||''; uiMsgWarn=msgEl.classList.contains('warn'); }
+  return {
+    N, wallPct, grid: grid.map(r=>[...r]),
+    won, paused, stage, startStage,
+    movesPerStage: [...movesPerStage],
+    movesStage9, campaignMovesTotal, campaignHistory: [...campaignHistory],
+    killedCount,
+    M1, M2, M3, P4, M5, M6, M7,
+    col1, col2, col3, col4, col5, col6, col7,
+    tickCount, k2Territory: {...k2Territory},
+    graveyard: [...graveyard],
+    k5Flashes: k5Flashes.map(f=>({x:f.x,y:f.y,t:f.t})),
+    k5WallFlashes: k5WallFlashes.map(f=>({x:f.x,y:f.y,t:f.t})),
+    k5FreezeUntil,
+    hero: cloneHeroSnapshot(hero),
+    heroMoved,
+    s9PadFocusIx,
+    uiMsg, uiMsgWarn,
+  };
+}
+function performGameStateRestore(rawSnap){
+  const s=reviveMarkedSets(rawSnap);
+  N=s.N; wallPct=s.wallPct;
+  grid=s.grid.map(r=>[...r]);
+  won=!!s.won; paused=!!s.paused;
+  stage=s.stage|0; startStage=s.startStage|0;
+  movesPerStage=[...s.movesPerStage];
+  movesStage9=s.movesStage9|0; campaignMovesTotal=s.campaignMovesTotal|0;
+  campaignHistory=Array.isArray(s.campaignHistory)?[...s.campaignHistory]:[];
+  killedCount=s.killedCount|0;
+  M1=s.M1; M2=s.M2; M3=s.M3; P4=s.P4; M5=s.M5; M6=s.M6; M7=s.M7;
+  col1=s.col1|0; col2=s.col2|0; col3=s.col3|0; col4=s.col4|0; col5=s.col5|0; col6=s.col6|0; col7=s.col7|0;
+  tickCount=s.tickCount|0;
+  k2Territory={...s.k2Territory};
+  graveyard=Array.isArray(s.graveyard)?[...s.graveyard]:[];
+  k5Flashes=Array.isArray(s.k5Flashes)?s.k5Flashes.map(f=>({x:f.x,y:f.y,t:f.t})):[];
+  k5WallFlashes=Array.isArray(s.k5WallFlashes)?s.k5WallFlashes.map(f=>({x:f.x,y:f.y,t:f.t})):[];
+  k5FreezeUntil=+s.k5FreezeUntil||0;
+  hero=s.hero;
+  heroMoved=!!s.heroMoved;
+  s9PadFocusIx=s.s9PadFocusIx|0;
+  _replayUiMsg=typeof s.uiMsg==='string'?s.uiMsg:'';
+  _replayUiMsgWarn=!!s.uiMsgWarn;
+}
+function showCounterLinesForCurrentStage(){
+  hideL();
+  if(stage<=1) return;
+  showL('line2','c1-cnt','c1-tot',col1,M1.length);
+  if(stage<=2) return;
+  showL('line3','c2-cnt','c2-tot',col2,M2.length);
+  if(stage<=3) return;
+  showL('line4','c3-cnt','c3-tot',col3,M3.length);
+  if(stage<=4) return;
+  showL('line5','c4-cnt','c4-tot',col4,P4.length*2);
+  if(stage<=5) return;
+  showL('line6','c5-cnt','c5-tot',col5,M5.length);
+  if(stage<=6) return;
+  showL('line7','c6-cnt','c6-tot',col6,M6.length);
+  if(stage<=7) return;
+  showL('line8','c7-cnt','c7-tot',col7,M7.length);
+  if(stage===8) showL('line9','c8-cnt','c8-tot',0,1);
+}
+function maybeRecordSnapshot(tag){
+  if(!replayRecording || replayMode || !gameStarted) return;
+  if(gel('game').style.display==='none') return;
+  try{
+    const snap=markSetsForJson(buildGameStateSnapshot());
+    const json=JSON.stringify(snap);
+    if(json===_replayLastJson) return;
+    _replayLastJson=json;
+    replayFrames.push({tag:String(tag||''), t:Date.now(), snap});
+    updateReplayMenuButtons();
+  }catch(err){
+    console.warn('kolobok replay: снимок не сохранён ('+String(tag||'')+')', err);
+  }
+}
+function updateReplayMenuButtons(){
+  const mb=gel('menu-save-replay');
+  const sb=gel('setup-save-replay');
+  const vis=!!(replayFrames.length>0 && !replayMode);
+  if(mb&&mb!==_stub) mb.style.display=(vis && gameStarted && gel('game').style.display!=='none')?'block':'none';
+  if(sb&&sb!==_stub) sb.style.display=vis?'block':'none';
+}
+function stopReplayAuto(){
+  if(replayAutoTimer){ clearInterval(replayAutoTimer); replayAutoTimer=null; }
+  const b=gel('replay-auto-btn');
+  if(b&&b!==_stub) b.textContent='▶ Авто';
+}
+function updateReplayToolbar(){
+  const tb=gel('replay-toolbar');
+  if(!tb||tb===_stub) return;
+  if(!replayMode){ tb.classList.remove('open'); return; }
+  tb.classList.add('open');
+  const fr=replayFrames[replayIndex];
+  gel('replay-pos').textContent=(replayIndex+1)+' / '+replayFrames.length;
+  gel('replay-tag').textContent=fr&&fr.tag?fr.tag:'—';
+}
+function replayApplyUiAfterFrame(){
+  clrT();
+  layoutCellSize();
+  gel('stage-num').textContent=String(stage);
+  showCounterLinesForCurrentStage();
+  const sb=gel('stop-btn');
+  if(sb&&sb!==_stub){ sb.textContent='⏸ Стоп'; sb.classList.remove('active'); }
+  refreshCounters();
+  syncCtrlMode();
+  updateS9PadDomHighlight();
+  syncHelpPanelsForStage();
+  setMsg(_replayUiMsg, _replayUiMsgWarn);
+  hideVictoryOverlay();
+  if(won && stage===9) showFinalVictoryScreen(true);
+  draw();
+  updateReplayToolbar();
+}
+function replaySeek(d){
+  if(!replayMode || !replayFrames.length) return;
+  let i=replayIndex+(d|0);
+  if(i<0) i=0;
+  if(i>=replayFrames.length) i=replayFrames.length-1;
+  if(i===replayIndex) return;
+  replayIndex=i;
+  performGameStateRestore(replayFrames[i].snap);
+  replayApplyUiAfterFrame();
+}
+function toggleReplayAuto(btn){
+  if(!replayMode) return;
+  if(replayAutoTimer){
+    stopReplayAuto();
+    return;
+  }
+  replayAutoTimer=setInterval(()=>{
+    if(replayIndex>=replayFrames.length-1){ stopReplayAuto(); return; }
+    replaySeek(1);
+  }, 380);
+  if(btn) btn.textContent='⏸ Авто';
+}
+function exitReplayModeCore(){
+  stopReplayAuto();
+  replayMode=false;
+  replayIndex=0;
+  _replayLastJson='';
+  gel('replay-toolbar').classList.remove('open');
+}
+function exitReplayToSetup(){
+  exitReplayModeCore();
+  replayFrames=[];
+  hideVictoryOverlay();
+  clrT();
+  gameStarted=false;
+  paused=false;
+  won=false;
+  gel('game').style.display='none';
+  gel('setup').style.display='flex';
+  updateReplayMenuButtons();
+}
+function ensureKeydown(){
+  if(keydownBound) return;
+  keydownBound=true;
+  document.addEventListener('keydown',onKey,{capture:true});
+}
+async function exportReplayRecording(){
+  if(!replayFrames.length) return;
+  const payload={
+    v:1,
+    app:'kolobok_2026',
+    savedAt:new Date().toISOString(),
+    meta:{
+      playerName:(gel('player-name').value||'').trim()||'Игрок',
+      startStage:replayMeta.startStage,
+      N:replayMeta.N,
+      wallPct:replayMeta.wallPct,
+      npcCounts:{...replayMeta.npcCounts},
+    },
+    frames: replayFrames,
+  };
+  const text=JSON.stringify(payload);
+  const name='kolobok-zapis-'+(new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'))+'.json';
+  const file=new File([text],name,{type:'application/json'});
+  if(navigator.share&&navigator.canShare){
+    try{
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Запись — Колобок и его команда'});
+        return;
+      }
+    }catch(e){}
+  }
+  const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+  const a=document.createElement('a');
+  a.href=url; a.download=name; a.click();
+  URL.revokeObjectURL(url);
+}
+function startReplayFromJson(data){
+  if(!data||data.v!==1||data.app!=='kolobok_2026') throw new Error('Нужен файл записи этой игры (kolobok_2026).');
+  if(!Array.isArray(data.frames)||!data.frames.length) throw new Error('В файле нет кадров.');
+  exitReplayModeCore();
+  hideVictoryOverlay();
+  closeMenu();
+  hideHelp();
+  gel('extras-modal').classList.remove('open');
+  gel('lb-modal').style.display='none';
+  stopReplayAuto();
+  replayMode=true;
+  replayRecording=false;
+  replayFrames=data.frames;
+  replayIndex=0;
+  if(data.meta&&typeof data.meta==='object'){
+    const m=data.meta;
+    replayMeta={
+      startStage:typeof m.startStage==='number'?m.startStage:((data.frames[0]&&data.frames[0].snap&&data.frames[0].snap.startStage)|0),
+      N:typeof m.N==='number'?m.N:((data.frames[0]&&data.frames[0].snap&&data.frames[0].snap.N)|15),
+      wallPct:typeof m.wallPct==='number'?m.wallPct:((data.frames[0]&&data.frames[0].snap&&data.frames[0].snap.wallPct)|14),
+      npcCounts:{...DEFAULT_NPC_COUNTS},
+    };
+    if(m.npcCounts&&typeof m.npcCounts==='object'){
+      for(const k of NPC_COUNT_KEYS){
+        const v=parseInt(m.npcCounts[k],10);
+        const max=k==='p4'?8:12;
+        if(!isNaN(v)&&v>=1&&v<=max) replayMeta.npcCounts[k]=v;
+      }
+    }
+  }else if(data.frames[0]&&data.frames[0].snap){
+    const s=data.frames[0].snap;
+    replayMeta={startStage:s.startStage|0,N:s.N|0,wallPct:s.wallPct|0,npcCounts:{...DEFAULT_NPC_COUNTS}};
+  }
+  gameStarted=true;
+  paused=false;
+  gel('setup').style.display='none';
+  gel('game').style.display='flex';
+  ensureKeydown();
+  try{ gel('c').focus({preventScroll:true}); }catch(e){}
+  performGameStateRestore(replayFrames[0].snap);
+  replayApplyUiAfterFrame();
+  updateReplayMenuButtons();
+}
 function showL(id,ci,ti,c,t){ const e=gel(id),ec=gel(ci),et=gel(ti); if(e)e.style.display='block'; if(ec)ec.textContent=c; if(et)et.textContent=t; }
 function hideL(){ ['line2','line3','line4','line5','line6','line7','line8','line9'].forEach(id=>{const e=gel(id);if(e)e.style.display='none';}); }
 function kxy(m){ return m.x+','+m.y; }
@@ -869,6 +1211,8 @@ function fullSet(obj){
 /** Цифра с клавиатуры: уровень героя = N (встречи, движение как к-N); 0 — уровень этапа. */
 function applyHeroChosenDigit(raw){
   if(!hero||!hero.alive) return;
+  const wasS9=stage===9;
+  try{
   const D=raw|0;
   const prevNav=hero.navDigit|0;
   if(stage===9 && D!==2){
@@ -923,6 +1267,9 @@ function applyHeroChosenDigit(raw){
     hero.absorbed=[];
     hero._bdx=0; hero._bdy=0; hero._satL=null; hero._satR=null;
     hero._k5LastWasJump=false;
+  }
+  }finally{
+    if(wasS9&&replayRecording&&!replayMode) maybeRecordSnapshot('digit');
   }
 }
 
@@ -1155,6 +1502,7 @@ function handleHeroDeath(info){
   if(info&&info.seniorSets&&info.juniorSets)
     deathLine+=' — старший ['+info.seniorSets.join(' ')+'] vs младший ['+info.juniorSets.join(' ')+']';
   campaignHistory.push(deathLine);
+  maybeRecordSnapshot('death');
   clrT(); // stop tick and animation timers
   draw();
   // Gray overlay on entire canvas
@@ -1330,6 +1678,8 @@ function refreshCounters(){
 
 function loadStage(){
   hideVictoryOverlay();
+  const conf=gel('confetti-canvas');
+  if(conf&&conf!==_stub) conf.style.display='none';
   clrT(); won=false; paused=false; M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
   col1=0;col2=0;col3=0;col4=0;col5=0;col6=0;col7=0;
   // Герой: уровень = номер этапа; на поле и в панели — одна цифра (без пенала)
@@ -1395,6 +1745,7 @@ function loadStage(){
   gamepadS9PrevA=false;
   gamepadS9HeldNav=null;
   gamepadS9LastNavAt=0;
+  maybeRecordSnapshot('stage');
 }
 
 /** Все клетки пола (grid===0) в одной 4-связной компоненте с (sx,sy) — нет «карманов» за замкнутым контуром стен. */
@@ -2075,6 +2426,7 @@ function tick(){
   // Check win in case last NPC was absorbed automatically while hero is on finish
   if(hero.alive) checkWin();
   if(won) draw();
+  if(replayRecording && !replayMode) maybeRecordSnapshot('tick');
 }
 
 function draw(){
@@ -2351,11 +2703,16 @@ function scheduleNextStage(completedStage,nextStage){
   clrT();
   launchStageFireworks(completedStage);
   setTimeout(()=>{
-    const idx=completedStage-1;
-    const mvc=(idx>=0&&idx<8)?movesPerStage[idx]:0;
-    campaignHistory.push('Этап '+completedStage+' завершён (ходов на этапе: '+mvc+'). Переход на этап '+nextStage+'.');
-    stage=nextStage;
-    loadStage();
+    try{
+      const idx=completedStage-1;
+      const mvc=(idx>=0&&idx<8)?movesPerStage[idx]:0;
+      campaignHistory.push('Этап '+completedStage+' завершён (ходов на этапе: '+mvc+'). Переход на этап '+nextStage+'.');
+      stage=nextStage;
+      loadStage();
+    }catch(err){
+      console.error('kolobok: переход на этап '+nextStage, err);
+      setMsg('Ошибка при переходе на этап '+nextStage+'. Обновите страницу.', true);
+    }
   }, STAGE_SALUTE_MS);
 }
 
@@ -2417,6 +2774,7 @@ function launchFireworks(){
 }
 
 function trigReset(msg){
+  if(replayMode) return;
   setMsg(msg,true); clrT();
   resetT=setTimeout(()=>{ if(stage>=1&&stage<=8) movesPerStage[stage-1]=0; loadStage(); },2200);
 }
@@ -2703,6 +3061,7 @@ function syncCtrlMode(){
   }
 }
 function pressS9PadIndex(ix){
+  if(replayMode) return;
   if(stage!==9||won||resetT||!hero||!hero.alive||paused) return;
   if(gel('help-modal').classList.contains('open')) return;
   if(gel('menu-overlay').classList.contains('open')) return;
@@ -2717,6 +3076,7 @@ function pressS9PadIndex(ix){
 }
 
 function pmove(dx,dy){
+  if(replayMode) return;
   if(won||resetT||!hero.alive||paused) return;
   if(stage===9) return;
   if(heroImmobileLikeK1()) return;
@@ -2750,6 +3110,7 @@ function pmove(dx,dy){
 
   draw(); checkWin();
   if(won) draw();
+  if(replayRecording && !replayMode) maybeRecordSnapshot('move');
 }
 
 function gamepadSetupModalIsOpen(){
@@ -2774,6 +3135,7 @@ function closeGamepadSetup(){
 }
 
 function gamepadMovementAllowed(){
+  if(replayMode) return false;
   if(!gameStarted||gel('game').style.display==='none') return false;
   if(gel('help-modal').classList.contains('open')) return false;
   if(gel('menu-overlay').classList.contains('open')) return false;
@@ -2874,6 +3236,7 @@ function renderGamepadSetupPanel(gp,dThis){
   pre.textContent=lines.join('\n');
 }
 function gamepadStage9NavAllowed(){
+  if(replayMode) return false;
   if(!gameStarted||gel('game').style.display==='none') return false;
   if(gel('help-modal').classList.contains('open')) return false;
   if(gel('menu-overlay').classList.contains('open')) return false;
@@ -2926,6 +3289,7 @@ function pollGamepadStage9(gp){
   if(gamepadSetupModalIsOpen()) renderGamepadSetupPanel(gp,nav);
 }
 function pollGamepadHero(){
+  if(replayMode) return;
   const refreshUi=(gp,d)=>{ if(GAMEPAD_DEBUG&&stage!==9) renderGamepadDebugHud(gp,d); if(gamepadSetupModalIsOpen()&&stage!==9) renderGamepadSetupPanel(gp,d); };
   if(typeof navigator.getGamepads!=='function'){ refreshUi(null,null); return; }
   const pads=navigator.getGamepads();
@@ -2997,6 +3361,7 @@ function checkWin(){
     draw();
     launchStageFireworks(9);
     showFinalVictoryScreen();
+    if(replayRecording && !replayMode) maybeRecordSnapshot('win');
     return;
   }
   if(hero.x!==finishGX()||hero.y!==finishGY()) return;
@@ -3004,32 +3369,33 @@ function checkWin(){
   const a3=M3.filter(m=>!m.collected).length,a4=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0);
   const a5=M5.filter(m=>!m.collected).length,a6=M6.filter(m=>!m.collected).length;
   const a7=stage>=8?M7.filter(m=>!m.collected).length:0;
-  if(stage===1){won=true;setMsg('Этап 1 пройден!');scheduleNextStage(1,2);}
-  else if(stage===2){if(a1>0) return; won=true;setMsg('Этап 2 пройден!');scheduleNextStage(2,3);}
+  if(stage===1){won=true;setMsg('Этап 1 пройден!');scheduleNextStage(1,2);if(replayRecording && !replayMode) maybeRecordSnapshot('win');}
+  else if(stage===2){if(a1>0) return; won=true;setMsg('Этап 2 пройден!');scheduleNextStage(2,3);if(replayRecording && !replayMode) maybeRecordSnapshot('win');}
   else if(stage===3){
     if(a2>0||a1>0) return;
-    won=true;setMsg('Этап 3 пройден!');scheduleNextStage(3,4);
+    won=true;setMsg('Этап 3 пройден!');scheduleNextStage(3,4);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
   }
   else if(stage===4){
     if(a3>0||a2>0||a1>0) return;
-    won=true;setMsg('Этап 4 пройден!');scheduleNextStage(4,5);
+    won=true;setMsg('Этап 4 пройден!');scheduleNextStage(4,5);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
   }
   else if(stage===5){
     if(a4>0||a3>0||a2>0||a1>0) return;
-    won=true;setMsg('Этап 5 пройден!');scheduleNextStage(5,6);
+    won=true;setMsg('Этап 5 пройден!');scheduleNextStage(5,6);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
   }
   else if(stage===6){
     if(a5>0||a4>0||a3>0||a2>0||a1>0) return;
-    won=true;setMsg('Этап 6 пройден!');scheduleNextStage(6,7);
+    won=true;setMsg('Этап 6 пройден!');scheduleNextStage(6,7);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
   }
   else if(stage===7){
     if(a6>0||a5>0||a4>0||a3>0||a2>0||a1>0) return;
-    won=true;setMsg('Этап 7 пройден!');scheduleNextStage(7,8);
+    won=true;setMsg('Этап 7 пройден!');scheduleNextStage(7,8);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
   }
   else if(stage===8){
     if(a7>0||a6>0||a5>0||a4>0||a3>0||a2>0||a1>0) return;
     won=true; setMsg('Этап 8 пройден! Открываем этап 9…');
     scheduleNextStage(8,9);
+    if(replayRecording && !replayMode) maybeRecordSnapshot('win');
   }
 }
 
@@ -3051,6 +3417,18 @@ function onKey(e){
   }
   if(gamepadSetupModalIsOpen()){
     if(e.key==='Escape'){ e.preventDefault(); closeGamepadSetup(); }
+    return;
+  }
+  if(replayMode){
+    if(e.code==='Escape'){
+      if(gel('help-modal').classList.contains('open')){ e.preventDefault(); hideHelp(); return; }
+      if(gel('menu-overlay').classList.contains('open')){ e.preventDefault(); closeMenu(); return; }
+      e.preventDefault(); exitReplayToSetup(); return;
+    }
+    if(!gel('menu-overlay').classList.contains('open')&&!gel('help-modal').classList.contains('open')&&gel('lb-modal').style.display!=='flex'){
+      if(e.code==='ArrowLeft'){ e.preventDefault(); replaySeek(-1); return; }
+      if(e.code==='ArrowRight'){ e.preventDefault(); replaySeek(1); return; }
+    }
     return;
   }
   if(isDesktopFinePointer() && e.code==='Space'){
@@ -3123,6 +3501,7 @@ document.addEventListener('touchstart',e=>{
 },{passive:true});
 document.addEventListener('touchend',e=>{
   if(!gameStarted||gel('game').style.display==='none') return;
+  if(replayMode) return;
   if(gel('help-modal').classList.contains('open')) return;
   if(gel('extras-modal').classList.contains('open')) return;
   if(gamepadSetupModalIsOpen()) return;
@@ -3149,18 +3528,21 @@ function hideHelp(){ gel('help-modal').classList.remove('open'); }
 function openMenu(){ gel('menu-overlay').classList.add('open'); }
 function closeMenu(){ gel('menu-overlay').classList.remove('open'); }
 function restartFull(){
+  if(replayMode) return;
   clrT(); stage=startStage; paused=false; movesPerStage=[0,0,0,0,0,0,0,0];
   initCampaignSession();
   const sb=gel('stop-btn'); if(sb){sb.classList.remove('active');sb.textContent='⏸ Стоп';}
   loadStage();
 }
 function toggleStop(){
+  if(replayMode) return;
   paused=!paused;
   const btn=gel('stop-btn');
   if(paused){ clrT(); btn.textContent='▶ Продолжить'; btn.classList.add('active'); }
   else{ btn.textContent='⏸ Стоп'; btn.classList.remove('active'); resumeTick(); }
 }
 function resetStage(){
+  if(replayMode) return;
   clrT(); paused=false;
   const sb=gel('stop-btn');
   if(sb){ sb.textContent='⏸ Стоп'; sb.classList.remove('active'); }
@@ -3171,23 +3553,35 @@ function resumeTick(){
   if(stage>=3 && heroMoved) tickT=setInterval(tick, tickMs());
 }
 function goToSetup(){
+  stopReplayAuto();
+  if(replayMode){
+    exitReplayToSetup();
+    return;
+  }
   hideVictoryOverlay();
   won=false;
   clrT(); paused=false;
   const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
   gel('game').style.display='none';
   gel('setup').style.display='flex';
+  updateReplayMenuButtons();
 }
 function fullReset(){
+  if(replayMode) exitReplayToSetup();
+  exitReplayModeCore();
+  replayFrames=[];
+  _replayLastJson='';
   clrT(); paused=false; stage=1; startStage=1; won=false; movesPerStage=[0,0,0,0,0,0,0,0];
   hideVictoryOverlay();
   movesStage9=0;
   campaignMovesTotal=0;
   campaignHistory=[];
+  gameStarted=false;
   const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
   document.querySelectorAll('.stage-sel').forEach((b,i)=>b.classList.toggle('active',i===0));
   gel('game').style.display='none';
   gel('setup').style.display='flex';
+  updateReplayMenuButtons();
 }
 
 // Leaderboard — stored in localStorage
@@ -3271,6 +3665,38 @@ if (GAMEPAD_DEBUG) {
 }
 loadNpcCounts();
 bindExtrasSliders();
+const LS_REPLAY_CHK='kolobok_replay_check';
+(function initReplaySetupUi(){
+  const chk=gel('replay-record-check');
+  if(chk&&chk!==_stub){
+    try{
+      const v=localStorage.getItem(LS_REPLAY_CHK);
+      chk.checked=v==='1';
+    }catch(err){ chk.checked=false; }
+    chk.addEventListener('change',function(){
+      try{ localStorage.setItem(LS_REPLAY_CHK,this.checked?'1':'0'); }catch(e){}
+    });
+  }
+  const pick=gel('replay-pick-file-btn');
+  const finp=gel('replay-file-input');
+  if(pick&&pick!==_stub&&finp&&finp!==_stub){
+    pick.addEventListener('click',()=>finp.click());
+    finp.addEventListener('change',function(){
+      const f=this.files&&this.files[0];
+      if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{
+        try{
+          startReplayFromJson(JSON.parse(String(r.result||'')));
+        }catch(err){
+          alert(err&&err.message?err.message:'Не удалось прочитать файл.');
+        }
+      };
+      r.readAsText(f);
+      this.value='';
+    });
+  }
+})();
 </script>
 <!-- Leaderboard modal -->
 <div id="lb-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:5000;align-items:center;justify-content:center;">
