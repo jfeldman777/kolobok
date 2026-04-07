@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Мистер Потейто</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #101014; color: #ecedf3; font-family: system-ui, sans-serif; }
+body { display: flex; justify-content: center; }
+#app {
+  width: min(960px, 100%);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: calc(8px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
+}
+.top {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #1b1d26; border: 1px solid #2a2e3f; border-radius: 12px; padding: 10px 12px;
+}
+h1 { font-size: 18px; color: #ffc44d; flex: 1; }
+a.back { color: #8cc7ff; font-size: 13px; text-decoration: none; }
+.pill { background: #242938; border: 1px solid #3a4258; border-radius: 999px; padding: 6px 10px; font-size: 13px; }
+.top-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mini {
+  border: 1px solid #4a5676;
+  border-radius: 8px;
+  background: #2a2f3f;
+  color: #e9eefb;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.vol-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #aebadb;
+  font-weight: 700;
+}
+.vol-wrap input { width: 86px; }
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.card { background: #171a23; border: 1px solid #2b3041; border-radius: 12px; padding: 10px; }
+#prompt { font-size: 18px; font-weight: 800; color: #ffd56f; margin-bottom: 6px; }
+#hint { font-size: 13px; color: #a8b2c9; margin-bottom: 8px; }
+.item-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border: 1px solid #3a4258;
+  border-radius: 10px;
+  background: #202638;
+}
+#item-emoji { font-size: 24px; line-height: 1; }
+#item-name { font-size: 16px; font-weight: 800; color: #f7f0c4; }
+.balls { display: flex; gap: 6px; align-items: center; min-height: 18px; margin-bottom: 8px; }
+.ball { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); background: #d32f2f; }
+.ball.done { background: #fff; }
+.ball.possible { background: #444b5f; border-color: #6f7a96; }
+.ball.possible.done { background: #c8d3ea; }
+.ball-paren { color: #7f8aa6; font-weight: 800; font-size: 13px; line-height: 1; }
+.answer-mark {
+  margin-left: 8px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #95a6c8;
+  min-width: 24px;
+  text-align: left;
+}
+.answer-mark.ok { color: #9ef0a7; }
+.answer-mark.ask { color: #ffd166; font-size: 32px; line-height: 1; }
+#status { font-size: 14px; min-height: 1.4em; }
+.ok { color: #8ee39f; } .bad { color: #ff9b98; } .info { color: #9ec3ff; }
+.journal { margin-top: 10px; border-top: 1px solid #2d3446; padding-top: 8px; }
+.journal h3 { font-size: 13px; margin-bottom: 6px; color: #b8c7e6; }
+#journal-list { margin: 0; padding-left: 18px; max-height: 160px; overflow: auto; }
+#journal-list li { font-size: 12px; color: #c4cce0; margin: 3px 0; }
+#canvas-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/10;
+  background: #0f1119;
+  border: 1px solid #2e3448;
+  border-radius: 12px;
+  overflow: hidden;
+}
+canvas { width: 100%; height: 100%; display: block; touch-action: manipulation; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+button {
+  border: 1px solid #445072; border-radius: 10px; background: #2a3d6e; color: #fff;
+  padding: 10px 14px; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+button.secondary { background: #2a2d39; border-color: #424b63; color: #d6deef; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <h1>Мистер Потейто</h1>
+    <a class="back" href="index.html">На главную</a>
+    <div class="top-controls">
+      <div class="vol-wrap"><span>Громк.</span><input id="vol" type="range" min="0" max="100" value="80"></div>
+      <button id="font-down" class="mini" type="button">A-</button>
+      <button id="font-up" class="mini" type="button">A+</button>
+    </div>
+    <div class="pill" id="sc">Очки: 0</div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <div id="prompt">Нажми «Старт»</div>
+      <div id="hint">Игрок видит предмет и лицо героя. Коснись на лице правильных зон органов чувств.</div>
+      <div class="item-view"><span id="item-emoji">❔</span><span id="item-name">предмет</span></div>
+      <div class="balls" id="balls"><span id="answer-mark" class="answer-mark"></span></div>
+      <div id="status" class="info"></div>
+      <div class="controls" style="margin-top:10px;">
+        <button id="start">Старт</button>
+        <button id="restart" class="secondary">Сброс</button>
+        <button id="download-journal" class="secondary">Скачать журнал</button>
+      </div>
+      <div class="journal">
+        <h3>Журнал ответов</h3>
+        <ol id="journal-list"></ol>
+      </div>
+    </div>
+
+    <div id="canvas-wrap">
+      <canvas id="c"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ORGANS=[
+    { id:'ears',  name:'уши',  file:'img/потейто_уши.png',  color:'rgba(124,193,255,0.32)' },
+    { id:'eyes',  name:'глаза', file:'img/потейто_глаза.png', color:'rgba(136,255,170,0.30)' },
+    { id:'nose',  name:'нос',  file:'img/потейто_нос.png',  color:'rgba(255,178,94,0.34)' },
+    { id:'mouth', name:'рот',  file:'img/потейто_рот.png',  color:'rgba(255,120,153,0.32)' },
+    { id:'hands', name:'руки', file:'img/потейто_руки.png', color:'rgba(216,163,255,0.30)' },
+  ];
+  const BASE_FILE='img/потейто.png';
+  const LINES_FILE='img/потейто_линии.png';
+  const ITEMS=[
+    { name:'цветок', emoji:'🌸', needs:['eyes','nose'], possible:['hands'] },
+    { name:'конфета', emoji:'🍬', needs:['mouth'], possible:['eyes','hands','nose'] },
+    { name:'колокольчик', emoji:'🔔', needs:['ears'], possible:['eyes','hands'] },
+    { name:'суп', emoji:'🍲', needs:['eyes','nose','mouth'], possible:['hands'] },
+    { name:'книга', emoji:'📘', needs:['eyes','hands'], possible:['ears'] },
+    { name:'яблоко', emoji:'🍎', needs:['eyes','nose','mouth'], possible:['hands'] },
+    { name:'мяч', emoji:'⚽', needs:['eyes','hands'], possible:['ears'] },
+    { name:'музыкальный барабан', emoji:'🥁', needs:['ears','hands'], possible:['eyes'] },
+    { name:'апельсин', emoji:'🍊', needs:['eyes','nose','mouth'], possible:['hands'] },
+    { name:'лимон', emoji:'🍋', needs:['mouth','nose'], possible:['eyes','hands'] },
+    { name:'шоколад', emoji:'🍫', needs:['mouth'], possible:['eyes','nose','hands'] },
+    { name:'ложка', emoji:'🥄', needs:['hands'], possible:['eyes'] },
+    { name:'чай', emoji:'🍵', needs:['mouth','nose'], possible:['eyes','hands'] },
+    { name:'свеча', emoji:'🕯️', needs:['eyes','nose'], possible:['hands'] },
+    { name:'дождь', emoji:'🌧️', needs:['ears','hands'], possible:['eyes'] },
+    { name:'песок', emoji:'🏖️', needs:['hands'], possible:['eyes'] },
+    { name:'кубики', emoji:'🧱', needs:['hands','eyes'], possible:['ears'] },
+    { name:'погремушка', emoji:'🪇', needs:['ears','hands'], possible:['eyes'] },
+    { name:'мыло', emoji:'🧼', needs:['nose','hands'], possible:['eyes'] },
+    { name:'морковка', emoji:'🥕', needs:['mouth'], possible:['eyes','hands'] },
+    { name:'банан', emoji:'🍌', needs:['mouth'], possible:['eyes','hands'] },
+    { name:'воздушный шарик', emoji:'🎈', needs:['eyes','hands'], possible:['ears'] },
+    { name:'кошка', emoji:'🐱', needs:['eyes','ears','hands'], possible:['nose'] },
+    { name:'собака', emoji:'🐶', needs:['ears','eyes'], possible:['hands','nose'] },
+    { name:'трава', emoji:'🌿', needs:['hands','nose'], possible:['eyes'] },
+    { name:'цветной карандаш', emoji:'✏️', needs:['eyes','hands'], possible:[] },
+    { name:'музыка', emoji:'🎵', needs:['ears'], possible:['hands'] },
+    { name:'ветер', emoji:'💨', needs:['hands','ears'], possible:['eyes'] },
+    { name:'лёд', emoji:'🧊', needs:['hands'], possible:['mouth','eyes'] },
+    { name:'мед', emoji:'🍯', needs:['mouth'], possible:['nose','eyes'] },
+    { name:'часы (тикают)', emoji:'🕰️', needs:['ears'], possible:['eyes'] },
+    { name:'зеркало', emoji:'🪞', needs:['eyes'], possible:['hands'] },
+    { name:'хлеб', emoji:'🍞', needs:['mouth','nose'], possible:['hands','eyes'] },
+    { name:'сок', emoji:'🧃', needs:['mouth'], possible:['eyes','nose'] },
+    { name:'перец (болгарский)', emoji:'🫑', needs:['mouth','nose'], possible:['eyes'] },
+    { name:'шишка', emoji:'🌲', needs:['hands'], possible:['eyes','nose'] },
+  ];
+
+  const cv=document.getElementById('c');
+  const wrap=document.getElementById('canvas-wrap');
+  const scEl=document.getElementById('sc');
+  const promptEl=document.getElementById('prompt');
+  const itemEmojiEl=document.getElementById('item-emoji');
+  const itemNameEl=document.getElementById('item-name');
+  const statusEl=document.getElementById('status');
+  const ballsEl=document.getElementById('balls');
+  const answerMarkEl=document.getElementById('answer-mark');
+  const journalListEl=document.getElementById('journal-list');
+  const startBtn=document.getElementById('start');
+  const restartBtn=document.getElementById('restart');
+  const dlJournalBtn=document.getElementById('download-journal');
+  const volEl=document.getElementById('vol');
+  const fontDownBtn=document.getElementById('font-down');
+  const fontUpBtn=document.getElementById('font-up');
+
+  const state={
+    loaded:false, running:false, score:0,
+    item:null, lastItemName:null, selected:new Set(), pendingNext:false,
+    currentLog:null, journal:[],
+    volume:0.8, fontScale:1,
+    base:null, lines:null, masks:new Map(), maskData:new Map(),
+    drawRect:{x:0,y:0,w:0,h:0},
+  };
+  const SENSE_TEXT={
+    ears:'Уши — слух',
+    eyes:'Глаза — зрение',
+    nose:'Нос — обоняние',
+    mouth:'Рот — вкус',
+    hands:'Руки — осязание',
+  };
+  const FONT_MIN=0.8, FONT_MAX=1.45, FONT_STEP=0.08;
+  const SETTINGS_KEY='mr_potato_settings_v1';
+  const SPEAK_LEAD_MS=1280;
+  const SPEAK_QUEUE_GAP_MS=190;
+  const SPEAK_IDLE_FALLBACK_MS=12000;
+  let speakLeadTimer=0;
+  let speakPlayingUtterance=false;
+  const speakQueue=[];
+  const speakIdleCallbacks=[];
+  function clearSpeakQueue(){
+    speakQueue.length=0;
+    if(speakLeadTimer){ clearTimeout(speakLeadTimer); speakLeadTimer=0; }
+    speakPlayingUtterance=false;
+    if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+  function pumpSpeakQueue(fromContinuation){
+    if(speakLeadTimer||speakPlayingUtterance||!speakQueue.length) return;
+    const text=speakQueue.shift();
+    const delay=fromContinuation?SPEAK_QUEUE_GAP_MS:SPEAK_LEAD_MS;
+    speakLeadTimer=setTimeout(()=>{
+      speakLeadTimer=0;
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='ru-RU';
+      u.volume=Math.max(0, Math.min(1, state.volume));
+      u.rate=1;
+      u.pitch=1;
+      speakPlayingUtterance=true;
+      u.onend=()=>{
+        speakPlayingUtterance=false;
+        pumpSpeakQueue(true);
+        tryRunSpeechIdleCallbacks();
+      };
+      u.onerror=()=>{
+        speakPlayingUtterance=false;
+        pumpSpeakQueue(true);
+        tryRunSpeechIdleCallbacks();
+      };
+      window.speechSynthesis.speak(u);
+      requestAnimationFrame(tryRunSpeechIdleCallbacks);
+    }, delay);
+  }
+  function tryRunSpeechIdleCallbacks(){
+    if(speakLeadTimer) return;
+    if(!('speechSynthesis' in window)) return;
+    const syn=window.speechSynthesis;
+    if(syn.speaking || syn.pending) return;
+    if(!speakIdleCallbacks.length) return;
+    const cbs=speakIdleCallbacks.splice(0);
+    for(const fn of cbs) fn();
+  }
+  function runWhenSpeechIdle(fn){
+    if(!('speechSynthesis' in window)){
+      setTimeout(fn, 0);
+      return;
+    }
+    let done=false;
+    const wrap=()=>{ if(done) return; done=true; fn(); };
+    speakIdleCallbacks.push(wrap);
+    tryRunSpeechIdleCallbacks();
+    setTimeout(wrap, SPEAK_IDLE_FALLBACK_MS);
+  }
+  function organName(id){
+    const o=ORGANS.find(x=>x.id===id);
+    return o?o.name:id;
+  }
+
+  function setStatus(txt, kind){
+    statusEl.className=kind||'info';
+    statusEl.textContent=txt||'';
+  }
+  function speakSenseByOrgan(id){
+    if(!('speechSynthesis' in window)) return;
+    const text=SENSE_TEXT[id];
+    if(!text) return;
+    speakQueue.push(text);
+    pumpSpeakQueue();
+  }
+  function applyFontScale(){
+    const scale=Math.max(FONT_MIN, Math.min(FONT_MAX, state.fontScale));
+    state.fontScale=scale;
+    const list=document.querySelectorAll('#app *:not(canvas)');
+    for(const el of list){
+      if(!el.dataset.baseFontPx){
+        const cs=window.getComputedStyle(el);
+        const px=parseFloat(cs.fontSize||'0');
+        if(px>0) el.dataset.baseFontPx=String(px);
+      }
+      const base=parseFloat(el.dataset.baseFontPx||'0');
+      if(base>0) el.style.fontSize=(base*scale).toFixed(2)+'px';
+    }
+  }
+  function saveSettings(){
+    try{
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        volume:state.volume,
+        fontScale:state.fontScale
+      }));
+    }catch(_e){}
+  }
+  function loadSettings(){
+    try{
+      const raw=localStorage.getItem(SETTINGS_KEY);
+      if(!raw) return;
+      const s=JSON.parse(raw);
+      if(s&&typeof s==='object'){
+        if(Number.isFinite(s.volume)) state.volume=Math.max(0, Math.min(1, +s.volume));
+        if(Number.isFinite(s.fontScale)) state.fontScale=Math.max(FONT_MIN, Math.min(FONT_MAX, +s.fontScale));
+      }
+    }catch(_e){}
+  }
+  function updateHud(){
+    scEl.textContent='Очки: '+state.score;
+  }
+  function loadImage(src){
+    return new Promise((resolve,reject)=>{
+      const im=new Image();
+      im.onload=()=>resolve(im);
+      im.onerror=()=>reject(new Error('Не загрузилось: '+src));
+      im.src=src;
+    });
+  }
+  function makeMaskData(img){
+    const t=document.createElement('canvas');
+    t.width=img.width; t.height=img.height;
+    const tx=t.getContext('2d');
+    tx.drawImage(img,0,0);
+    return tx.getImageData(0,0,t.width,t.height);
+  }
+  async function preload(){
+    state.base=await loadImage(BASE_FILE);
+    state.lines=await loadImage(LINES_FILE);
+    for(const o of ORGANS){
+      const im=await loadImage(o.file);
+      state.masks.set(o.id, im);
+      state.maskData.set(o.id, makeMaskData(im));
+    }
+    state.loaded=true;
+  }
+  function renderBalls(){
+    if(!state.item) return;
+    ballsEl.innerHTML='';
+    const need=state.item.needs.length;
+    const done=Math.min(need, [...state.selected].filter(x=>state.item.needs.includes(x)).length);
+    for(let i=0;i<need;i++){
+      const b=document.createElement('span');
+      b.className='ball'+(i<done?' done':'');
+      ballsEl.appendChild(b);
+    }
+    const pNeed=(state.item.possible||[]).length;
+    if(pNeed){
+      const l=document.createElement('span');
+      l.className='ball-paren';
+      l.textContent='(';
+      ballsEl.appendChild(l);
+      const pDone=[...state.selected].filter(x=>state.item.possible.includes(x)).length;
+      for(let i=0;i<pNeed;i++){
+        const b=document.createElement('span');
+        b.className='ball possible'+(i<pDone?' done':'');
+        ballsEl.appendChild(b);
+      }
+      const r=document.createElement('span');
+      r.className='ball-paren';
+      r.textContent=')';
+      ballsEl.appendChild(r);
+    }
+    ballsEl.appendChild(answerMarkEl);
+  }
+  function renderJournal(){
+    journalListEl.innerHTML='';
+    for(const row of state.journal){
+      const li=document.createElement('li');
+      li.textContent=row;
+      journalListEl.appendChild(li);
+    }
+  }
+  function finalizeLog(resultLabel){
+    const l=state.currentLog;
+    if(!l) return;
+    const yes='да ('+(l.yes.length?l.yes.map(organName).join(', '):'—')+')';
+    const maybe='возможно ('+(l.maybe.length?l.maybe.map(organName).join(', '):'—')+')';
+    const wrong='лишнее ('+(l.wrong.length?l.wrong.map(organName).join(', '):'—')+')';
+    state.journal.unshift(`${l.item}: ${resultLabel}; ${yes}; ${maybe}; ${wrong}`);
+    state.journal=state.journal.slice(0,40);
+    state.currentLog=null;
+    renderJournal();
+  }
+
+  function pickItem(){
+    const pool=ITEMS.filter(x=>x.name!==state.lastItemName);
+    const item=pool[(Math.random()*pool.length)|0];
+    state.item=item;
+    state.lastItemName=item.name;
+    state.selected.clear();
+    state.pendingNext=false;
+    answerMarkEl.textContent='';
+    answerMarkEl.className='answer-mark';
+    state.currentLog={ item:item.name, yes:[], maybe:[], wrong:[] };
+    promptEl.textContent='Выбери органы чувств для предмета';
+    itemEmojiEl.textContent=item.emoji||'❔';
+    itemNameEl.textContent=item.name;
+    renderBalls();
+  }
+  function hitOrganAt(ix, iy){
+    for(const o of ORGANS){
+      const d=state.maskData.get(o.id);
+      if(!d||ix<0||iy<0||ix>=d.width||iy>=d.height) continue;
+      const a=d.data[((iy|0)*d.width+(ix|0))*4+3];
+      if(a>24) return o.id;
+    }
+    return null;
+  }
+  function checkCurrentAnswer(){
+    const need=state.item.needs;
+    const ok=need.every(id=>state.selected.has(id));
+    if(!ok) return;
+    if(ok){
+      state.score++;
+      finalizeLog('верно');
+      setStatus('Верно!', 'ok');
+      answerMarkEl.textContent='ВЕРНО';
+      answerMarkEl.className='answer-mark ok';
+      state.pendingNext=true;
+      draw();
+      const successAt=performance.now();
+      const minBeforeNextMs=2000;
+      function advanceRound(){
+        if(!state.running||!state.pendingNext) return;
+        answerMarkEl.textContent='';
+        answerMarkEl.className='answer-mark';
+        setStatus('', 'info');
+        pickItem();
+        state.pendingNext=false;
+        updateHud();
+        draw();
+      }
+      runWhenSpeechIdle(()=>{
+        if(!state.running||!state.pendingNext) return;
+        const wait=Math.max(0, minBeforeNextMs-(performance.now()-successAt));
+        setTimeout(advanceRound, wait);
+      });
+    }
+    updateHud();
+    draw();
+  }
+  function onPick(id){
+    if(!state.running||state.pendingNext) return;
+    if(!id){
+      answerMarkEl.textContent='?';
+      answerMarkEl.className='answer-mark ask';
+      setStatus('', 'info');
+      draw();
+      return;
+    }
+    speakSenseByOrgan(id);
+    if(state.selected.has(id)) return;
+    const isNeed=state.item.needs.includes(id);
+    const isPossible=(state.item.possible||[]).includes(id);
+    if(!isNeed && !isPossible){
+      if(state.currentLog && !state.currentLog.wrong.includes(id)) state.currentLog.wrong.push(id);
+      answerMarkEl.textContent='?';
+      answerMarkEl.className='answer-mark ask';
+      setStatus('', 'info');
+      draw();
+      return;
+    }
+    if(isNeed && state.currentLog && !state.currentLog.yes.includes(id)) state.currentLog.yes.push(id);
+    if(isPossible && state.currentLog && !state.currentLog.maybe.includes(id)) state.currentLog.maybe.push(id);
+    if(answerMarkEl.textContent==='?'){
+      answerMarkEl.textContent='';
+      answerMarkEl.className='answer-mark';
+    }
+    state.selected.add(id);
+    renderBalls();
+    checkCurrentAnswer();
+  }
+  function draw(){
+    const w=wrap.clientWidth|0, h=wrap.clientHeight|0;
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    cv.width=w*dpr; cv.height=h*dpr; cv.style.width=w+'px'; cv.style.height=h+'px';
+    const ctx=cv.getContext('2d');
+    ctx.scale(dpr,dpr);
+    ctx.fillStyle='#0f1119'; ctx.fillRect(0,0,w,h);
+    if(!state.base){ return; }
+    const iw=state.base.width, ih=state.base.height;
+    const k=Math.min(w/iw, h/ih);
+    const dw=iw*k, dh=ih*k;
+    const dx=(w-dw)/2, dy=(h-dh)/2;
+    state.drawRect={x:dx,y:dy,w:dw,h:dh};
+    ctx.drawImage(state.base, dx, dy, dw, dh);
+    if(state.running && state.selected.size){
+      for(const id of state.selected){
+        const m=state.masks.get(id);
+        const o=ORGANS.find(x=>x.id===id);
+        if(!m||!o) continue;
+        ctx.globalAlpha=0.28;
+        ctx.drawImage(m, dx, dy, dw, dh);
+        ctx.globalAlpha=1;
+      }
+    }
+    if(state.lines) ctx.drawImage(state.lines, dx, dy, dw, dh);
+  }
+  function canvasToImgCoords(clientX, clientY){
+    const r=cv.getBoundingClientRect();
+    const x=clientX-r.left, y=clientY-r.top;
+    const d=state.drawRect;
+    if(x<d.x||y<d.y||x>d.x+d.w||y>d.y+d.h) return null;
+    const ix=((x-d.x)/d.w)*state.base.width;
+    const iy=((y-d.y)/d.h)*state.base.height;
+    return {ix,iy};
+  }
+  function onPointer(e){
+    if(!state.running||!state.loaded) return;
+    const p=e.touches&&e.touches.length?e.touches[0]:e;
+    const c=canvasToImgCoords(p.clientX,p.clientY);
+    if(!c){ onPick(null); return; }
+    onPick(hitOrganAt(c.ix,c.iy));
+  }
+  function tick(){
+    if(state.running) updateHud();
+    requestAnimationFrame(tick);
+  }
+  function startGame(){
+    if(!state.loaded) return;
+    clearSpeakQueue();
+    speakIdleCallbacks.length=0;
+    state.running=true;
+    state.score=0; state.lastItemName=null; state.selected.clear();
+    pickItem();
+    setStatus('Старт! Тапай зоны, пока не соберешь правильный набор.', 'info');
+    updateHud();
+    draw();
+  }
+  function resetGame(){
+    clearSpeakQueue();
+    speakIdleCallbacks.length=0;
+    state.running=false;
+    state.score=0; state.item=null; state.lastItemName=null;
+    state.selected.clear();
+    state.pendingNext=false;
+    state.currentLog=null;
+    state.journal=[];
+    promptEl.textContent='Нажми «Старт»';
+    itemEmojiEl.textContent='❔';
+    itemNameEl.textContent='предмет';
+    ballsEl.innerHTML='';
+    renderJournal();
+    setStatus('', 'info');
+    updateHud();
+    draw();
+  }
+  function downloadJournal(){
+    if(!state.journal.length){
+      setStatus('Журнал пуст.', 'info');
+      return;
+    }
+    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    const lines=[
+      'Мистер Потейто — журнал ответов',
+      'Дата: '+new Date().toLocaleString(),
+      '--------------------------------',
+      ...state.journal
+    ];
+    const blob=new Blob([lines.join('\n')], {type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='mr_potato_journal_'+stamp+'.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+    setStatus('Журнал скачан.', 'ok');
+  }
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', resetGame);
+  dlJournalBtn.addEventListener('click', downloadJournal);
+  volEl.addEventListener('input',()=>{
+    state.volume=(parseInt(volEl.value,10)||0)/100;
+    saveSettings();
+  });
+  fontDownBtn.addEventListener('click',()=>{
+    state.fontScale=Math.max(FONT_MIN, state.fontScale-FONT_STEP);
+    applyFontScale();
+    saveSettings();
+  });
+  fontUpBtn.addEventListener('click',()=>{
+    state.fontScale=Math.min(FONT_MAX, state.fontScale+FONT_STEP);
+    applyFontScale();
+    saveSettings();
+  });
+  cv.addEventListener('click', onPointer);
+  cv.addEventListener('touchstart', onPointer, {passive:true});
+  window.addEventListener('resize', draw);
+
+  loadSettings();
+  volEl.value=String(Math.round(state.volume*100));
+  preload().then(()=>{
+    setStatus('Готово. Нажми «Старт».', 'info');
+    draw();
+  }).catch(err=>{
+    setStatus(err.message, 'bad');
+  });
+  applyFontScale();
+  updateHud();
+  tick();
+})();
+</script>
+</body>
+</html>
