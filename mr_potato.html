@@ -49,6 +49,21 @@ a.back { color: #8cc7ff; font-size: 13px; text-decoration: none; }
   font-weight: 700;
 }
 .vol-wrap input { width: 86px; }
+.speech-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.speech-mode .sm-label {
+  font-size: 12px;
+  color: #aebadb;
+  font-weight: 700;
+}
+.mini.active {
+  background: #35569a;
+  border-color: #6c8ed9;
+}
 .main {
   flex: 1;
   display: grid;
@@ -120,6 +135,11 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
       <div class="vol-wrap"><span>Громк.</span><input id="vol" type="range" min="0" max="100" value="80"></div>
       <button id="font-down" class="mini" type="button">A-</button>
       <button id="font-up" class="mini" type="button">A+</button>
+      <div class="speech-mode" role="group" aria-label="Озвучка предмета">
+        <span class="sm-label">Озвучка:</span>
+        <button id="speech-brief" class="mini active" type="button">Краткая</button>
+        <button id="speech-full" class="mini" type="button">Полная</button>
+      </div>
     </div>
     <div class="pill" id="sc">Очки: 0</div>
   </div>
@@ -214,26 +234,30 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   const volEl=document.getElementById('vol');
   const fontDownBtn=document.getElementById('font-down');
   const fontUpBtn=document.getElementById('font-up');
+  const speechBriefBtn=document.getElementById('speech-brief');
+  const speechFullBtn=document.getElementById('speech-full');
 
   const state={
     loaded:false, running:false, score:0,
     item:null, lastItemName:null, selected:new Set(), pendingNext:false,
     currentLog:null, journal:[],
     volume:0.8, fontScale:1,
+    itemSpeech:'brief',
     base:null, lines:null, masks:new Map(), maskData:new Map(),
     drawRect:{x:0,y:0,w:0,h:0},
   };
-  const SENSE_TEXT={
-    ears:'Уши — слух',
-    eyes:'Глаза — зрение',
-    nose:'Нос — обоняние',
-    mouth:'Рот — вкус',
-    hands:'Руки — осязание',
+  const FEEDBACK_SPEAK_LABEL={
+    ears:'ухо',
+    eyes:'зрение',
+    nose:'нос',
+    mouth:'вкус',
+    hands:'рука',
   };
   const FONT_MIN=0.8, FONT_MAX=1.45, FONT_STEP=0.08;
   const SETTINGS_KEY='mr_potato_settings_v1';
-  const SPEAK_LEAD_MS=1280;
-  const SPEAK_QUEUE_GAP_MS=190;
+  const PROMPT_GAME_TITLE='ЧЕМ МЫ ЧУВСТВУЕМ';
+  const SPEAK_LEAD_MS=1850;
+  const SPEAK_QUEUE_GAP_MS=520;
   const SPEAK_IDLE_FALLBACK_MS=12000;
   let speakLeadTimer=0;
   let speakPlayingUtterance=false;
@@ -300,12 +324,38 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     statusEl.className=kind||'info';
     statusEl.textContent=txt||'';
   }
-  function speakSenseByOrgan(id){
+  function speakPickFeedback(id, verdict){
     if(!('speechSynthesis' in window)) return;
-    const text=SENSE_TEXT[id];
-    if(!text) return;
+    const label=FEEDBACK_SPEAK_LABEL[id];
+    if(!label) return;
+    const tail=verdict==='yes'?'да':verdict==='maybe'?'возможно':'нет';
+    speakQueue.push(label+' — '+tail);
+    pumpSpeakQueue();
+  }
+  function speakMissFeedback(){
+    if(!('speechSynthesis' in window)) return;
+    speakQueue.push('Мимо — нет');
+    pumpSpeakQueue();
+  }
+  function speakItemName(name){
+    if(!('speechSynthesis' in window)) return;
+    const raw=String(name||'').trim();
+    if(!raw) return;
+    const text=state.itemSpeech==='full'
+      ? 'Чем мы чувствуем '+raw.toLocaleUpperCase('ru-RU')
+      : raw;
     speakQueue.push(text);
     pumpSpeakQueue();
+  }
+  function syncSpeechModeButtons(){
+    const b=state.itemSpeech==='full';
+    speechBriefBtn.classList.toggle('active', !b);
+    speechFullBtn.classList.toggle('active', b);
+  }
+  function setItemSpeech(mode){
+    state.itemSpeech=(mode==='full'?'full':'brief');
+    syncSpeechModeButtons();
+    saveSettings();
   }
   function applyFontScale(){
     const scale=Math.max(FONT_MIN, Math.min(FONT_MAX, state.fontScale));
@@ -325,7 +375,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     try{
       localStorage.setItem(SETTINGS_KEY, JSON.stringify({
         volume:state.volume,
-        fontScale:state.fontScale
+        fontScale:state.fontScale,
+        itemSpeech:state.itemSpeech
       }));
     }catch(_e){}
   }
@@ -337,6 +388,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
       if(s&&typeof s==='object'){
         if(Number.isFinite(s.volume)) state.volume=Math.max(0, Math.min(1, +s.volume));
         if(Number.isFinite(s.fontScale)) state.fontScale=Math.max(FONT_MIN, Math.min(FONT_MAX, +s.fontScale));
+        if(s.itemSpeech==='full'||s.itemSpeech==='brief') state.itemSpeech=s.itemSpeech;
       }
     }catch(_e){}
   }
@@ -427,10 +479,11 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     answerMarkEl.textContent='';
     answerMarkEl.className='answer-mark';
     state.currentLog={ item:item.name, yes:[], maybe:[], wrong:[] };
-    promptEl.textContent='Выбери органы чувств для предмета';
+    promptEl.textContent=PROMPT_GAME_TITLE;
     itemEmojiEl.textContent=item.emoji||'❔';
     itemNameEl.textContent=item.name;
     renderBalls();
+    if(state.running) speakItemName(item.name);
   }
   function hitOrganAt(ix, iy){
     for(const o of ORGANS){
@@ -480,10 +533,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
       answerMarkEl.textContent='?';
       answerMarkEl.className='answer-mark ask';
       setStatus('', 'info');
+      speakMissFeedback();
       draw();
       return;
     }
-    speakSenseByOrgan(id);
     if(state.selected.has(id)) return;
     const isNeed=state.item.needs.includes(id);
     const isPossible=(state.item.possible||[]).includes(id);
@@ -492,9 +545,11 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
       answerMarkEl.textContent='?';
       answerMarkEl.className='answer-mark ask';
       setStatus('', 'info');
+      speakPickFeedback(id,'no');
       draw();
       return;
     }
+    speakPickFeedback(id, isNeed?'yes':'maybe');
     if(isNeed && state.currentLog && !state.currentLog.yes.includes(id)) state.currentLog.yes.push(id);
     if(isPossible && state.currentLog && !state.currentLog.maybe.includes(id)) state.currentLog.maybe.push(id);
     if(answerMarkEl.textContent==='?'){
@@ -619,11 +674,14 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     applyFontScale();
     saveSettings();
   });
+  speechBriefBtn.addEventListener('click',()=>setItemSpeech('brief'));
+  speechFullBtn.addEventListener('click',()=>setItemSpeech('full'));
   cv.addEventListener('click', onPointer);
   cv.addEventListener('touchstart', onPointer, {passive:true});
   window.addEventListener('resize', draw);
 
   loadSettings();
+  syncSpeechModeButtons();
   volEl.value=String(Math.round(state.volume*100));
   preload().then(()=>{
     setStatus('Готово. Нажми «Старт».', 'info');
