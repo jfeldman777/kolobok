@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#121218">
-<title>Разогрев</title>
+<title>Колобок-альпинист</title>
 <link rel="icon" href="favicon.ico" type="image/x-icon">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,6 +27,65 @@ h1 { font-size: 15px; font-weight: 800; color: #E8A020; flex: 1; min-width: 120p
   border: 1px solid #444; background: #2a2a36; color: #ccc; cursor: pointer;
 }
 .mode-row button.active { border-color: #E8A020; color: #E8A020; background: #2a2218; }
+.play-start-panel {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 8px 12px;
+  background: #16161e;
+  border-bottom: 1px solid #2a2a38;
+}
+.play-start-panel .play-start-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a8a9e;
+  width: 100%;
+}
+@media (min-width: 520px) {
+  .play-start-panel .play-start-title { width: auto; margin-right: 8px; }
+}
+.play-start-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4c8d8;
+}
+.play-start-field input {
+  width: 4.2em;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #252530;
+  color: #eee;
+}
+#opt-player { width: 10.8em; }
+.play-start-field input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.play-start-hint {
+  font-size: 11px;
+  color: #6a7080;
+  width: 100%;
+}
+@media (min-width: 520px) {
+  .play-start-hint { width: auto; flex: 1; min-width: 120px; text-align: right; }
+}
+.train-diff { display: none; gap: 4px; align-items: center; }
+.train-diff.visible { display: flex; }
+.train-diff button {
+  padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 6px;
+  border: 1px solid #444; background: #252530; color: #aaa; cursor: pointer;
+}
+.train-diff button.active { border-color: #7eb8e8; color: #b8dcff; background: #1a2430; }
 .hint { flex-shrink: 0; font-size: 11px; color: #6a6a78; padding: 6px 10px; line-height: 1.45; background: #16161c; border-bottom: 1px solid #2a2a38; }
 .pane-label {
   flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
@@ -59,6 +118,39 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
   border: 2px solid #444; background: #2a2a36; color: #fff;
 }
 .digits button.on { border-color: #E8A020; box-shadow: 0 0 0 2px rgba(232,160,32,0.35); }
+.speed-ctl {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.speed-ctl .speed-lab {
+  font-size: 11px;
+  font-weight: 800;
+  color: #7a7a88;
+  letter-spacing: 0.03em;
+}
+.speed-ctl button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 17px;
+  font-weight: 900;
+  border-radius: 10px;
+  border: 1px solid #555;
+  background: #2e2e3a;
+  color: #e0e4ec;
+  cursor: pointer;
+}
+.speed-ctl button:active { filter: brightness(1.15); }
+#speed-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #E8A020;
+  min-width: 4.5em;
+  text-align: center;
+}
 #msg {
   width: 100%; text-align: center; font-size: 13px; font-weight: 600; min-height: 1.4em;
 }
@@ -66,6 +158,75 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
 #msg.bad { color: #ff8a80; }
 #msg.info { color: #9cb8e8; }
 .stats { font-size: 11px; color: #666; text-align: center; width: 100%; }
+#bottom-panel {
+  flex-shrink: 0;
+  padding: 8px 12px 14px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  background: #14141c;
+  border-top: 1px solid #2a2a38;
+  min-height: 2.8em;
+}
+.bottom-mode {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-align: left;
+  line-height: 1.25;
+  margin: 0 0 6px;
+  color: #8a96a8;
+}
+#bottom-panel.train .bottom-mode { color: #9eb8c4; }
+#bottom-panel.play .bottom-mode { color: #9ec5e8; }
+#bottom-status {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: left;
+  color: #c8d0e0;
+}
+#bottom-panel.train #bottom-status { color: #b0bec5; }
+#bottom-panel.play #bottom-status { color: #b8d4f0; }
+
+#victory-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: none;
+  background: rgba(8,10,16,0.86);
+}
+#victory-overlay.show { display: block; }
+#victory-fireworks { position: absolute; inset: 0; width: 100%; height: 100%; }
+.victory-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 560px);
+  background: rgba(18,21,32,0.9);
+  border: 1px solid #3a4258;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.victory-title { font-size: 26px; font-weight: 900; color: #ffd166; margin-bottom: 6px; text-align: center; }
+.victory-sub { font-size: 13px; color: #b8c6de; text-align: center; margin-bottom: 10px; }
+.victory-board { margin-top: 8px; }
+.victory-board h3 { font-size: 14px; margin-bottom: 6px; color: #d7e4f6; }
+#champ-list { margin: 0; padding-left: 22px; color: #e8ecf6; max-height: 170px; overflow: auto; }
+#champ-list li { margin: 2px 0; font-size: 13px; }
+#victory-close {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  border: none;
+  border-radius: 10px;
+  background: #295ea7;
+  color: #fff;
+  cursor: pointer;
+}
 @media (min-width: 600px) {
   #app { max-width: 900px; }
 }
@@ -74,17 +235,28 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
 <body>
 <div id="app">
   <div class="top-bar">
-    <h1>Разогрев</h1>
+    <h1>Колобок-альпинист</h1>
     <a href="index.html">На главную</a>
     <div class="mode-row">
       <span class="mode-row-label"><label>Режим</label></span>
       <button type="button" id="m-train" class="active">Тренировка</button>
+      <div class="train-diff visible" id="train-diff" aria-label="Сложность тренировки">
+        <button type="button" id="train-easy" class="active">Лёгкая</button>
+        <button type="button" id="train-hard">Трудная</button>
+      </div>
       <button type="button" id="m-play">Игра</button>
     </div>
   </div>
+  <div id="play-start-panel" class="play-start-panel" aria-label="Настройки игры">
+    <span class="play-start-title">Игра — старт</span>
+    <label class="play-start-field"><span>Гор</span><input type="number" id="opt-hills" min="1" max="99" value="20" inputmode="numeric"></label>
+    <label class="play-start-field"><span>Жизней</span><input type="number" id="opt-lives" min="1" max="12" value="3" inputmode="numeric"></label>
+    <label class="play-start-field"><span>Игрок</span><input type="text" id="opt-player" maxlength="24" value="Игрок" autocomplete="nickname"></label>
+    <span class="play-start-hint" id="play-start-hint">Меняйте до входа в «Игра».</span>
+  </div>
   <p class="hint" id="hint-text">
-    Сначала <b>тренировка</b>: сверху четыре эталона (1–4). Пробел или «Гора» — новая гора внизу.
-    Цифры <b>1–4</b> накладывают кривую на гору; угадали — галочка и новая гора. <b>Игра</b>: после вершины или в зазоре — 1–4, кривая и удар; <b>↑↓</b>; 20.
+    <b>Лёгкая</b>: пробел — гора появляется/исчезает (на месте). <b>1–4</b> — кривая; верно — птичка, неверно — крестик.
+    <b>Трудная</b>: гора едет; под колобком заезд; гора выше кривой — удар. <b>↑</b> быстрее, <b>↓</b> медленнее (игра и трудная тренировка).
   </p>
   <div class="pane-label">Эталоны (↑ высота, → время)</div>
   <div id="canvas-ref-wrap">
@@ -99,9 +271,31 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
   <div class="controls">
     <button type="button" id="btn-mountain">Гора</button>
     <div class="digits" id="digits"></div>
+    <div class="speed-ctl" id="speed-ctl" aria-label="Скорость горы">
+      <span class="speed-lab">Скорость</span>
+      <button type="button" id="sp-down" title="Медленнее">↓</button>
+      <span id="speed-val">104 px/s</span>
+      <button type="button" id="sp-up" title="Быстрее">↑</button>
+    </div>
   </div>
   <p id="msg" class="info"></p>
   <p class="stats" id="stats"></p>
+  <div id="bottom-panel" class="bottom-panel train">
+    <div id="bottom-mode" class="bottom-mode">Тренировка легкая</div>
+    <p id="bottom-status" aria-live="polite">Статус: выбери режим.</p>
+  </div>
+  <div id="victory-overlay" aria-hidden="true">
+    <canvas id="victory-fireworks"></canvas>
+    <div class="victory-card">
+      <div class="victory-title">Победа!</div>
+      <div class="victory-sub" id="victory-sub">Салют!</div>
+      <div class="victory-board">
+        <h3>Доска чемпионов</h3>
+        <ol id="champ-list"></ol>
+      </div>
+      <button type="button" id="victory-close">Играть снова</button>
+    </div>
+  </div>
 </div>
 <script>
 (function(){
@@ -193,41 +387,494 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
   let generatedFrom=0;
   let choice=0;
   let trainRounds=0, trainOk=0;
-  /** Пока true — на канвасе галочка, скоро следующая гора. */
+  /** Пока true — на канвасе галочка после успешной тренировки. */
   let showSuccessMark=false;
-  let successTimer=null;
   const N=120;
+  /** Как на канвасе эталонов: те же точки, цвет COLORS, сплошная линия 2.2px. */
+  const REF_CURVE_N=140;
+  const REF_CURVE_LINE={ width: 2.2, cap: 'round', join: 'round' };
 
-  /** Режим «Игра»: цепочка гор, колобок и наезд по кривой. */
+  /** Тренировка с движением: одна гора, следующая по пробелу. */
+  let trainDifficulty='easy';
+  /** { hill, left, correctId } или null */
+  let trSeg=null;
+  let trRaf=null;
+  let trLastTs=0;
+  let trRideActive=false;
+  let trJumpPick=0;
+  let trainAnimOutcome=null;
+  let trainContinueTimer=null;
+  let trainFlashUntil=0;
+  /** Чтобы подряд не выпадала та же «база» горы (тренировка). */
+  let lastTrainSpawnType=0;
+  /** Лёгкая тренировка: учёт попытки один раз за показ горы. */
+  let trainEasyStatsDone=false;
+  const TRAIN_SPEED={ easy: 52, hard: 104 };
+  /** Верхняя граница для регулятора (↑↓ и кнопки) в игре и трудной тренировке. */
+  const SPEED_MAX_PX=204;
+  const TRAIN_STRIKE_GAP={ easy: 0.058, hard: 0.036 };
+  /** Трудная тренировка: скорость ленты, ↑↓ в том же диапазоне, что игра. */
+  let trainSpeedPx=TRAIN_SPEED.hard;
+
+  /** Режим «Игра»: одна гора как сложная тренировка; следующая сама после ухода. */
   let playStreak=0;
+  let playHillsTotal=20;
+  let playStartLives=3;
+  let playLives=playStartLives;
+  let playPlayerName='Игрок';
+  let playRunStartMs=0;
+  const CHAMPIONS_KEY='kolobok_champions_v1';
+  let victoryRaf=0;
+  let victoryEndAt=0;
+  let fireworks=[];
+  function syncSpeedRegulator(){
+    const row=gel('speed-ctl');
+    const val=gel('speed-val');
+    if(!row||!val) return;
+    const show=mode==='play'||(mode==='train'&&trainDifficulty==='hard');
+    row.style.display=show?'flex':'none';
+    if(!show) return;
+    const n=Math.round(mode==='play'?playSpeedPx:trainSpeedPx);
+    val.textContent=n+' px/s';
+  }
+
+  function refreshBottomStatus(){
+    try{
+    const panel=gel('bottom-panel');
+    const modeLine=gel('bottom-mode');
+    const el=gel('bottom-status');
+    if(panel) panel.className='bottom-panel '+mode;
+    if(modeLine){
+      if(mode==='train'){
+        modeLine.textContent=trainDifficulty==='easy'?'Тренировка легкая':'Тренировка трудная';
+      } else {
+        modeLine.textContent='Игра';
+      }
+    }
+    if(!el) return;
+    if(mode==='train'){
+      if(trainDifficulty==='easy'){
+        if(trainAnimOutcome==='crash'){
+          el.textContent='Статус: сбой. Через мгновение снова.';
+          return;
+        }
+        if(trainAnimOutcome==='ok'){
+          el.textContent='Статус: верно. Пробел — дальше.';
+          return;
+        }
+        if(!trSeg){
+          el.textContent='Статус: пробел или «Гора» — показать гору.';
+          return;
+        }
+        el.textContent='Статус: 1–4 — кривая; верно птичка, неверно крестик. Пробел — убрать гору.';
+        return;
+      }
+      if(trainAnimOutcome==='crash'){
+        el.textContent='Статус: тренировка — сбой. Через мгновение можно снова.';
+        return;
+      }
+      if(trainAnimOutcome==='ok'){
+        el.textContent='Статус: тренировка — засчитано. Жми пробел или «Гора» — следующая.';
+        return;
+      }
+      if(!trSeg){
+        el.textContent='Статус: тренировка — горы на поле нет. Пробел или «Гора», когда готов.';
+        return;
+      }
+      if(trRideActive){
+        el.textContent='Статус: тренировка — заезд по кривой. Время идёт само, никого не ждёт.';
+        return;
+      }
+      if(choice>=1&&choice<=4){
+        el.textContent='Статус: тренировка — гора едёт, кривая выбрана. Ждём только подъезда к колобку (затем заезд сам).';
+        return;
+      }
+      el.textContent='Статус: тренировка — гора едёт, никого не ждёт. Жми 1–4, если хочешь кривую на горе.';
+      return;
+    }
+    if(mode==='play'){
+      el.textContent='Скорость: стрелки ↑ ↓ или кнопки — сейчас '+Math.round(playSpeedPx)+' px/s';
+      return;
+    }
+    el.textContent='Статус: выбери «Тренировка» или «Игра».';
+    } finally {
+      syncSpeedRegulator();
+    }
+  }
   /** { hill, left, correctId } — left уменьшается, слева уходит за край, справа нарастают новые. */
   let playSegments=[];
-  /** Горка, для которой можно выбрать 1–4 (после вершины или в зазоре). */
-  let mountainAwaitingId=null;
-  let prevOverlapSeg=null;
+  /** Во время заезда в игре — заблокированная кривая (как trJumpPick в тренировке). */
   let jumpPick=0;
   let playRideActive=false;
   let rideSegRef=null;
   let rideTargetCorrectId=1;
-  const STRIKE_GAP=0.042;
+  /** В игре — как «Сложная» тренировка: тот же зазор удара. */
+  const PLAY_STRIKE_GAP=TRAIN_STRIKE_GAP.hard;
   let playRaf=null;
   let lastPlayTs=0;
   /** После неверного ответа один кадр «разбился». */
   let playOutcome=null;
   let playContinueTimer=null;
-  let playSpeedPx=78;
-  const PLAY_SPEED_MIN=22;
-  const PLAY_SPEED_MAX=220;
-  const PLAY_SPEED_STEP=11;
-  /** Доля ширины пол между горами (было ~0.055). */
-  const PLAY_GAP_FRAC=0.14;
+  /** Стартовая скорость = сложная тренировка; ↑↓ в пределах лёгкая…сложная. */
+  let playSpeedPx=TRAIN_SPEED.hard;
+  const PLAY_SPEED_MIN=TRAIN_SPEED.easy;
+  const PLAY_SPEED_MAX=SPEED_MAX_PX;
+  const PLAY_SPEED_STEP=8;
+  let gamepadPollRaf=0;
+  let gamepadPrevButtons=[];
+  let gamepadStickHeld=false;
+  /** Стартовая позиция одной горы в игре (как в тренировке): правее поля. */
+  const PLAY_SPAWN_OFF_FRAC=0.22;
   let playPaused=false;
-
   function clearPlayContinueTimer(){
     if(playContinueTimer){
       clearTimeout(playContinueTimer);
       playContinueTimer=null;
     }
+  }
+
+  function clearTrainContinueTimer(){
+    if(trainContinueTimer){
+      clearTimeout(trainContinueTimer);
+      trainContinueTimer=null;
+    }
+  }
+
+  function readPlayStartOptions(){
+    const hi=gel('opt-hills');
+    const li=gel('opt-lives');
+    const pi=gel('opt-player');
+    let h=parseInt(hi&&hi.value,10);
+    let l=parseInt(li&&li.value,10);
+    let name=((pi&&pi.value)||'').trim();
+    if(!Number.isFinite(h)) h=playHillsTotal;
+    h=Math.max(1, Math.min(99, h|0));
+    if(!Number.isFinite(l)) l=playStartLives;
+    l=Math.max(1, Math.min(12, l|0));
+    if(!name) name=playPlayerName||'Игрок';
+    name=name.slice(0,24);
+    playHillsTotal=h;
+    playStartLives=l;
+    playPlayerName=name;
+    if(hi) hi.value=String(h);
+    if(li) li.value=String(l);
+    if(pi) pi.value=name;
+    try{ localStorage.setItem('kolobok_player_name', name); }catch(_e){}
+    return !!name;
+  }
+
+  function syncPlayStartPanel(){
+    const hi=gel('opt-hills');
+    const li=gel('opt-lives');
+    const pi=gel('opt-player');
+    const hint=gel('play-start-hint');
+    const lock=mode==='play';
+    if(hi){
+      hi.disabled=lock;
+      hi.value=String(playHillsTotal);
+    }
+    if(li){
+      li.disabled=lock;
+      li.value=String(playStartLives);
+    }
+    if(pi){
+      pi.disabled=lock;
+      pi.value=playPlayerName;
+    }
+    if(hint) hint.textContent=lock?'Во время партии значения не меняются.':'Задайте имя, горы и жизни, затем нажмите «Игра».';
+  }
+
+  function loadChampions(){
+    try{
+      const raw=localStorage.getItem(CHAMPIONS_KEY);
+      const arr=raw?JSON.parse(raw):[];
+      return Array.isArray(arr)?arr:[];
+    }catch(_e){ return []; }
+  }
+  function saveChampions(arr){
+    try{ localStorage.setItem(CHAMPIONS_KEY, JSON.stringify(arr)); }catch(_e){}
+  }
+  function saveChampionRecord(ms){
+    const rec={ name:playPlayerName||'Игрок', ms:Math.max(0,ms|0), hills:playHillsTotal, lives:playStartLives, at:Date.now() };
+    const arr=loadChampions();
+    arr.push(rec);
+    arr.sort((a,b)=>a.ms-b.ms);
+    saveChampions(arr.slice(0,10));
+  }
+  function renderChampions(){
+    const el=gel('champ-list');
+    if(!el) return;
+    const arr=loadChampions();
+    el.innerHTML='';
+    if(!arr.length){
+      const li=document.createElement('li');
+      li.textContent='Пока пусто.';
+      el.appendChild(li);
+      return;
+    }
+    for(const r of arr){
+      const li=document.createElement('li');
+      li.textContent=`${r.name} — ${(r.ms/1000).toFixed(1)} c · ${r.hills} гор · ${r.lives} ❤`;
+      el.appendChild(li);
+    }
+  }
+  function stopVictoryFireworks(){
+    if(victoryRaf){ cancelAnimationFrame(victoryRaf); victoryRaf=0; }
+  }
+  function victoryTick(ts){
+    const cv=gel('victory-fireworks');
+    const ov=gel('victory-overlay');
+    if(!cv||!ov||!ov.classList.contains('show')){ stopVictoryFireworks(); return; }
+    const w=ov.clientWidth|0, h=ov.clientHeight|0;
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    cv.width=w*dpr; cv.height=h*dpr; cv.style.width=w+'px'; cv.style.height=h+'px';
+    const ctx=cv.getContext('2d');
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,w,h);
+    if(ts<victoryEndAt && Math.random()<0.3){
+      const x=Math.random()*w, y=60+Math.random()*h*0.45;
+      const hue=(Math.random()*360)|0;
+      for(let i=0;i<22;i++){
+        const a=(Math.PI*2*i)/22, v=1.4+Math.random()*2.4;
+        fireworks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:38+Math.random()*26,hue});
+      }
+    }
+    const next=[];
+    for(const p of fireworks){
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.045; p.life-=1;
+      if(p.life>0){
+        next.push(p);
+        ctx.globalAlpha=Math.min(1,p.life/28);
+        ctx.fillStyle=`hsl(${p.hue} 95% 62%)`;
+        ctx.fillRect(p.x,p.y,2.2,2.2);
+      }
+    }
+    fireworks=next;
+    ctx.globalAlpha=1;
+    victoryRaf=requestAnimationFrame(victoryTick);
+  }
+  function showVictoryOverlay(ms){
+    const ov=gel('victory-overlay');
+    const sub=gel('victory-sub');
+    if(!ov||!sub) return;
+    sub.textContent=`${playPlayerName}, победа за ${(ms/1000).toFixed(1)} c!`;
+    renderChampions();
+    ov.classList.add('show');
+    ov.setAttribute('aria-hidden','false');
+    fireworks=[];
+    victoryEndAt=performance.now()+2200;
+    stopVictoryFireworks();
+    victoryRaf=requestAnimationFrame(victoryTick);
+  }
+  function hideVictoryOverlay(){
+    const ov=gel('victory-overlay');
+    if(!ov) return;
+    ov.classList.remove('show');
+    ov.setAttribute('aria-hidden','true');
+    stopVictoryFireworks();
+  }
+
+  function trainStatsLine(){
+    const lab=trainDifficulty==='easy'?'легкая':'трудная';
+    let s='Тренировка: '+trainOk+' / '+trainRounds+' верно · '+lab;
+    if(trainDifficulty==='hard') s+=' · '+Math.round(trainSpeedPx)+' px/s · ↑↓';
+    return s;
+  }
+
+  function stopTrainRaf(){
+    if(trRaf){ cancelAnimationFrame(trRaf); trRaf=null; }
+  }
+
+  function applyTrainEasyDigitPick(d){
+    if(mode!=='train'||trainDifficulty!=='easy'||!trSeg||trainAnimOutcome) return;
+    if(!trainEasyStatsDone){
+      trainRounds++;
+      if(d===trSeg.correctId) trainOk++;
+      trainEasyStatsDone=true;
+    }
+    choice=d;
+    if(d!==trSeg.correctId) trainFlashUntil=performance.now()+400;
+    [...gel('digits').querySelectorAll('button')].forEach(x=>{
+      x.classList.toggle('on', x.dataset.d===String(d));
+    });
+    gel('stats').textContent=trainStatsLine();
+    drawPlay();
+    refreshBottomStatus();
+  }
+
+  /** Лёгкая: гора стоит под колобком, без движения. */
+  function trySpawnTrainMountainEasy(){
+    if(mode!=='train'||trainAnimOutcome) return;
+    if(trSeg) return;
+    clearTrainContinueTimer();
+    trainAnimOutcome=null;
+    showSuccessMark=false;
+    const g=generatePlaySegment({ avoid:lastTrainSpawnType });
+    lastTrainSpawnType=g.correctId;
+    const wrap=gel('canvas-play-wrap');
+    const w=wrap.clientWidth|0;
+    const padL=36, padR=14;
+    const iw=w-padL-padR;
+    const mW=iw*0.58;
+    const heroX=padL+iw*0.24;
+    const leftStatic=heroX-mW*0.38;
+    trSeg={ hill:g.hill, left:leftStatic, correctId:g.correctId };
+    trRideActive=false;
+    trJumpPick=0;
+    choice=0;
+    trainEasyStatsDone=false;
+    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+    setMsg('', '');
+    gel('stats').textContent=trainStatsLine();
+    stopTrainRaf();
+    drawPlay();
+    refreshBottomStatus();
+  }
+
+  function failTrain(msg){
+    stopTrainRaf();
+    trainAnimOutcome='crash';
+    trainFlashUntil=performance.now()+520;
+    trainRounds++;
+    setMsg(msg+' Пробел — снова, когда будешь готов.', 'bad');
+    gel('stats').textContent=trainStatsLine();
+    drawPlay();
+    clearTrainContinueTimer();
+    trainContinueTimer=setTimeout(()=>{
+      trainContinueTimer=null;
+      trainAnimOutcome=null;
+      trSeg=null;
+      trRideActive=false;
+      trJumpPick=0;
+      choice=0;
+      [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+      setMsg('Пробел или «Гора» — следующая гора.', '');
+      drawPlay();
+    }, 980);
+  }
+
+  function successTrain(){
+    stopTrainRaf();
+    trainRounds++;
+    trainOk++;
+    trainAnimOutcome='ok';
+    showSuccessMark=true;
+    setMsg('✓ Верно! Тип кривой совпал с горой. Пробел — следующая.', 'ok');
+    gel('stats').textContent=trainStatsLine();
+    drawPlay();
+    clearTrainContinueTimer();
+    trainContinueTimer=setTimeout(()=>{
+      trainContinueTimer=null;
+      trainAnimOutcome=null;
+      showSuccessMark=false;
+      trSeg=null;
+      trRideActive=false;
+      trJumpPick=0;
+      choice=0;
+      [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+      setMsg('Пробел или «Гора» — следующая гора.', '');
+      drawPlay();
+    }, 1100);
+  }
+
+  function trySpawnTrainMountain(){
+    if(mode!=='train' || trainAnimOutcome) return;
+    if(trainDifficulty==='easy') return;
+    const wrap=gel('canvas-play-wrap');
+    const w=wrap.clientWidth|0;
+    const padL=36, padR=14;
+    const iw=w-padL-padR;
+    const mW=iw*0.58;
+    const clipLeft=padL-24;
+    if(trSeg && trSeg.left+mW>=clipLeft){
+      if(!trRaf) trRaf=requestAnimationFrame(trainTick);
+      return;
+    }
+    clearTrainContinueTimer();
+    trainAnimOutcome=null;
+    showSuccessMark=false;
+    const g=generatePlaySegment({ avoid:lastTrainSpawnType });
+    lastTrainSpawnType=g.correctId;
+    trSeg={ hill:g.hill, left:padL+iw+mW*0.22, correctId:g.correctId };
+    trRideActive=false;
+    trJumpPick=0;
+    choice=0;
+    trLastTs=0;
+    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+    setMsg('Жми 1–4 — кривая на горе. Успеваешь менять, пока не подъехала.', '');
+    gel('stats').textContent=trainStatsLine();
+    drawPlay();
+    stopTrainRaf();
+    trRaf=requestAnimationFrame(trainTick);
+  }
+
+  function trainTick(ts){
+    if(trainDifficulty==='easy'){
+      stopTrainRaf();
+      return;
+    }
+    if(mode!=='train' || !trSeg || trainAnimOutcome){
+      stopTrainRaf();
+      return;
+    }
+    const lt=trLastTs||ts;
+    const raw=(ts-lt)/1000;
+    const dt=raw>0?Math.min(0.048,raw):1/240;
+    trLastTs=ts;
+
+    const w=gel('canvas-play-wrap').clientWidth|0;
+    const padL=36, padR=14;
+    const iw=w-padL-padR;
+    const heroX=padL+iw*0.24;
+    const mW=iw*0.58;
+    const clipLeft=padL-24;
+    const vTrain=trainDifficulty==='hard'?trainSpeedPx:TRAIN_SPEED.easy;
+    const spd=vTrain*dt;
+    const gap=trainDifficulty==='hard'?TRAIN_STRIKE_GAP.hard:TRAIN_STRIKE_GAP.easy;
+
+    const prevLeft=trSeg.left;
+    trSeg.left-=spd;
+    const spanL=Math.min(prevLeft, trSeg.left);
+    const spanR=Math.max(prevLeft+mW, trSeg.left+mW);
+    const heroOnMountain=heroX>=spanL && heroX<=spanR;
+
+    if(!trRideActive && heroOnMountain){
+      if(!choice || choice<1 || choice>4){
+        failTrain('Нет кривой — нажми 1–4 до того, как гора под колобком.');
+        return;
+      }
+      trJumpPick=choice;
+      trRideActive=true;
+      [...gel('digits').querySelectorAll('button')].forEach(x=>{
+        x.classList.toggle('on', x.dataset.d===String(trJumpPick));
+      });
+    }
+
+    if(trRideActive){
+      const ur=(heroX-trSeg.left)/mW;
+      if(ur>=0 && ur<=1){
+        const cv=sampleCurveAt(trJumpPick,ur);
+        const mv=mountainSampleAt(trSeg.hill,ur);
+        if(trJumpPick!==trSeg.correctId && cv+gap<mv){
+          failTrain('Удар: гора выше кривой.');
+          return;
+        }
+      }
+      if(trSeg.left+mW<heroX-10){
+        trRideActive=false;
+        if(trJumpPick===trSeg.correctId) successTrain();
+        else failTrain('Не тот тип кривой для этой горы.');
+        return;
+      }
+    }
+
+    if(trSeg.left+mW<clipLeft && !trRideActive){
+      failTrain('Гора уехала — не заехал на неё.');
+      return;
+    }
+
+    drawPlay();
+    trRaf=requestAnimationFrame(trainTick);
   }
 
   function noiseAmp(){ return 0.045 + Math.random()*0.035; }
@@ -245,8 +892,19 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     }
   }
 
-  function generatePlaySegment(){
-    const base=1+((Math.random()*4)|0);
+  /**
+   * Гора с шумом от эталона base∈{1..4}. correctId всегда = задуманный тип (не повтор
+   * классификации через bestMatch — так ответ не «залипает» на одной цифре при сбоях).
+   * opt.avoid — не брать эту цифру, если получится (для разнообразия в тренировке).
+   */
+  function generatePlaySegment(opt){
+    opt=opt||{};
+    const avoid=opt.avoid|0;
+    let base;
+    for(let k=0;k<24;k++){
+      base=1+(Math.random()*4|0);
+      if(!avoid || base!==avoid || k>=20) break;
+    }
     generatedFrom=base;
     let arr;
     let guard=0;
@@ -257,36 +915,24 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
       guard++;
     }while(bestMatch(arr,N).id!==base && guard<60);
     if(bestMatch(arr,N).id!==base) arr=sampleCurve(base, N);
-    return {hill:arr, correctId:bestMatch(arr,N).id};
+    return {hill:arr, correctId:base};
   }
 
   function initPlaySegments(w, iw, padL){
     const mW=iw*0.58;
-    const gap=iw*PLAY_GAP_FRAC;
     playSegments=[];
-    let x=padL-mW*0.28;
-    for(let i=0;i<7;i++){
-      const g=generatePlaySegment();
-      playSegments.push({hill:g.hill, left:x, correctId:g.correctId});
-      x+=mW+gap;
-    }
+    const g=generatePlaySegment();
+    playSegments.push({hill:g.hill, left:padL+iw+mW*PLAY_SPAWN_OFF_FRAC, correctId:g.correctId});
   }
 
-  function playStatsLine(){
-    const base='Скорость ↑↓: '+Math.round(playSpeedPx)+' · 20 гор · пробел/0 пауза';
-    return playPaused?('⏸ Стоит · пробел/0 дальше · '+base):base;
-  }
-
-  function continueAfterPlayRound(){
-    clearPlayContinueTimer();
-    jumpPick=0;
-    playRideActive=false;
-    rideSegRef=null;
-    playOutcome=null;
-    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
-    setMsg('Серия: '+playStreak+' / 20. После вершины или в зазоре — 1–4, кривая и удар. Пробел/0 пауза. ↑↓', '');
-    gel('stats').textContent=playStatsLine();
-    if(mode==='play' && !playRaf) playRaf=requestAnimationFrame(playTick);
+  /** Сразу новая гора справа (после успеха или старт раунда). */
+  function spawnFreshPlaySegment(){
+    const wrap=gel('canvas-play-wrap');
+    const w=wrap.clientWidth|0;
+    const padL=36, padR=14;
+    const iw=w-padL-padR;
+    initPlaySegments(w, iw, padL);
+    lastPlayTs=0;
   }
 
   function failPlayFullRestart(msg){
@@ -294,80 +940,118 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
     playStreak=0;
     playPaused=false;
-    mountainAwaitingId=null;
-    prevOverlapSeg=null;
+    choice=0;
     jumpPick=0;
     playRideActive=false;
     rideSegRef=null;
     playOutcome='crash';
+    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
     drawPlay();
-    setMsg(msg+' Начинаем сначала.', 'bad');
-    gel('stats').textContent=playStatsLine();
+    setMsg('Жизни кончились.', 'bad');
+    gel('stats').textContent='';
     playContinueTimer=setTimeout(()=>{
       playContinueTimer=null;
       playOutcome=null;
       playSegments=[];
+      playLives=playStartLives;
       makeMountain();
+    }, 1150);
+  }
+
+  /** Ошибка в игре: минус жизнь; при 0 — полный сброс серии. */
+  function failPlayMistake(msg){
+    if(playLives<=1){
+      playLives=0;
+      failPlayFullRestart(msg);
+      return;
+    }
+    playLives--;
+    clearPlayContinueTimer();
+    if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
+    playPaused=false;
+    choice=0;
+    jumpPick=0;
+    playRideActive=false;
+    rideSegRef=null;
+    playOutcome='crash';
+    [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+    drawPlay();
+    setMsg('', '');
+    gel('stats').textContent='';
+    playContinueTimer=setTimeout(()=>{
+      playContinueTimer=null;
+      playOutcome=null;
+      spawnFreshPlaySegment();
+      playRaf=requestAnimationFrame(playTick);
     }, 1150);
   }
 
   function playAnswerSuccess(){
     clearPlayContinueTimer();
-    mountainAwaitingId=null;
-    prevOverlapSeg=null;
+    choice=0;
     jumpPick=0;
     playRideActive=false;
     rideSegRef=null;
     [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
     playStreak++;
-    if(playStreak>=20){
-      setMsg('Победа! 20 гор подряд.', 'ok');
-      gel('stats').textContent='Серия выдержана. Новая лента гор.';
+    if(playStreak>=playHillsTotal){
+      const totalMs=playRunStartMs?Math.max(0, performance.now()-playRunStartMs):0;
+      setMsg('Победа!', 'ok');
+      gel('stats').textContent='';
+      saveChampionRecord(totalMs);
+      showVictoryOverlay(totalMs);
       playStreak=0;
+      playLives=playStartLives;
       playSegments=[];
       if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
+      drawPlay();
       playContinueTimer=setTimeout(()=>{
         playContinueTimer=null;
+        setMsg('', '');
         makeMountain();
       }, 2400);
     } else {
-      setMsg('✓ Верно ('+playStreak+' / 20).', 'ok');
-      playContinueTimer=setTimeout(()=>{ playContinueTimer=null; continueAfterPlayRound(); }, 480);
+      spawnFreshPlaySegment();
+      setMsg('', '');
+      gel('stats').textContent='';
+      drawPlay();
+      /* Всегда планируем кадр: вызов из playTick оставляет playRaf «старым» и if(!playRaf) не срабатывал — лента замирала. */
+      playRaf=requestAnimationFrame(playTick);
     }
   }
 
   function makeMountain(){
     if(mode==='train'){
-      if(successTimer){ clearTimeout(successTimer); successTimer=null; }
-      showSuccessMark=false;
-      const base=1+((Math.random()*4)|0);
-      generatedFrom=base;
-      let arr;
-      let guard=0;
-      const amp0=noiseAmp();
-      do{
-        arr=sampleCurve(base, N);
-        addBoundedNoise(arr, amp0);
-        guard++;
-      }while(bestMatch(arr,N).id!==base && guard<60);
-      if(bestMatch(arr,N).id!==base) arr=sampleCurve(base, N);
-      mountain=arr;
-      choice=0;
-      jumpPick=0;
-      [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
-      setMsg('Цифры 1–4 — какая кривая совпала с горой.', '');
-      drawPlay();
+      if(trainDifficulty==='easy'){
+        if(trainAnimOutcome) return;
+        if(trSeg){
+          stopTrainRaf();
+          trSeg=null;
+          trRideActive=false;
+          trJumpPick=0;
+          choice=0;
+          trainEasyStatsDone=false;
+          [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+          setMsg('', '');
+          drawPlay();
+          refreshBottomStatus();
+          return;
+        }
+        trySpawnTrainMountainEasy();
+        return;
+      }
+      trySpawnTrainMountain();
+      if(trSeg && !trainAnimOutcome && !trRaf) trRaf=requestAnimationFrame(trainTick);
       return;
     }
     clearPlayContinueTimer();
     if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
+    if(playStreak===0) playRunStartMs=performance.now();
     playOutcome=null;
     playPaused=false;
     mountain=null;
     choice=0;
     jumpPick=0;
-    mountainAwaitingId=null;
-    prevOverlapSeg=null;
     playRideActive=false;
     rideSegRef=null;
     [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
@@ -377,14 +1061,14 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     const iw=w-padL-padR;
     if(!playSegments.length) initPlaySegments(w, iw, padL);
     lastPlayTs=0;
-    setMsg('Серия: '+playStreak+' / 20. 1–4 после вершины или в зазоре; неверная кривая — удар. Пробел/0 пауза. ↑↓', '');
-    gel('stats').textContent=playStatsLine();
+    setMsg('', '');
+    gel('stats').textContent='';
     drawPlay();
     playRaf=requestAnimationFrame(playTick);
   }
 
   function playTick(ts){
-    if(mode!=='play'||!playSegments.length||playOutcome){
+    if(mode!=='play'||playOutcome){
       playRaf=null;
       return;
     }
@@ -394,7 +1078,6 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
       playRaf=requestAnimationFrame(playTick);
       return;
     }
-
     const lt=lastPlayTs||ts;
     const dt=Math.min(0.048,(ts-lt)/1000);
     lastPlayTs=ts;
@@ -404,9 +1087,11 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     const iw=w-padL-padR;
     const heroX=padL+iw*0.24;
     const mW=iw*0.58;
-    const gap=iw*PLAY_GAP_FRAC;
     const clipLeft=padL-24;
     const spd=playSpeedPx*dt;
+
+    const prevLeftSnap=new Map(playSegments.map(s=>[s,s.left]));
+    const nSegBefore=playSegments.length;
 
     for(let i=0;i<playSegments.length;i++) playSegments[i].left-=spd;
 
@@ -416,50 +1101,49 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     }
 
     if(playRideActive && playSegments.indexOf(rideSegRef)<0){
-      failPlayFullRestart('Не ответил вовремя — гора уехала.');
+      failPlayMistake('Не ответил вовремя — гора уехала.');
       return;
     }
-    if(mountainAwaitingId && !playRideActive && playSegments.indexOf(mountainAwaitingId)<0){
-      failPlayFullRestart('Не ответил вовремя — гора уехала.');
+    if(!playRideActive && nSegBefore>0 && playSegments.length===0){
+      failPlayMistake('Гора уехала — не заехал на неё.');
       return;
     }
 
-    let maxR=-1e9;
-    for(let i=0;i<playSegments.length;i++)
-      maxR=Math.max(maxR, playSegments[i].left+mW);
-    while(maxR<w+mW*2.2){
+    if(!playSegments.length){
       const g=generatePlaySegment();
-      playSegments.push({hill:g.hill, left:maxR+gap, correctId:g.correctId});
-      maxR+=mW+gap;
+      playSegments.push({hill:g.hill, left:padL+iw+mW*PLAY_SPAWN_OFF_FRAC, correctId:g.correctId});
     }
 
-    let overlapSeg=null;
-    for(const s of playSegments){
-      if(heroX>=s.left && heroX<=s.left+mW){ overlapSeg=s; break; }
+    if(playSegments.length===1 && !playRideActive){
+      const seg=playSegments[0];
+      let prevL=prevLeftSnap.get(seg);
+      if(prevL===undefined) prevL=seg.left;
+      const spanL=Math.min(prevL, seg.left);
+      const spanR=Math.max(prevL+mW, seg.left+mW);
+      const heroOnMountain=heroX>=spanL && heroX<=spanR;
+      if(heroOnMountain){
+        if(!choice || choice<1 || choice>4){
+          failPlayMistake('Нет кривой — нажми 1–4 до того, как гора под колобком.');
+          return;
+        }
+        jumpPick=choice;
+        playRideActive=true;
+        rideSegRef=seg;
+        rideTargetCorrectId=seg.correctId;
+        [...gel('digits').querySelectorAll('button')].forEach(x=>{
+          x.classList.toggle('on', x.dataset.d===String(jumpPick));
+        });
+        gel('stats').textContent='';
+      }
     }
-
-    if(!playRideActive && mountainAwaitingId && overlapSeg && overlapSeg!==mountainAwaitingId){
-      failPlayFullRestart('Поздно — следующая гора уже под колобком.');
-      return;
-    }
-    if(playRideActive && overlapSeg && overlapSeg!==rideSegRef){
-      failPlayFullRestart('Поздно — следующая гора уже под колобком.');
-      return;
-    }
-
-    if(!playRideActive && overlapSeg){
-      const ua=(heroX-overlapSeg.left)/mW;
-      if(ua>peakPassU(overlapSeg.hill)+1e-5) mountainAwaitingId=overlapSeg;
-    }
-    prevOverlapSeg=overlapSeg;
 
     if(playRideActive && rideSegRef){
       const ur=(heroX-rideSegRef.left)/mW;
       if(ur>=0 && ur<=1){
         const cv=sampleCurveAt(jumpPick,ur);
         const mv=mountainSampleAt(rideSegRef.hill,ur);
-        if(jumpPick!==rideTargetCorrectId && cv+STRIKE_GAP<mv){
-          failPlayFullRestart('Удар: кривая оказалась ниже горы.');
+        if(jumpPick!==rideTargetCorrectId && cv+PLAY_STRIKE_GAP<mv){
+          failPlayMistake('Удар: кривая оказалась ниже горы.');
           return;
         }
       }
@@ -468,49 +1152,29 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
         rideSegRef=null;
         if(jumpPick===rideTargetCorrectId){
           playAnswerSuccess();
-          drawPlay();
         } else {
-          failPlayFullRestart('Не тот тип кривой.');
+          failPlayMistake('Не тот тип кривой.');
         }
         return;
       }
     }
 
     drawPlay();
-    if(mode!=='play' || !playSegments.length){
+    if(mode!=='play'||playOutcome){
       playRaf=null;
       return;
     }
     playRaf=requestAnimationFrame(playTick);
   }
 
-  function tryPlayJump(d){
+  function setPlayCurveChoice(d){
     if(mode!=='play'||!playSegments.length||playOutcome||playRideActive) return;
-    const w=gel('canvas-play-wrap').clientWidth|0;
-    const padL=36, padR=14;
-    const iw=w-padL-padR;
-    const heroX=padL+iw*0.24;
-    const mW=iw*0.58;
-    let overlapSeg=null;
-    for(const s of playSegments){
-      if(heroX>=s.left && heroX<=s.left+mW){ overlapSeg=s; break; }
-    }
-    if(!mountainAwaitingId) return;
-    if(overlapSeg && overlapSeg!==mountainAwaitingId) return;
-    const pk=peakPassU(mountainAwaitingId.hill);
-    const uHero=(heroX-mountainAwaitingId.left)/mW;
-    const inGap=!overlapSeg;
-    const afterPeakOnHill=overlapSeg===mountainAwaitingId && uHero>pk+1e-5;
-    if(!inGap && !afterPeakOnHill) return;
-
-    jumpPick=d;
-    rideTargetCorrectId=mountainAwaitingId.correctId;
-    rideSegRef=mountainAwaitingId;
-    playRideActive=true;
-    mountainAwaitingId=null;
     [...gel('digits').querySelectorAll('button')].forEach(x=>{
       x.classList.toggle('on', x.dataset.d===String(d));
     });
+    choice=d;
+    if(mode==='play') gel('stats').textContent='';
+    drawPlay();
   }
 
   function setMsg(text, kind){
@@ -545,9 +1209,11 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     ctx.textAlign='center';
     for(let id=1;id<=4;id++){
       ctx.strokeStyle=COLORS[id];
-      ctx.lineWidth=2.2;
+      ctx.lineWidth=REF_CURVE_LINE.width;
+      ctx.lineCap=REF_CURVE_LINE.cap;
+      ctx.lineJoin=REF_CURVE_LINE.join;
       ctx.beginPath();
-      const samp=sampleCurve(id, 140);
+      const samp=sampleCurve(id, REF_CURVE_N);
       for(let i=0;i<samp.length;i++){
         const x=padL+(i/(samp.length-1))*iw;
         const y=padT+ih-samp[i]*ih;
@@ -568,12 +1234,76 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     ctx.fillText('четыре типа кривых', w/2, h-10);
   }
 
-  function drawKolobok(ctx, cx, cy, r, broken){
+  function drawKolobokEasyBird(ctx, cx, cy, r){
+    const s=r*0.55;
+    const bx=cx+r*1.05, by=cy-r*0.28;
+    ctx.save();
+    ctx.fillStyle='#42a5f5';
+    ctx.strokeStyle='#1565c0';
+    ctx.lineWidth=Math.max(1,r*0.06);
+    ctx.beginPath();
+    ctx.arc(bx,by,s*0.22,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(bx+s*0.42,by+s*0.08,s*0.5,s*0.3,0.15,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bx+s*0.55,by);
+    ctx.quadraticCurveTo(bx+s*1.05,by-s*0.45,bx+s*0.75,by+s*0.18);
+    ctx.stroke();
+    ctx.fillStyle='#ff9800';
+    ctx.beginPath();
+    ctx.moveTo(bx+s*0.95,by+s*0.02);
+    ctx.lineTo(bx+s*1.15,by+s*0.08);
+    ctx.lineTo(bx+s*0.98,by+s*0.14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawKolobokEasyCross(ctx, cx, cy, r){
+    const s=r*0.4;
+    const x=cx+r*1.1, y=cy-r*0.15;
+    ctx.save();
+    ctx.strokeStyle='#c62828';
+    ctx.lineWidth=Math.max(2.2,r*0.12);
+    ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(x-s,y-s); ctx.lineTo(x+s,y+s);
+    ctx.moveTo(x+s,y-s); ctx.lineTo(x-s,y+s);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /** curveDigit 1–4 — белая цифра внизу шара; easyHint 'ok'|'bad' — птичка / крестик (лёгкая тренировка). */
+  function drawKolobok(ctx, cx, cy, r, broken, curveDigit=0, easyHint=null){
     if(broken){
       ctx.fillStyle='#8d6e63';
       ctx.beginPath();
       ctx.ellipse(cx-r*0.5,cy+r*0.15,r*0.55,r*0.35,0.3,0,Math.PI*2);
       ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.75)';
+      ctx.lineWidth=Math.max(1.5,r*0.06);
+      ctx.stroke();
+      const fx=cx-r*0.52, fy=cy+r*0.1;
+      const k=r*0.14;
+      ctx.strokeStyle='#3e2723';
+      ctx.lineWidth=Math.max(1.2, k*0.35);
+      ctx.lineCap='round';
+      for(const sgn of [-1,1]){
+        const ex=fx+sgn*r*0.32;
+        ctx.beginPath();
+        ctx.moveTo(ex-k,fy-k); ctx.lineTo(ex+k,fy+k);
+        ctx.moveTo(ex+k,fy-k); ctx.lineTo(ex-k,fy+k);
+        ctx.stroke();
+      }
+      ctx.strokeStyle='#5d4037';
+      ctx.lineWidth=1.2;
+      ctx.beginPath();
+      ctx.arc(fx,fy+r*0.22,r*0.18,0.15,Math.PI-0.15);
+      ctx.stroke();
       ctx.fillStyle='#bdbdbd';
       ctx.beginPath();
       ctx.arc(cx+r*0.35,cy-r*0.1,r*0.28,0,Math.PI*2);
@@ -588,31 +1318,67 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
       ctx.stroke();
       return;
     }
-    ctx.fillStyle='#ffcc66';
-    ctx.strokeStyle='#c49040';
-    ctx.lineWidth=2;
+    ctx.fillStyle='#f39c12';
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=Math.max(2, r*0.07);
     ctx.beginPath();
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.fill();
     ctx.stroke();
-    const eye=r*0.14;
-    ctx.fillStyle='#222';
+    const eyeY=cy-r*0.2;
+    const eyeXo=r*0.24;
+    const eyeR=r*0.11;
+    ctx.fillStyle='#fff';
     ctx.beginPath();
-    ctx.arc(cx-r*0.35*r,cy-r*0.15*r,eye,0,Math.PI*2);
-    ctx.arc(cx+r*0.35*r,cy-r*0.15*r,eye,0,Math.PI*2);
+    ctx.arc(cx-eyeXo,eyeY,eyeR,0,Math.PI*2);
+    ctx.arc(cx+eyeXo,eyeY,eyeR,0,Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle='#333';
-    ctx.lineWidth=1.2;
+    const pup=r*0.038;
+    ctx.fillStyle='#111';
     ctx.beginPath();
-    ctx.arc(cx,cy+r*0.08*r,r*0.38,0.22,Math.PI-0.22);
+    ctx.arc(cx-eyeXo,eyeY,pup,0,Math.PI*2);
+    ctx.arc(cx+eyeXo,eyeY,pup,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle='#1a1a1a';
+    ctx.lineWidth=Math.max(1.1, r*0.05);
+    ctx.lineCap='round';
+    const smileR=r*0.3;
+    const smileCy=cy+r*0.16;
+    ctx.beginPath();
+    ctx.arc(cx,smileCy,smileR,0.25,Math.PI-0.25);
     ctx.stroke();
+    if(curveDigit>=1&&curveDigit<=4){
+      ctx.save();
+      ctx.fillStyle='#fff';
+      ctx.font=`900 ${Math.max(11, r*0.42)}px system-ui,sans-serif`;
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(String(curveDigit), cx, cy+r*0.58);
+      ctx.restore();
+    }
+    if(easyHint==='ok') drawKolobokEasyBird(ctx,cx,cy,r);
+    else if(easyHint==='bad') drawKolobokEasyCross(ctx,cx,cy,r);
+  }
+
+  function drawPlayHudHearts(ctx, x, y, lives, maxL){
+    ctx.save();
+    ctx.textAlign='left';
+    ctx.textBaseline='middle';
+    ctx.font='bold 22px system-ui,sans-serif';
+    for(let i=0;i<maxL;i++){
+      ctx.fillStyle=i<lives?'#e53935':'#3a3a48';
+      ctx.globalAlpha=i<lives?1:0.38;
+      ctx.fillText('\u2665', x+i*26, y);
+      ctx.globalAlpha=1;
+    }
+    ctx.restore();
   }
 
   function drawPlay(){
     const cv=gel('play-c');
     const wrap=gel('canvas-play-wrap');
     const w=wrap.clientWidth|0, h=wrap.clientHeight|0;
-    if(w<10||h<10) return;
+    if(w<10||h<10){ refreshBottomStatus(); return; }
     const dpr=Math.min(2, window.devicePixelRatio||1);
     cv.width=w*dpr; cv.height=h*dpr;
     cv.style.width=w+'px'; cv.style.height=h+'px';
@@ -636,6 +1402,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
         ctx.font='600 15px system-ui,sans-serif';
         ctx.textAlign='center';
         ctx.fillText('Загрузка…', w/2, h/2);
+        refreshBottomStatus();
         return;
       }
       const mW=iw*0.58;
@@ -659,37 +1426,25 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
       }
       const heroX=padL+iw*0.24;
       const heroR=Math.min(iw,ih)*0.056;
-      if(playRideActive && rideSegRef && jumpPick>=1 && jumpPick<=4){
-        const samp=sampleCurve(jumpPick, N);
-        ctx.strokeStyle=COLORS[jumpPick];
-        ctx.globalAlpha=0.88;
-        ctx.lineWidth=3.2;
-        ctx.setLineDash([5,4]);
+      const curveSeg=playSegments[0];
+      const curveId=playRideActive&&rideSegRef?jumpPick:choice;
+      if(curveSeg && curveId>=1&&curveId<=4){
+        const samp=sampleCurve(curveId, REF_CURVE_N);
+        const segLeft=playRideActive&&rideSegRef?rideSegRef.left:curveSeg.left;
+        const n=samp.length;
+        ctx.strokeStyle=COLORS[curveId];
+        ctx.globalAlpha=1;
+        ctx.lineWidth=REF_CURVE_LINE.width;
+        ctx.lineCap=REF_CURVE_LINE.cap;
+        ctx.lineJoin=REF_CURVE_LINE.join;
+        ctx.setLineDash([]);
         ctx.beginPath();
-        for(let i=0;i<N;i++){
-          const mx=rideSegRef.left+(i/(N-1))*mW;
+        for(let i=0;i<n;i++){
+          const mx=segLeft+(i/(n-1))*mW;
           const my=groundY-samp[i]*hillH;
           if(i===0) ctx.moveTo(mx,my); else ctx.lineTo(mx,my);
         }
         ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.globalAlpha=1;
-      }
-      let canAnswer=false;
-      if(mountainAwaitingId && !playRideActive){
-        let segU=null;
-        for(const s of playSegments){
-          if(heroX>=s.left && heroX<=s.left+mW){ segU=s; break; }
-        }
-        if(!segU) canAnswer=true;
-        else if(segU===mountainAwaitingId){
-          const uu=(heroX-mountainAwaitingId.left)/mW;
-          if(uu>peakPassU(mountainAwaitingId.hill)+1e-5) canAnswer=true;
-        }
-      }
-      if(canAnswer){
-        ctx.fillStyle='rgba(46,125,50,0.2)';
-        ctx.fillRect(padL,padT,iw,ih*0.92);
       }
       let jumpY=0;
       if(playRideActive && rideSegRef){
@@ -697,53 +1452,103 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
         if(ur>=0 && ur<=1) jumpY=hillH*sampleCurveAt(jumpPick,ur);
       }
       const heroCy=groundY-heroR-jumpY;
-      drawKolobok(ctx, heroX, heroCy, heroR, playOutcome==='crash');
-      ctx.fillStyle='#555';
-      ctx.font='600 10px system-ui,sans-serif';
-      ctx.textAlign='left';
-      ctx.fillText('колобок', heroX-heroR, groundY+14);
+      const kolDigit=playRideActive&&rideSegRef?jumpPick:(choice>=1&&choice<=4?choice:0);
+      drawKolobok(ctx, heroX, heroCy, heroR, playOutcome==='crash', kolDigit, null);
+
+      const remainPlay=Math.max(0, playHillsTotal-playStreak);
+      ctx.textAlign='center';
+      ctx.font='900 42px system-ui,sans-serif';
+      const cntMain=String(remainPlay);
+      ctx.lineWidth=5;
+      ctx.strokeStyle='rgba(255,255,255,0.92)';
+      ctx.strokeText(cntMain, w/2, padT+34);
+      ctx.fillStyle='#0f172a';
+      ctx.fillText(cntMain, w/2, padT+34);
+      const heartW=26;
+      const heartLeft=Math.max(padL+4, w-padR-heartW*playStartLives-8);
+      drawPlayHudHearts(ctx, heartLeft, padT+22, playLives, playStartLives);
+
+      if(playPaused){
+        ctx.fillStyle='rgba(15,23,42,0.5)';
+        ctx.fillRect(padL,padT,iw,ih);
+        ctx.fillStyle='#e2e8f0';
+        ctx.font='800 22px system-ui,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('ПАУЗА', w/2, padT+ih*0.44);
+      }
+      refreshBottomStatus();
       return;
     }
 
     ctx.fillStyle='#f5f5f7';
     ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle='#bbb';
-    ctx.lineWidth=1;
-    ctx.beginPath();
-    ctx.moveTo(padL, padT); ctx.lineTo(padL, padT+ih); ctx.lineTo(w-padR, padT+ih);
-    ctx.stroke();
-    if(!mountain){
-      ctx.fillStyle='#888';
-      ctx.font='48px system-ui,sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText('Пробел или «Гора»', w/2, h/2);
-      return;
+    if(performance.now()<trainFlashUntil){
+      ctx.fillStyle='rgba(229,57,53,0.22)';
+      ctx.fillRect(0,0,w,h);
     }
-    ctx.strokeStyle='#333';
-    ctx.lineWidth=2.5;
+    const mW=iw*0.58;
+    const hillH=ih*0.88;
+    const heroX=padL+iw*0.24;
+    const heroR=Math.min(iw,ih)*0.056;
+    if(trainDifficulty==='easy'&&trSeg) trSeg.left=heroX-mW*0.38;
+
+    ctx.strokeStyle='#9e9e9e';
+    ctx.lineWidth=2;
     ctx.beginPath();
-    for(let i=0;i<mountain.length;i++){
-      const x=padL+(i/(mountain.length-1))*iw;
-      const y=padT+ih-mountain[i]*ih;
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    }
+    ctx.moveTo(padL,groundY);
+    ctx.lineTo(w-padR,groundY);
     ctx.stroke();
-    if(choice>=1&&choice<=4){
-      const samp=sampleCurve(choice, N);
-      ctx.strokeStyle=COLORS[choice];
-      ctx.globalAlpha=0.55;
-      ctx.lineWidth=2.8;
-      ctx.setLineDash([6,4]);
+
+    if(trSeg){
+      const seg=trSeg;
       ctx.beginPath();
-      for(let i=0;i<samp.length;i++){
-        const x=padL+(i/(samp.length-1))*iw;
-        const y=padT+ih-samp[i]*ih;
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      ctx.moveTo(seg.left,groundY);
+      for(let i=0;i<seg.hill.length;i++){
+        const mx=seg.left+(i/(seg.hill.length-1))*mW;
+        const my=groundY-seg.hill[i]*hillH;
+        ctx.lineTo(mx,my);
       }
+      ctx.lineTo(seg.left+mW,groundY);
+      ctx.closePath();
+      ctx.fillStyle='rgba(80,90,110,0.35)';
+      ctx.fill();
+      ctx.strokeStyle='#444';
+      ctx.lineWidth=2.5;
       ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.globalAlpha=1;
+
+      const curveId=trRideActive?trJumpPick:choice;
+      if(curveId>=1&&curveId<=4){
+        const samp=sampleCurve(curveId, REF_CURVE_N);
+        const n=samp.length;
+        ctx.strokeStyle=COLORS[curveId];
+        ctx.globalAlpha=1;
+        ctx.lineWidth=REF_CURVE_LINE.width;
+        ctx.lineCap=REF_CURVE_LINE.cap;
+        ctx.lineJoin=REF_CURVE_LINE.join;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        for(let i=0;i<n;i++){
+          const mx=seg.left+(i/(n-1))*mW;
+          const my=groundY-samp[i]*hillH;
+          if(i===0) ctx.moveTo(mx,my); else ctx.lineTo(mx,my);
+        }
+        ctx.stroke();
+      }
     }
+
+    let jumpY=0;
+    if(trRideActive && trSeg){
+      const ur=(heroX-trSeg.left)/mW;
+      if(ur>=0 && ur<=1) jumpY=hillH*sampleCurveAt(trJumpPick,ur);
+    }
+    const heroCy=groundY-heroR-jumpY;
+    const broken=trainAnimOutcome==='crash';
+    const kolDigit=trRideActive?trJumpPick:(choice>=1&&choice<=4?choice:0);
+    let easyHint=null;
+    if(trainDifficulty==='easy'&&trSeg&&choice>=1&&choice<=4)
+      easyHint=choice===trSeg.correctId?'ok':'bad';
+    drawKolobok(ctx, heroX, heroCy, heroR, broken, kolDigit, easyHint);
+
     if(showSuccessMark){
       const cx=padL+iw*0.72, cy=padT+ih*0.22, s=Math.min(iw,ih)*0.14;
       ctx.strokeStyle='#1b5e20';
@@ -763,57 +1568,74 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
       ctx.lineTo(cx+s*0.42,cy-s*0.36);
       ctx.stroke();
     }
-  }
 
-  function evalChoice(){
-    if(mode!=='train'||!mountain||choice<1||choice>4||showSuccessMark) return;
-    const { id: closest } = bestMatch(mountain, N);
-    if(choice!==closest) return;
-
-    trainRounds++;
-    trainOk++;
-    let text='✓ Верно! Тип '+closest+' — эта кривая и есть основа горы (с шумом).';
-    setMsg(text,'ok');
-    gel('stats').textContent='Тренировка: '+trainOk+' / '+trainRounds+' верно';
-
-    showSuccessMark=true;
-    drawPlay();
-    if(successTimer) clearTimeout(successTimer);
-    successTimer=setTimeout(()=>{
-      successTimer=null;
-      makeMountain();
-    }, 720);
+    if(!trSeg && !trainAnimOutcome){
+      ctx.fillStyle='#888';
+      ctx.font='600 15px system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(
+        trainDifficulty==='easy'
+          ? 'Пробел или «Гора» — показать гору'
+          : 'Пробел или «Гора» — следующая гора',
+        w/2, padT+ih*0.42);
+    }
+    refreshBottomStatus();
   }
 
   function setMode(m){
-    if(successTimer){ clearTimeout(successTimer); successTimer=null; }
     clearPlayContinueTimer();
+    clearTrainContinueTimer();
+    stopTrainRaf();
     if(playRaf){ cancelAnimationFrame(playRaf); playRaf=null; }
     showSuccessMark=false;
     playOutcome=null;
+    trainAnimOutcome=null;
+    trSeg=null;
+    trRideActive=false;
+    trJumpPick=0;
+    trainFlashUntil=0;
+    trainEasyStatsDone=false;
     mode=m;
     gel('m-train').classList.toggle('active', m==='train');
     gel('m-play').classList.toggle('active', m==='play');
+    gel('train-diff').classList.toggle('visible', m==='train');
     gel('btn-mountain').style.display=m==='train'?'':'none';
     gel('play-area-label').textContent=m==='train'
-      ? 'Ваша гора и выбранная кривая'
-      : 'Колобок — после вершины, зазор, кривая и удар';
+      ? 'Одна гора — кривая 1–4, заезд под колобком'
+      : 'Игра';
+    gel('hint-text').style.display=m==='train'?'':'none';
     gel('hint-text').innerHTML=m==='train'
-      ? 'Сначала <b>тренировка</b>: сверху четыре эталона (1–4). Пробел или «Гора» — новая гора. Цифры накладывают кривую; угадали — галочка и следующая гора.'
-      : '<b>Игра</b>: лента гор. <b>1–4</b> после <b>вершины</b> (спуск) или в зазоре — накладывается кривая, колобок едет по ней; чужая кривая где ниже горы — <b>удар</b>, доехал не той кривой — с нуля. Пробел/0 — пауза. <b>↑↓</b> скорость, <b>20</b> подряд.';
+      ? '<b>Лёгкая</b>: пробел — гора появляется/исчезает (стоит на месте). <b>1–4</b> — кривая; верно — <b>птичка</b>, неверно — <b>крестик</b>. <b>Трудная</b> и <b>Игра</b>: <b>↑</b> быстрее, <b>↓</b> медленнее.'
+      : '';
     gel('stats').textContent='';
     if(m==='train'){
+      hideVictoryOverlay();
       playSegments=[];
       mountain=null;
       trainRounds=0;
       trainOk=0;
       choice=0;
-      setMsg('Пробел или «Гора» для тренировочной горы.', '');
+      lastTrainSpawnType=0;
+      [...gel('digits').querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+      setMsg('Пробел или «Гора» — выпустить гору.', '');
+      gel('stats').textContent=trainStatsLine();
     } else {
+      if(!readPlayStartOptions()){
+        setMsg('Введите имя игрока.', 'bad');
+        mode='train';
+        gel('m-train').classList.add('active');
+        gel('m-play').classList.remove('active');
+        gel('train-diff').classList.add('visible');
+        syncPlayStartPanel();
+        drawPlay();
+        return;
+      }
       playStreak=0;
+      playLives=playStartLives;
       playSegments=[];
       makeMountain();
     }
+    syncPlayStartPanel();
     drawPlay();
   }
 
@@ -825,13 +1647,19 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     b.dataset.d=String(d);
     b.addEventListener('click',()=>{
       if(mode==='train'){
+        if(trainAnimOutcome) return;
+        if(trainDifficulty==='easy'){
+          if(!trSeg) return;
+          applyTrainEasyDigitPick(d);
+          return;
+        }
+        if(trRideActive) return;
         [...digitsEl.querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
         b.classList.add('on');
         choice=d;
         drawPlay();
-        evalChoice();
       } else {
-        tryPlayJump(d);
+        setPlayCurveChoice(d);
       }
     });
     digitsEl.appendChild(b);
@@ -840,6 +1668,134 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
   gel('btn-mountain').addEventListener('click', makeMountain);
   gel('m-train').addEventListener('click',()=>setMode('train'));
   gel('m-play').addEventListener('click',()=>setMode('play'));
+  function setTrainDifficulty(diff){
+    if(mode!=='train') return;
+    if(trSeg && !trainAnimOutcome) return;
+    trainDifficulty=diff;
+    gel('train-easy').classList.toggle('active', diff==='easy');
+    gel('train-hard').classList.toggle('active', diff==='hard');
+    gel('stats').textContent=trainStatsLine();
+    refreshBottomStatus();
+  }
+  gel('train-easy').addEventListener('click',()=>setTrainDifficulty('easy'));
+  gel('train-hard').addEventListener('click',()=>setTrainDifficulty('hard'));
+
+  gel('sp-up').addEventListener('click',()=>{
+    if(mode==='play'){
+      playSpeedPx=Math.min(PLAY_SPEED_MAX, playSpeedPx+PLAY_SPEED_STEP);
+      refreshBottomStatus();
+    } else if(mode==='train'&&trainDifficulty==='hard'){
+      trainSpeedPx=Math.min(PLAY_SPEED_MAX, trainSpeedPx+PLAY_SPEED_STEP);
+      gel('stats').textContent=trainStatsLine();
+      refreshBottomStatus();
+    }
+  });
+  gel('sp-down').addEventListener('click',()=>{
+    if(mode==='play'){
+      playSpeedPx=Math.max(PLAY_SPEED_MIN, playSpeedPx-PLAY_SPEED_STEP);
+      refreshBottomStatus();
+    } else if(mode==='train'&&trainDifficulty==='hard'){
+      trainSpeedPx=Math.max(PLAY_SPEED_MIN, trainSpeedPx-PLAY_SPEED_STEP);
+      gel('stats').textContent=trainStatsLine();
+      refreshBottomStatus();
+    }
+  });
+
+  function gamepadAdjustSpeed(delta){
+    if(mode==='play'){
+      playSpeedPx=Math.max(PLAY_SPEED_MIN, Math.min(PLAY_SPEED_MAX, playSpeedPx+delta));
+      refreshBottomStatus();
+      return;
+    }
+    if(mode==='train'&&trainDifficulty==='hard'){
+      trainSpeedPx=Math.max(PLAY_SPEED_MIN, Math.min(PLAY_SPEED_MAX, trainSpeedPx+delta));
+      gel('stats').textContent=trainStatsLine();
+      refreshBottomStatus();
+    }
+  }
+
+  function gamepadSelectDigit(d){
+    if(d<1||d>4) return;
+    if(mode==='train'){
+      if(trainAnimOutcome) return;
+      if(trainDifficulty==='easy'){
+        if(!trSeg) return;
+        applyTrainEasyDigitPick(d);
+        return;
+      }
+      if(trRideActive) return;
+      choice=d;
+      [...digitsEl.querySelectorAll('button')].forEach(x=>{
+        x.classList.toggle('on', x.dataset.d===String(d));
+      });
+      drawPlay();
+      return;
+    }
+    setPlayCurveChoice(d);
+  }
+
+  function gamepadCycleDigit(step){
+    let cur=choice|0;
+    if(cur<1||cur>4) cur=1;
+    cur+=step;
+    if(cur<1) cur=4;
+    if(cur>4) cur=1;
+    gamepadSelectDigit(cur);
+  }
+
+  function gamepadTogglePause(){
+    if(mode!=='play') return;
+    playPaused=!playPaused;
+    gel('stats').textContent='';
+    drawPlay();
+    if(!playRaf&&!playOutcome) playRaf=requestAnimationFrame(playTick);
+  }
+
+  function gamepadPoll(){
+    const pads=(navigator.getGamepads&&navigator.getGamepads())||[];
+    const gp=pads[0];
+    if(gp&&gp.connected){
+      const pressed=(i)=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
+      const just=(i)=>pressed(i)&&!gamepadPrevButtons[i];
+      const lx=gp.axes&&gp.axes.length?gp.axes[0]:0;
+
+      if(just(0)) gamepadSelectDigit(choice>=1&&choice<=4?choice:1);      // A
+      if(just(9)) gamepadTogglePause();                                     // Start
+      if(just(4)||just(14)) gamepadAdjustSpeed(-PLAY_SPEED_STEP);           // LB or D-pad left
+      if(just(5)||just(15)) gamepadAdjustSpeed(+PLAY_SPEED_STEP);           // RB or D-pad right
+      if(just(12)) gamepadCycleDigit(+1);                                   // D-pad up
+      if(just(13)) gamepadCycleDigit(-1);                                   // D-pad down
+
+      if(lx>0.65){
+        if(!gamepadStickHeld){ gamepadCycleDigit(+1); gamepadStickHeld=true; }
+      } else if(lx<-0.65){
+        if(!gamepadStickHeld){ gamepadCycleDigit(-1); gamepadStickHeld=true; }
+      } else {
+        gamepadStickHeld=false;
+      }
+
+      if(just(1)&&mode==='train') makeMountain();                           // B
+
+      gamepadPrevButtons=gp.buttons.map(b=>!!b.pressed);
+    } else {
+      gamepadPrevButtons=[];
+      gamepadStickHeld=false;
+    }
+    gamepadPollRaf=requestAnimationFrame(gamepadPoll);
+  }
+
+  function onPlayOptAdjust(){
+    if(mode!=='train') return;
+    readPlayStartOptions();
+  }
+  gel('opt-hills').addEventListener('change', onPlayOptAdjust);
+  gel('opt-lives').addEventListener('change', onPlayOptAdjust);
+  gel('opt-player').addEventListener('change', onPlayOptAdjust);
+  gel('opt-player').addEventListener('blur', onPlayOptAdjust);
+  gel('victory-close').addEventListener('click',()=>{
+    hideVictoryOverlay();
+    setMode('train');
+  });
 
   window.addEventListener('keydown',e=>{
     if(e.target&&e.target.tagName==='INPUT') return;
@@ -848,8 +1804,9 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
       if(mode==='train') makeMountain();
       else {
         playPaused=!playPaused;
-        gel('stats').textContent=playStatsLine();
-        if(!playRaf&&mode==='play'&&playSegments.length&&!playOutcome)
+        gel('stats').textContent='';
+        if(mode==='play') drawPlay();
+        if(!playRaf&&mode==='play'&&!playOutcome)
           playRaf=requestAnimationFrame(playTick);
       }
       return;
@@ -857,8 +1814,9 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     if(mode==='play'&&(e.code==='Digit0'||e.code==='Numpad0')){
       e.preventDefault();
       playPaused=!playPaused;
-      gel('stats').textContent=playStatsLine();
-      if(!playRaf&&playSegments.length&&!playOutcome)
+      gel('stats').textContent='';
+      drawPlay();
+      if(!playRaf&&!playOutcome)
         playRaf=requestAnimationFrame(playTick);
       return;
     }
@@ -866,29 +1824,49 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
       if(e.code==='ArrowUp'){
         e.preventDefault();
         playSpeedPx=Math.min(PLAY_SPEED_MAX, playSpeedPx+PLAY_SPEED_STEP);
-        gel('stats').textContent=playStatsLine();
+        refreshBottomStatus();
         return;
       }
       if(e.code==='ArrowDown'){
         e.preventDefault();
         playSpeedPx=Math.max(PLAY_SPEED_MIN, playSpeedPx-PLAY_SPEED_STEP);
-        gel('stats').textContent=playStatsLine();
+        refreshBottomStatus();
+        return;
+      }
+    }
+    if(mode==='train'&&trainDifficulty==='hard'){
+      if(e.code==='ArrowUp'){
+        e.preventDefault();
+        trainSpeedPx=Math.min(PLAY_SPEED_MAX, trainSpeedPx+PLAY_SPEED_STEP);
+        gel('stats').textContent=trainStatsLine();
+        refreshBottomStatus();
+        return;
+      }
+      if(e.code==='ArrowDown'){
+        e.preventDefault();
+        trainSpeedPx=Math.max(PLAY_SPEED_MIN, trainSpeedPx-PLAY_SPEED_STEP);
+        gel('stats').textContent=trainStatsLine();
+        refreshBottomStatus();
         return;
       }
     }
     if(e.key>='1'&&e.key<='4'){
       const d=e.key|0;
       if(mode==='train'){
+        if(trainAnimOutcome) return;
+        if(trainDifficulty==='easy'){
+          if(!trSeg) return;
+          applyTrainEasyDigitPick(d);
+          return;
+        }
+        if(trRideActive) return;
         choice=d;
         [...digitsEl.querySelectorAll('button')].forEach(x=>{
           x.classList.toggle('on', x.dataset.d===e.key);
         });
-        if(mountain){
-          drawPlay();
-          evalChoice();
-        }
+        drawPlay();
       } else {
-        tryPlayJump(d);
+        setPlayCurveChoice(d);
       }
       return;
     }
@@ -904,8 +1882,15 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     new ResizeObserver(onResize).observe(gel('canvas-ref-wrap'));
     new ResizeObserver(onResize).observe(gel('canvas-play-wrap'));
   }
+  window.addEventListener('gamepadconnected',()=>{ setMsg('Геймпад подключен.', 'info'); });
+  window.addEventListener('gamepaddisconnected',()=>{ setMsg('', ''); });
+  try{
+    const nm=(localStorage.getItem('kolobok_player_name')||'').trim();
+    if(nm) playPlayerName=nm.slice(0,24);
+  }catch(_e){}
   setMode('train');
   onResize();
+  gamepadPollRaf=requestAnimationFrame(gamepadPoll);
   window.addEventListener('load',()=>{ requestAnimationFrame(onResize); });
 })();
 </script>
