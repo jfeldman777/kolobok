@@ -189,6 +189,89 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
 #bottom-panel.train #bottom-status { color: #b0bec5; }
 #bottom-panel.play #bottom-status { color: #b8d4f0; }
 
+.rules-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  background: rgba(8, 10, 16, 0.72);
+  backdrop-filter: blur(3px);
+}
+.rules-modal-overlay[hidden] { display: none !important; }
+.rules-modal-panel {
+  position: relative;
+  width: min(540px, 100%);
+  max-height: min(82vh, 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #1a1d28;
+  border: 1px solid #3a4258;
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+.rules-modal-panel h2 {
+  font-size: 16px;
+  color: #E8A020;
+  margin-bottom: 10px;
+  padding-right: 40px;
+}
+.rules-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #444;
+  border-radius: 10px;
+  background: #2a2a36;
+  color: #e8e8ec;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  font-weight: 700;
+}
+.rules-prose-alp {
+  font-size: 12px;
+  line-height: 1.52;
+  color: #b8c0d0;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  max-height: min(58vh, 480px);
+  padding-right: 4px;
+}
+.rules-prose-alp p { margin: 0 0 0.65em; }
+.rules-prose-alp ul { margin: 0.3em 0 0.65em; padding-left: 1.1em; }
+.rules-prose-alp li { margin: 0.2em 0; }
+.rules-prose-alp strong { color: #e8ecf6; }
+.rules-link-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #2a2a36;
+  color: #9eb8e8;
+  cursor: pointer;
+}
+.rules-modal-footer-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  border: none;
+  border-radius: 10px;
+  background: #295ea7;
+  color: #fff;
+  cursor: pointer;
+}
+
 #victory-overlay {
   position: fixed;
   inset: 0;
@@ -237,6 +320,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
   <div class="top-bar">
     <h1>Колобок-альпинист</h1>
     <a href="index.html">На главную</a>
+    <button type="button" id="rules-open" class="rules-link-btn">Правила</button>
     <div class="mode-row">
       <span class="mode-row-label"><label>Режим</label></span>
       <button type="button" id="m-train" class="active">Тренировка</button>
@@ -284,6 +368,24 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     <div id="bottom-mode" class="bottom-mode">Тренировка легкая</div>
     <p id="bottom-status" aria-live="polite">Статус: выбери режим.</p>
   </div>
+  <div id="rules-modal" class="rules-modal-overlay" hidden role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="rules-modal-title">
+    <div class="rules-modal-panel" role="document">
+      <button type="button" class="rules-modal-close" id="rules-close" aria-label="Закрыть">×</button>
+      <h2 id="rules-modal-title">Правила: Колобок-альпинист</h2>
+      <div class="rules-prose-alp">
+        <p><strong>Задача.</strong> Научиться подбирать кривую «горы» под эталон и в режиме «Игра» проехать заданное число препятствий, не ударившись.</p>
+        <p><strong>Экран.</strong> Вверху — эталонные кривые (цифры 1–4, ось: вверх — высота, вправо — время). Внизу — твоя гора и выбранная кривая.</p>
+        <p><strong>Тренировка, лёгкая.</strong> Пробел или кнопка «Гора» — гора появляется и исчезает на месте. Цифры <strong>1–4</strong> (или кнопки) — выбор кривой. Угадал — птичка, ошибся — крестик; жизни не тратятся.</p>
+        <p><strong>Тренировка, трудная.</strong> Гора движется; колобок должен заехать снизу на склон. Если гора оказывается <strong>выше</strong> выбранной кривой в момент заезда — удар. Стрелки <strong>↑</strong> / <strong>↓</strong> — скорость движения горы.</p>
+        <p><strong>Игра.</strong> Перед входом в «Игра» в панели старта задаются число гор, жизней и имя игрока (имя сохраняется). На трассе выбираешь кривую <strong>1–4</strong>; считаются оставшиеся горы и жизни. <strong>Пробел</strong> — пауза (в тренировке лёгкой пробел по-прежнему переключает гору). Стрелки <strong>↑</strong> / <strong>↓</strong> меняют скорость горы.</p>
+        <p><strong>Победа.</strong> После последней горы — салют, время прохождения и доска чемпионов (запись в памяти браузера).</p>
+        <p><strong>Геймпед.</strong> Поддерживается: при подключении появится подсказка; кнопки и крестовина дублируют основные действия.</p>
+        <p><strong>Телефон.</strong> Управление касаниями по кнопкам на экране; игровое поле реагирует на размер окна.</p>
+      </div>
+      <button type="button" class="rules-modal-footer-btn" id="rules-close-btn">Закрыть</button>
+    </div>
+  </div>
+
   <div id="victory-overlay" aria-hidden="true">
     <canvas id="victory-fireworks"></canvas>
     <div class="victory-card">
@@ -1797,7 +1899,30 @@ canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; 
     setMode('train');
   });
 
+  function closeRulesModal(){
+    const m=gel('rules-modal');
+    if(m.hidden) return;
+    m.hidden=true;
+    m.setAttribute('aria-hidden','true');
+    try{ gel('rules-open').focus(); }catch(_e){}
+  }
+  function openRulesModal(){
+    const m=gel('rules-modal');
+    m.hidden=false;
+    m.setAttribute('aria-hidden','false');
+    try{ gel('rules-close').focus(); }catch(_e){}
+  }
+  gel('rules-open').addEventListener('click', openRulesModal);
+  gel('rules-close').addEventListener('click', closeRulesModal);
+  gel('rules-close-btn').addEventListener('click', closeRulesModal);
+  gel('rules-modal').addEventListener('click', (e)=>{ if(e.target===gel('rules-modal')) closeRulesModal(); });
+
   window.addEventListener('keydown',e=>{
+    if(!gel('rules-modal').hidden && e.key==='Escape'){
+      e.preventDefault();
+      closeRulesModal();
+      return;
+    }
     if(e.target&&e.target.tagName==='INPUT') return;
     if(e.code==='Space'){
       e.preventDefault();

@@ -165,6 +165,21 @@ a.back { color: #8cc7ff; font-size: 13px; text-decoration: none; }
   padding-top: 12px;
   border-top: 1px solid #2d3446;
 }
+.rules-prose {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #aeb8d4;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  max-height: min(52vh, 440px);
+  padding-right: 4px;
+}
+.rules-prose p { margin: 0 0 0.75em; }
+.rules-prose p:last-child { margin-bottom: 0; }
+.rules-prose ul { margin: 0.35em 0 0.75em; padding-left: 1.15em; }
+.rules-prose li { margin: 0.25em 0; }
+.rules-prose strong { color: #d8e2f8; }
 #canvas-wrap {
   position: relative;
   width: 100%;
@@ -213,11 +228,31 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
         <button id="start">Старт</button>
         <button id="restart" class="secondary">Сброс</button>
         <button id="journal-open" class="secondary" type="button">Журнал</button>
+        <button id="rules-open" class="secondary" type="button">Правила</button>
       </div>
     </div>
 
     <div id="canvas-wrap">
       <canvas id="c"></canvas>
+    </div>
+  </div>
+
+  <div id="rules-modal" class="journal-overlay" hidden role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="rules-modal-title">
+    <div class="journal-panel" role="document">
+      <button type="button" class="journal-close-x" id="rules-close" aria-label="Закрыть">×</button>
+      <h2 id="rules-modal-title">Правила: Мистер Потейто</h2>
+      <div class="rules-prose">
+        <p><strong>Идея.</strong> Показывается предмет (слово и картинка). Нужно на лице героя отметить те органы чувств, которыми этот предмет «ощущают» по заданию.</p>
+        <p><strong>Шарики.</strong> Красные — обязательно найти все такие зоны. Серые в скобках — «возможно»: их можно нажать, они учитываются отдельно; раунд завершается, когда собраны все обязательные.</p>
+        <p><strong>Зоны на картинке.</strong> Уши — слух, глаза — зрение, нос — обоняние, рот — вкус. <strong>Кожа осязания</strong> и <strong>руки</strong> — разные зоны: кожа — ощущения по коже (например ветер, дождь); руки — осязание и мышечное чувство, когда предмет держат или манипулируют (мяч, ложка).</p>
+        <p><strong>Управление.</strong> Клик мышью или касание пальцем по нужной области на лице.</p>
+        <p><strong>Озвучка.</strong> После нажатия звучит ответ (да / возможно / нет). Название предмета озвучивается при смене карточки: режим «Краткая» — только слово; «Полная» — «Чем мы чувствуем …». Громкость и размер букв настраиваются сверху и сохраняются.</p>
+        <p><strong>Журнал.</strong> Записи раундов открываются кнопкой «Журнал»; там же «Скачать журнал» в файл.</p>
+        <p><strong>Счёт.</strong> Очко начисляется за полностью верный набор обязательных зон. Промах мимо зоны показывает «?» и не озвучивается.</p>
+      </div>
+      <div class="journal-modal-actions">
+        <button type="button" id="rules-close-btn" class="secondary">Закрыть</button>
+      </div>
     </div>
   </div>
 
@@ -295,6 +330,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   const ballsEl=document.getElementById('balls');
   const answerMarkEl=document.getElementById('answer-mark');
   const journalListEl=document.getElementById('journal-list');
+  const rulesModal=document.getElementById('rules-modal');
+  const rulesOpenBtn=document.getElementById('rules-open');
+  const rulesCloseX=document.getElementById('rules-close');
+  const rulesCloseBtn=document.getElementById('rules-close-btn');
   const journalModal=document.getElementById('journal-modal');
   const journalOpenBtn=document.getElementById('journal-open');
   const journalCloseX=document.getElementById('journal-close');
@@ -678,7 +717,20 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     if(state.running) updateHud();
     requestAnimationFrame(tick);
   }
+  function closeRulesModal(){
+    if(rulesModal.hidden) return;
+    rulesModal.hidden=true;
+    rulesModal.setAttribute('aria-hidden','true');
+    try{ rulesOpenBtn.focus(); }catch(_e){}
+  }
+  function openRulesModal(){
+    closeJournalModal();
+    rulesModal.hidden=false;
+    rulesModal.setAttribute('aria-hidden','false');
+    try{ rulesCloseX.focus(); }catch(_e){}
+  }
   function openJournalModal(){
+    closeRulesModal();
     journalModal.hidden=false;
     journalModal.setAttribute('aria-hidden','false');
     try{ journalCloseX.focus(); }catch(_e){}
@@ -691,6 +743,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   }
   function startGame(){
     if(!state.loaded) return;
+    closeRulesModal();
     closeJournalModal();
     clearSpeakQueue();
     speakIdleCallbacks.length=0;
@@ -702,6 +755,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     draw();
   }
   function resetGame(){
+    closeRulesModal();
     closeJournalModal();
     clearSpeakQueue();
     speakIdleCallbacks.length=0;
@@ -744,11 +798,19 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   }
   startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', resetGame);
+  rulesOpenBtn.addEventListener('click', openRulesModal);
+  rulesCloseX.addEventListener('click', closeRulesModal);
+  rulesCloseBtn.addEventListener('click', closeRulesModal);
+  rulesModal.addEventListener('click', (e)=>{ if(e.target===rulesModal) closeRulesModal(); });
   journalOpenBtn.addEventListener('click', openJournalModal);
   journalCloseX.addEventListener('click', closeJournalModal);
   journalCloseBtn.addEventListener('click', closeJournalModal);
   journalModal.addEventListener('click', (e)=>{ if(e.target===journalModal) closeJournalModal(); });
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'&&!journalModal.hidden) closeJournalModal(); });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key!=='Escape') return;
+    if(!rulesModal.hidden){ closeRulesModal(); return; }
+    if(!journalModal.hidden) closeJournalModal();
+  });
   dlJournalBtn.addEventListener('click', downloadJournal);
   volEl.addEventListener('input',()=>{
     state.volume=(parseInt(volEl.value,10)||0)/100;
