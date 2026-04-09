@@ -2212,7 +2212,7 @@ function meet(A,B){
   const bOk=B.isHero?B.alive:!B.collected;
   if(!aOk||!bOk) return null;
 
-  const setA=fullSet(A), setB=fullSet(B);
+  const setA=penaltyDigitsSet(A), setB=penaltyDigitsSet(B);
   const maxA=maxOfSet(setA), maxB=maxOfSet(setB);
 
   if(maxA===maxB){
@@ -2235,7 +2235,8 @@ function meet(A,B){
   }
 
   const[senior,junior]=maxA>maxB?[A,B]:[B,A];
-  const sSets=fullSet(senior), jSets=fullSet(junior);
+  const sSets=maxA>maxB?setA:setB;
+  const jSets=maxA>maxB?setB:setA;
 
   let canC=false;
   if(stage===9) canC=Math.abs(maxA-maxB)===1;
@@ -2246,7 +2247,7 @@ function meet(A,B){
       npcPenaltyMinusOne(senior);
       return null;
     }
-    const toAdd=[junior.lvl,...(junior.dots||[])];
+    const toAdd=[...jSets];
     // dots — unique set for logic
     for(const d of toAdd){ if(d>=1&&d<=MAX_DIGIT&&!senior.dots.includes(d)) senior.dots.push(d); }
     if(!senior.absorbed) senior.absorbed=[];
@@ -2365,37 +2366,20 @@ function penaltyDigitsSet(obj){
 function resolveMushroomMeet(actor,mushKey){
   if(!actor||actor.collected||!forestMushrooms||!forestMushrooms.has(mushKey)) return 'none';
   const mush=mushroomUnitAt(actor.x,actor.y);
-  const actorSet=penaltyDigitsSet(actor);
-  // Гарантия правила: если в пенале есть 2, с грибом 1 всегда кооперация.
-  if(actorSet.has(2)){
-    absorbSetIntoSenior(actor, fullSet(mush));
+  const beforeActorAlive=actor.isHero?actor.alive:!actor.collected;
+  meet(actor,mush); // единый механизм встреч
+  const afterActorAlive=actor.isHero?actor.alive:!actor.collected;
+  if(mush.collected){
     forestMushrooms.delete(mushKey);
     if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
-    return 'cooperation';
+    return 'cooperation_or_war_mush';
   }
-  const maxA=maxOfSet(actorSet), maxM=1;
-  if(maxA===maxM) return 'competition';
-  const senior=maxA>maxM?actor:mush;
-  const junior=maxA>maxM?mush:actor;
-  const seniorSet=(senior===actor)?actorSet:fullSet(mush);
-  const juniorSet=(junior===actor)?actorSet:fullSet(mush);
-  let canC=false;
-  for(const a of seniorSet){ for(const b of juniorSet){ if(Math.abs(a-b)===1){ canC=true; break; } } if(canC) break; }
-  if(canC){
-    if(senior===actor) absorbSetIntoSenior(actor, fullSet(mush));
-    forestMushrooms.delete(mushKey);
-    if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
-    return 'cooperation';
-  }
-  // Война: погибает старший.
-  if(senior===actor){
-    actor.collected=true;
-    pushGrave(actorSet, fullSet(mush));
-    return 'war_actor_died';
-  }
+  if(beforeActorAlive && !afterActorAlive) return 'war_actor_died';
+  // Для грибов "конкуренция" (равные максимумы) означает, что гриб собран,
+  // иначе на первом этапе (1 против 1) серия "Собери грибы" не проходится.
   forestMushrooms.delete(mushKey);
   if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
-  return 'war_mush_died';
+  return 'competition';
 }
 
 function checkMeetings(mover){
@@ -3157,7 +3141,7 @@ function entitiesAtCell(x,y, ignoreMob){
 }
 function canCooptPair(senior, junior){
   if(stage===9) return Math.abs(maxOfSet(fullSet(senior))-maxOfSet(fullSet(junior)))===1;
-  const sSets=fullSet(senior), jSets=fullSet(junior);
+  const sSets=penaltyDigitsSet(senior), jSets=penaltyDigitsSet(junior);
   for(const a of sSets) for(const b of jSets) if(Math.abs(a-b)===1) return true;
   return false;
 }
@@ -3949,13 +3933,6 @@ function heroResolveCellAfterMove(){
         handleHeroDeath({seniorSets:[...fullSet(hero)],juniorSets:[1],heroWasSenior:true});
         return false;
       }
-      // Жёсткая гарантия: если у героя есть "2", встреча с грибом "1" — кооперация,
-      // и в этом же тике не допускаем последующую "смерть после гриба".
-      if(mushRes==='cooperation' && penaltyDigitsSet(hero).has(2)){
-        refreshCounters(); updateHeroLvl();
-        gel('hset').textContent=String(heroDisplayLvl());
-        return true;
-      }
       if(forestIsMole()||forestIsBoar()||forestIsHorse()){
         setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
       } else {
@@ -4528,9 +4505,16 @@ function checkWin(){
     return;
   }
   if(FOREST_CAMPAIGN_2027){
-    if(hero.x!==finishGX()||hero.y!==finishGY()) return;
-    if(forestUsesMushrooms() && forestMushrooms.size) return;
-    if((forestIsMole()||forestIsBoar()) && !forestMoleTaken) return;
+    const allMushCollected=!(forestUsesMushrooms() && forestMushrooms.size);
+    // Для серии "Собери грибы" переход сразу после последнего гриба.
+    // Для остальных лесных серий сохраняем условие домика.
+    if(forestIsMush()){
+      if(!allMushCollected) return;
+    } else {
+      if(hero.x!==finishGX()||hero.y!==finishGY()) return;
+      if(!allMushCollected) return;
+    }
+    if((forestIsMole()||forestIsBoar()||forestIsHorse()) && !forestMoleTaken) return;
     won=true;
     setMsg(forestUsesMushrooms()?'Игра пройдена!':'Вы дошли до домика!');
     scheduleNextStage(1,2);
