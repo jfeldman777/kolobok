@@ -935,7 +935,7 @@ function forestStartMushCampaign(){
   campaignHistory=[];
   movesPerStage=[0,0,0,0,0,0,0,0];
   won=false;
-  setMsg('Собери грибы');
+  setMsg('Собери грибы, затем доберись до домика');
   loadStage();
 }
 
@@ -1018,9 +1018,71 @@ function forestFinishCampaign(){
     if(replayRecording && !replayMode) maybeRecordSnapshot('forest-mush-finished');
     return;
   }
-  // После «домой» автоматически запускаем «собери грибы».
-  setMsg('Следующая игра: собери грибы…');
-  setTimeout(()=>{ forestStartMushCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+  // После серии «домой» — страница с текстом, затем по кнопке — серия «собери грибы».
+  setMsg('');
+  setTimeout(()=>{
+    if(replayMode){ forestStartMushCampaign(); return; }
+    showForestHomeToMushStory();
+  }, Math.max(250, STAGE_SALUTE_MS-500));
+}
+
+function forestHomeMushStoryDismiss(){
+  window.removeEventListener('keydown', forestHomeMushStoryOnKeydown, true);
+  const ov=gel('victory-overlay');
+  if(ov&&ov!==_stub){
+    try{ ov.removeEventListener('pointerdown', forestHomeMushStoryOnPointer, true); }catch(e){}
+  }
+  hideVictoryOverlay();
+  forestStartMushCampaign();
+}
+function forestHomeMushStoryOnKeydown(ev){
+  try{
+    ev.preventDefault();
+    ev.stopPropagation();
+  }catch(e){}
+  forestHomeMushStoryDismiss();
+}
+function forestHomeMushStoryOnPointer(ev){
+  if(ev.button!=null&&ev.button!==0) return;
+  try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+  forestHomeMushStoryDismiss();
+}
+
+/** Между серией 1 («домой») и серией 2 («грибы»). */
+function showForestHomeToMushStory(){
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub){ forestStartMushCampaign(); return; }
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.setAttribute('tabindex','-1');
+  const story='Прошёл дождь и в лесу выросли грибы. Колобок решил по дороге собрать все грибы.';
+  ov.innerHTML='<div id="victory-box" style="max-width:520px;text-align:center">'+
+    '<canvas id="forest-mush-story-canvas" width="220" height="220" style="display:block;margin:0 auto 8px;width:min(220px,55vw);height:min(220px,55vw);image-rendering:auto"></canvas>'+
+    '<p class="vic-lead" style="margin:0;font-size:clamp(1.05rem,3.8vw,1.35rem);line-height:1.55;color:#dce8df;font-weight:600">'+story+'</p>'+
+    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">Дальше нажми любую клавишу или коснись экрана.</p>'+
+    '</div>';
+  window.addEventListener('keydown', forestHomeMushStoryOnKeydown, true);
+  ov.addEventListener('pointerdown', forestHomeMushStoryOnPointer, true);
+  try{ ov.focus({ preventScroll: true }); }catch(e){ try{ ov.focus(); }catch(e2){} }
+  queueMicrotask(()=>{
+    const c=document.getElementById('forest-mush-story-canvas');
+    if(!c) return;
+    const css=Math.min(220, Math.max(160, Math.min(window.innerWidth*0.55, 240)));
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    c.width=Math.round(css*dpr);
+    c.height=Math.round(css*dpr);
+    c.style.width=css+'px';
+    c.style.height=css+'px';
+    const ctx=c.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,css,css);
+    const sz=Math.round(css*0.82);
+    const ox=Math.round((css-sz)/2);
+    const oy=Math.round((css-sz)*0.42);
+    drawMushroom(ctx, ox, oy, sz);
+  });
 }
 
 function showForestFinalOverlay(){
@@ -1442,8 +1504,10 @@ function initCampaignSession(){
 }
 
 function hideVictoryOverlay(){
+  try{ window.removeEventListener('keydown', forestHomeMushStoryOnKeydown, true); }catch(e){}
   const ov=gel('victory-overlay');
   if(!ov||ov===_stub) return;
+  try{ ov.removeEventListener('pointerdown', forestHomeMushStoryOnPointer, true); }catch(e){}
   ov.classList.remove('victory-open');
   ov.innerHTML='';
   ov.style.display='none';
@@ -2691,7 +2755,7 @@ function loadStage(){
       }
       if(forestIsHorse()) setMsg('Сначала лошади → кабан → крот → гриб');
       else if(forestIsMole()||forestIsBoar()) setMsg('Возьми крота, затем грибы: 0/'+forestMushroomsTotal);
-      else setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+      else setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal+', затем доберись до домика');
     } else {
       setMsg('Помоги колобку вернуться домой');
     }
@@ -3304,7 +3368,7 @@ function stepK2PaintMob(m,ownerId){
         const prefix=forestMoleTaken?'Собери грибы':'Возьми крота, затем грибы';
         setMsg(prefix+': '+forestMushroomsCollected+'/'+forestMushroomsTotal);
       } else {
-        setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+        setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal+', затем доберись до домика');
       }
     }
   }
@@ -3936,7 +4000,11 @@ function heroResolveCellAfterMove(){
       if(forestIsMole()||forestIsBoar()||forestIsHorse()){
         setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
       } else {
-        setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+        if(forestIsMush() && forestMushrooms && !forestMushrooms.size){
+          setMsg('Все грибы собраны. Доберись до домика!');
+        } else {
+          setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal+', затем доберись до домика');
+        }
       }
     }
   }
@@ -4506,10 +4574,10 @@ function checkWin(){
   }
   if(FOREST_CAMPAIGN_2027){
     const allMushCollected=!(forestUsesMushrooms() && forestMushrooms.size);
-    // Для серии "Собери грибы" переход сразу после последнего гриба.
-    // Для остальных лесных серий сохраняем условие домика.
+    // Серия «Собери грибы»: все грибы + домик. Остальные лесные серии — домик + грибы (и крот при необходимости).
     if(forestIsMush()){
       if(!allMushCollected) return;
+      if(hero.x!==finishGX()||hero.y!==finishGY()) return;
     } else {
       if(hero.x!==finishGX()||hero.y!==finishGY()) return;
       if(!allMushCollected) return;
