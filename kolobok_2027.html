@@ -1,0 +1,4533 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Колобок и его команда (2027)</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #111; color: #fff; font-family: system-ui, sans-serif; height: 100%; overflow: hidden; }
+body { display: flex; justify-content: center; }
+#app { width: 100%; max-width: 560px; padding: 0.5rem; }
+.forest2027 #app { max-width: none; }
+.app-nav-bar {
+  flex-shrink: 0;
+  padding: 6px 8px 8px;
+  padding-top: max(6px, env(safe-area-inset-top, 0px));
+  text-align: center;
+  background: #121212;
+  border-radius: 10px 10px 0 0;
+  border: 1px solid #2a2a2a;
+  border-bottom: none;
+}
+#app > .app-nav-bar + .screen-title-bar {
+  margin-top: 0;
+  border-radius: 0 0 10px 10px;
+  border-top: 1px solid #2a2a2a;
+}
+.home-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7eb8e8;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(126, 184, 232, 0.4);
+}
+.home-link:hover { color: #b8dcf8; }
+.home-link:active { opacity: 0.85; }
+#game .game-nav-bar {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #2a2a2a;
+  background: #0f0f0f;
+  padding-top: calc(6px + env(safe-area-inset-top, 0px));
+}
+#app > .screen-title-bar {
+  margin-bottom: 0.75rem;
+  border-radius: 10px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+}
+
+/* Setup */
+#setup { display: flex; flex-direction: column; gap: 0.9rem; background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 1.25rem; }
+.row { display: flex; align-items: center; gap: 12px; }
+label { font-size: 13px; color: #aaa; min-width: 100px; }
+.val { font-size: 14px; font-weight: 600; min-width: 36px; color: #fff; }
+input[type=range] { flex: 1; accent-color: #E8A020; }
+#start-btn { padding: 12px; font-size: 16px; cursor: pointer; border-radius: 10px; border: 1px solid #555; background: #222; color: #fff; font-weight: 600; }
+#start-btn:active { background: #333; }
+.stage-sel { padding: 8px 14px; font-size: 14px; cursor: pointer; border-radius: 8px; border: 1px solid #444; background: #222; color: #aaa; }
+.stage-sel:active { background: #333; }
+.stage-sel.active { background: #E8A020; border-color: #E8A020; color: #000; font-weight: 700; }
+
+/* Game — fixed full screen */
+#game {
+  display: none; flex-direction: column;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+}
+.screen-title-bar,
+#screen-title {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #E8A020;
+  padding: 10px 10px 8px;
+  background: #141414;
+  border-bottom: 1px solid #2a2a2a;
+}
+#forest-tagline {
+  display: none;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c8e6c9;
+  padding: 8px 12px 6px;
+  background: linear-gradient(180deg, #0f1a12 0%, #0d120e 100%);
+  border-bottom: 1px solid #2d4a32;
+  line-height: 1.35;
+}
+.forest2027 #game .game-nav-bar { display: none !important; }
+.forest2027 #forest-tagline { display: none !important; }
+@media (min-width: 720px) {
+  #game .game-nav-bar,
+  #game #forest-tagline,
+  #game .screen-title-bar,
+  #game #top-bar {
+    text-align: center;
+    justify-content: center;
+  }
+  #game .screen-title-bar,
+  #game #screen-title {
+    font-size: 20px;
+    padding: 14px 16px 10px;
+  }
+  #forest-tagline {
+    font-size: 18px;
+    padding: 12px 16px 10px;
+  }
+  #top-bar {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 8px 12px;
+    min-height: 44px;
+  }
+  #sb { font-size: 15px !important; }
+  #msg { font-size: 13px !important; text-align: center; }
+}
+#screen-title {
+  padding-top: 10px;
+}
+#menu-box > .screen-title-bar:first-child {
+  margin: -1rem -1rem 10px -1rem;
+  border-radius: 16px 16px 0 0;
+}
+#help-box > .screen-title-bar:first-child {
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+  border-radius: 13px 13px 0 0;
+}
+#lb-panel > .screen-title-bar:first-child {
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+  border-radius: 13px 13px 0 0;
+}
+#top-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  background: #1a1a1a; flex-shrink: 0;
+  min-height: 36px;
+}
+#forest-phase-switch {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-right: 2px;
+}
+#forest-phase-switch button {
+  min-width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #4a4a4a;
+  background: #222;
+  color: #ddd;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  line-height: 1;
+}
+#forest-phase-switch button.active {
+  background: #e8a020;
+  color: #111;
+  border-color: #e8a020;
+}
+.forest2027 #forest-phase-switch { display: inline-flex; }
+#sb { font-size: 12px; color: #fff; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+#hero-panel { flex-shrink: 0; }
+#msg { font-size: 11px; font-weight: 600; color: #fff; flex: 1; overflow: hidden; }
+#msg.warn { color: #ff6b6b; }
+
+/* Mobile menu in top-bar */
+#mobile-menu-btn { padding: 3px 10px; font-size: 16px; cursor: pointer; border-radius: 8px; border: 1px solid #555; background: #e65100; color: #fff; font-weight: 700; display: none; flex-shrink: 0; }
+#mobile-menu-btn:active { background: #bf360c; }
+#desktop-menu-btn { padding: 4px 12px; font-size: 13px; cursor: pointer; border-radius: 8px; border: 1px solid #555; background: #e65100; color: #fff; font-weight: 700; display: none; flex-shrink: 0; }
+#desktop-menu-btn:hover { background: #bf360c; }
+
+/* Panels */
+#panels-bar { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding: 3px 6px; background: #0d0d0d; flex-shrink: 0; height: 28px; align-items: center; scrollbar-width: none; }
+#panels-bar::-webkit-scrollbar { display: none; }
+/* Просмотр записи партии */
+.replay-toolbar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(232, 160, 32, 0.1);
+  border-bottom: 1px solid #3a3220;
+  flex-shrink: 0;
+}
+.replay-toolbar.open { display: flex; }
+.replay-toolbar button {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #2a2a2a;
+  color: #fff;
+}
+.replay-toolbar button:active { filter: brightness(1.12); }
+.panel { display:inline-flex; align-items:center; height:20px; padding:0 5px; border-radius:4px; font-size:11px; font-weight:700; border:1.5px solid; white-space:nowrap; flex-shrink:0; }
+.panel.done { opacity:0.4; }
+.panel-dead { display:inline-flex; align-items:center; height:20px; padding:0 5px; border-radius:4px; font-size:11px; font-weight:700; border:1.5px solid #444; background:#1a1a1a; color:#555; white-space:nowrap; flex-shrink:0; }
+
+/* Доска + мобильные кнопки одним блоком (кнопки сразу под полем, не у края экрана) */
+#canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#board-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  max-width: 100%;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+}
+canvas { display: block; }
+
+/* Controls: 2 rows, только touch; снизу у доски, не у safe-area как отдельной панели на весь экран */
+#ctrl { display: none; flex-direction: column; gap: 4px; padding: 6px 6px 0; margin-top: 2px; background: #0a0a0a; flex-shrink: 0; width: 100%; box-sizing: border-box; border-radius: 0 0 10px 10px; }
+#ctrl-dpad { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+#ctrl-row1 { display: flex; justify-content: center; }
+#ctrl-row2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+#ctrl button { height: 50px; font-size: 26px; font-weight: 900; cursor: pointer; border-radius: 10px; border: none; background: #1565c0; color: #fff; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+#ctrl-row1 button { width: 33vw; max-width: 130px; }
+#ctrl button:active { filter: brightness(1.4); transform: scale(0.92); }
+/* Этап 9: сетка 3×3 как на телефоне + 0; выбранная ячейка (геймпад / фокус) */
+#ctrl-s9pad { display: none; flex-direction: column; gap: 4px; width: 100%; }
+#ctrl-s9-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+#ctrl-s9pad .s9-key { height: 46px; font-size: 22px; font-weight: 900; cursor: pointer; border-radius: 10px; border: none; background: #1b5e20; color: #fff; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+#ctrl-s9pad .s9-key:active { filter: brightness(1.25); transform: scale(0.96); }
+#ctrl-s9pad .s9-key.s9-selected { box-shadow: 0 0 0 3px #E8A020, inset 0 0 0 2px rgba(255,255,255,0.25); background: #2e7d32; color: #fff; }
+#ctrl-s9pad .s9-key-zero { grid-column: 1 / -1; height: 44px; }
+#new-btn { display: none; }
+
+/* Overlays */
+#menu-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; align-items:flex-end; justify-content:center; }
+#menu-overlay.open { display:flex; }
+#menu-box { background:#1e1e1e; border-radius:16px 16px 0 0; width:100%; max-width:560px; padding:1rem; padding-bottom:calc(1rem + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:10px; }
+#menu-box button { padding:14px; font-size:15px; cursor:pointer; border-radius:10px; border:1px solid #333; background:#2a2a2a; color:#fff; text-align:left; }
+#menu-box button:active { background:#333; }
+#menu-close { background:#333 !important; text-align:center !important; color:#aaa !important; }
+#stop-btn.active { border-color:#E8A020; color:#E8A020; }
+#help-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4000; align-items:center; justify-content:center; }
+#help-modal.open { display:flex; }
+#help-box { background:#1e1e1e; border-radius:14px; max-width:520px; width:92%; max-height:85vh; overflow-y:auto; padding:1.5rem; position:relative; border:1px solid #333; }
+#help-box h2 { font-size:17px; font-weight:600; margin-bottom:1rem; color:#fff; }
+#help-box h3 { font-size:13px; font-weight:600; margin:1rem 0 0.3rem; color:#ddd; }
+#help-box p, #help-box li { font-size:13px; color:#aaa; line-height:1.6; }
+#help-box ul { padding-left:1.2rem; margin:0; }
+#help-box .badge { display:inline-block; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:600; margin-right:4px; }
+#help-close { position:absolute; top:0.75rem; right:0.75rem; background:#333; border:none; width:28px; height:28px; border-radius:50%; font-size:14px; cursor:pointer; color:#aaa; display:flex; align-items:center; justify-content:center; }
+#extras-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4500; align-items:center; justify-content:center; }
+#extras-modal.open { display:flex; }
+#gamepad-setup-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:4550; align-items:center; justify-content:center; padding:16px; padding-bottom:max(16px, env(safe-area-inset-bottom)); }
+#gamepad-setup-modal.open { display:flex; }
+#gamepad-setup-box { position:relative; background:#152018; border:1px solid #3d6b50; border-radius:14px; max-width:480px; width:100%; max-height:88vh; overflow-y:auto; padding:1rem 1.1rem 1.15rem; box-shadow:0 8px 32px rgba(0,0,0,0.45); }
+#gamepad-setup-box h2 { font-size:16px; font-weight:700; color:#b8e8c8; margin:0 2.2rem 0.5rem 0; letter-spacing:0.03em; }
+#gamepad-setup-box .gamepad-setup-hint { font-size:12px; color:#9ab0a0; line-height:1.5; margin:0 0 0.65rem; }
+#gamepad-setup-box #gamepad-setup-pre { margin:0 0 0.75rem; padding:10px; background:#0d120e; border-radius:8px; border:1px solid #2a3d30; font-size:11px; line-height:1.45; color:#c0e0d0; white-space:pre-wrap; word-break:break-word; font-family:ui-monospace,monospace; min-height:7rem; }
+#gamepad-setup-box #gamepad-setup-done { width:100%; padding:12px; font-size:14px; font-weight:700; cursor:pointer; border-radius:10px; border:1px solid #3d6b50; background:#1a3024; color:#a8e0b8; }
+#gamepad-setup-box #gamepad-setup-done:active { filter:brightness(1.08); }
+#gamepad-setup-close { position:absolute; top:0.6rem; right:0.6rem; width:30px; height:30px; border-radius:50%; border:none; background:#333; color:#aaa; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+/* Отладка геймпада: kolobok_2027.html?gamepaddebug=1 */
+#gamepad-debug-hud {
+  display:none; position:fixed; left:max(8px, env(safe-area-inset-left)); bottom:max(8px, env(safe-area-inset-bottom));
+  max-width:min(420px, 96vw); z-index:6000; background:rgba(18,22,20,0.94); border:1px solid #4a6b4a; border-radius:10px;
+  padding:10px 12px; font-size:11px; line-height:1.45; color:#c8e8d0; pointer-events:none; box-shadow:0 4px 24px rgba(0,0,0,0.5);
+}
+#gamepad-debug-hud.is-on { display:block; }
+#gamepad-debug-hud pre { margin:0; white-space:pre-wrap; word-break:break-word; font-family:ui-monospace,monospace; }
+#extras-box { background:#1e1e1e; border-radius:14px; max-width:520px; width:92%; max-height:88vh; overflow-y:auto; padding:1.25rem 1.5rem; position:relative; border:1px solid #333; }
+#extras-box h2 { font-size:16px; font-weight:600; margin:0 0 0.5rem; color:#fff; }
+#extras-box .extras-hint { font-size:12px; color:#888; margin:0 0 1rem; line-height:1.45; }
+#extras-box .extras-row { margin-bottom:0.65rem; }
+#extras-box .extras-row label { min-width:90px; font-size:12px; color:#ccc; }
+#extras-box input[type=range] { flex:1; }
+#extras-box #extras-apply { margin-top:0.75rem; width:100%; padding:14px; font-size:15px; font-weight:700; cursor:pointer; border-radius:10px; border:1px solid #E8A020; background:#3a2a0a; color:#E8A020; }
+#extras-box #extras-apply:active { filter:brightness(1.15); }
+#extras-box #extras-reset { margin-top:8px; width:100%; padding:12px; font-size:14px; cursor:pointer; border-radius:10px; border:1px solid #555; background:#2a2a2a; color:#ccc; }
+#extras-close { position:absolute; top:0.65rem; right:0.65rem; background:#333; border:none; width:28px; height:28px; border-radius:50%; font-size:14px; cursor:pointer; color:#aaa; display:flex; align-items:center; justify-content:center; }
+#victory-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10050; box-sizing:border-box; }
+#victory-overlay.victory-open { display:flex !important; pointer-events:auto; align-items:flex-start; justify-content:center; overflow-y:auto; padding:max(12px, env(safe-area-inset-top, 0px)) 12px max(24px, env(safe-area-inset-bottom, 0px)); background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); }
+#victory-box { margin-top:8px; background:#1a1a1a; border:1px solid #444; border-radius:14px; max-width:min(520px, 100%); width:100%; padding:18px 20px 20px; color:#ddd; box-shadow:0 16px 48px rgba(0,0,0,0.55); }
+#victory-box h2 { margin:0 0 10px; font-size:1.2rem; font-weight:800; color:#fff; }
+#victory-box .vic-lead { font-size:13px; color:#b0b0b0; line-height:1.5; margin-bottom:12px; }
+#victory-box .vic-stats { font-size:13px; line-height:1.55; color:#c8c8c8; margin-bottom:10px; }
+#victory-box .vic-stats em { font-style:normal; color:#888; font-size:11px; }
+#victory-box h3 { margin:14px 0 6px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#8a7848; }
+#victory-box #victory-log { margin:0; padding-left:1.15rem; font-size:12px; color:#aaa; line-height:1.5; max-height:min(38vh,300px); overflow-y:auto; }
+#victory-box #victory-log li { margin-bottom:4px; }
+#victory-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+#victory-actions a.vic-btn-home, #victory-actions button.vic-btn-setup { flex:1 1 auto; min-width:140px; text-align:center; padding:12px 14px; font-size:14px; font-weight:700; border-radius:10px; cursor:pointer; text-decoration:none; border:1px solid #555; }
+#victory-actions a.vic-btn-home { background:#1565c0; border-color:#2e6bb8; color:#fff; }
+#victory-actions a.vic-btn-home:active { filter:brightness(1.08); }
+#victory-actions button.vic-btn-setup { background:#2a2a2a; color:#e0e0e0; }
+#victory-actions button.vic-btn-setup:active { filter:brightness(1.12); }
+#confetti-canvas { display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1000; }
+
+/* Desktop */
+@media (hover: hover) and (pointer: fine) {
+  #ctrl { display: none !important; }
+  #desktop-menu-btn { display: inline-block !important; }
+  #mobile-menu-btn  { display: none !important; }
+}
+/* Mobile/touch */
+@media (hover: none), (pointer: coarse) {
+  #ctrl { display: flex !important; }
+  #desktop-menu-btn { display: none !important; }
+  #mobile-menu-btn  { display: inline-block !important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="app-nav-bar"><a href="index.html" class="home-link">На главную</a></div>
+  <div class="screen-title-bar">Колобок и его команда (2027)</div>
+  <div id="setup">
+    <p style="font-size:13px;color:#b0c4ae;line-height:1.55;margin:0 0 0.5rem;">Кампания <b>«Лес — домой»</b>: <b>15 мини-игр</b> подряд. Каждая задаётся <b>кодом</b> (например <code style="background:#2a2f28;padding:2px 6px;border-radius:4px;">6.1,2</code> — поле 6×6 и две фишки уровня 1; <code style="background:#2a2f28;padding:2px 6px;border-radius:4px;">6</code> — только поле 6×6 без фишек). После 15-й игры записывается результат в <b>таблицу чемпионов</b> (чем меньше суммарных ходов — тем выше). Элки — препятствия, финиш — домик.</p>
+    <div class="row">
+      <label>Имя игрока</label>
+      <input type="text" id="player-name" placeholder="Введи имя" maxlength="20"
+        style="flex:1;padding:8px 10px;font-size:14px;border-radius:8px;border:1px solid #444;background:#222;color:#fff;outline:none;">
+    </div>
+    <div class="row" style="display:none" aria-hidden="true">
+      <label>Размер доски</label>
+      <input type="range" id="n-slider" min="9" max="16" value="15" step="1">
+      <span id="n-out" class="val">15×15</span>
+    </div>
+    <div class="row" style="display:none" aria-hidden="true">
+      <label>Стен</label>
+      <input type="range" id="wall-slider" min="5" max="28" value="14" step="1">
+      <span id="wall-out" class="val">14%</span>
+    </div>
+    <div class="row" style="display:none" aria-hidden="true">
+      <label>Этап (архив)</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="stage-btns">
+        <button type="button" class="stage-sel active" onclick="selectStage(1)">1</button>
+        <button type="button" class="stage-sel" onclick="selectStage(2)">2</button>
+        <button type="button" class="stage-sel" onclick="selectStage(3)">3</button>
+        <button type="button" class="stage-sel" onclick="selectStage(4)">4</button>
+        <button type="button" class="stage-sel" onclick="selectStage(5)">5</button>
+        <button type="button" class="stage-sel" onclick="selectStage(6)">6</button>
+        <button type="button" class="stage-sel" onclick="selectStage(7)">7</button>
+        <button type="button" class="stage-sel" onclick="selectStage(8)">8</button>
+        <button type="button" class="stage-sel" onclick="selectStage(9)">9</button>
+      </div>
+    </div>
+    <button type="button" id="setup-extras-btn" onclick="showExtras()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">+ Дополнительно — число NPC</button>
+    <button type="button" id="setup-gamepad-btn" onclick="openGamepadSetup()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #3d6b50;background:#142218;color:#a8e0b8;">🎮 Геймпад — настройка и проверка</button>
+    <div class="row" style="align-items:flex-start;">
+      <label style="padding-top:4px;">Запись</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0;">
+          <input type="checkbox" id="replay-record-check" style="width:18px;height:18px;accent-color:#E8A020;flex-shrink:0;">
+          <span style="color:#ddd;font-size:13px;line-height:1.35;">Писать партию — потом <b>«Сохранить запись»</b> в меню игры и отправить файл в мессенджер</span>
+        </label>
+        <button type="button" id="replay-pick-file-btn" style="padding:10px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #4a5a78;background:#151a28;color:#9eb8e8;">Открыть запись (.json) — просмотр на этом устройстве</button>
+        <input type="file" id="replay-file-input" accept="application/json,.json" style="display:none;">
+        <button type="button" id="setup-save-replay" onclick="exportReplayRecording()" style="display:none;padding:10px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">💾 Сохранить накопленную запись (.json)</button>
+        <p style="font-size:11px;color:#888;margin:0;line-height:1.45;">Файл можно прикрепить в Telegram / почту и открыть на телефоне или ПК через кнопку выше. В просмотре: стрелки ◀ ▶ на клавиатуре, кнопки на панели.</p>
+      </div>
+    </div>
+    <button id="start-btn">Начать игру</button>
+    <button onclick="showLeaderboard()" style="padding:10px;font-size:14px;cursor:pointer;border-radius:10px;border:1px solid #444;background:#1e1e1e;color:#aaa;">🏆 Таблица чемпионов</button>
+  </div>
+  <div id="game">
+    <div class="app-nav-bar game-nav-bar"><a href="index.html" class="home-link">На главную</a></div>
+    <div id="screen-title" class="screen-title-bar">Колобок и его команда (2027)</div>
+    <div id="forest-tagline">Помоги колобку вернуться домой</div>
+    <div id="top-bar">
+      <span id="forest-phase-switch" aria-label="Выбор режима кампании">
+        <button type="button" id="forest-phase-1" onclick="forestSwitchPhase('home')">1</button>
+        <button type="button" id="forest-phase-2" onclick="forestSwitchPhase('mush')">2</button>
+        <button type="button" id="forest-phase-3" onclick="forestSwitchPhase('mole')">3</button>
+      </span>
+      <span id="sb">Игра <span id="stage-num">1</span>/<span id="stage-tMax">15</span> <span id="sb-code" style="opacity:0.85;font-weight:600"></span></span>
+      <span id="hero-panel"></span>
+      <span id="msg"></span>
+      <button type="button" id="desktop-menu-btn" onclick="openMenu()">☰ Меню</button>
+      <button type="button" id="mobile-menu-btn" onclick="openMenu()" aria-label="Меню">☰</button>
+    </div>
+    <div id="panels-bar"><!-- panels drawn by JS --></div>
+    <div id="replay-toolbar" class="replay-toolbar" aria-label="Просмотр записи">
+      <button type="button" onclick="replaySeek(-1)" title="Кадр назад (←)">◀</button>
+      <button type="button" onclick="replaySeek(1)" title="Кадр вперёд (→)">▶</button>
+      <button type="button" id="replay-auto-btn" onclick="toggleReplayAuto(this)" title="Автопрокрутка кадров">▶ Авто</button>
+      <span id="replay-pos" style="font-size:12px;color:#E8A020;font-weight:700;white-space:nowrap;">1 / 1</span>
+      <span id="replay-tag" style="font-size:11px;color:#888;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+      <button type="button" onclick="exitReplayToSetup()" style="margin-left:auto;">Выход</button>
+    </div>
+    <div id="canvas-wrap">
+      <div id="board-stack">
+        <canvas id="c" tabindex="0" aria-label="Игровое поле"></canvas>
+        <div id="ctrl">
+          <div id="ctrl-dpad">
+            <div id="ctrl-row1"><button type="button" id="btn-up" onclick="pmove(0,-1)">↑</button></div>
+            <div id="ctrl-row2">
+              <button type="button" id="btn-left"  onclick="pmove(-1,0)">←</button>
+              <button type="button" id="btn-down"  onclick="pmove(0,1)">↓</button>
+              <button type="button" id="btn-right" onclick="pmove(1,0)">→</button>
+            </div>
+          </div>
+          <div id="ctrl-s9pad" aria-label="Цифры режима этапа 9">
+            <div id="ctrl-s9-grid">
+              <button type="button" class="s9-key" data-s9ix="0" onclick="pressS9PadIndex(0)">1</button>
+              <button type="button" class="s9-key" data-s9ix="1" onclick="pressS9PadIndex(1)">2</button>
+              <button type="button" class="s9-key" data-s9ix="2" onclick="pressS9PadIndex(2)">3</button>
+              <button type="button" class="s9-key" data-s9ix="3" onclick="pressS9PadIndex(3)">4</button>
+              <button type="button" class="s9-key" data-s9ix="4" onclick="pressS9PadIndex(4)">5</button>
+              <button type="button" class="s9-key" data-s9ix="5" onclick="pressS9PadIndex(5)">6</button>
+              <button type="button" class="s9-key" data-s9ix="6" onclick="pressS9PadIndex(6)">7</button>
+              <button type="button" class="s9-key" data-s9ix="7" onclick="pressS9PadIndex(7)">8</button>
+              <button type="button" class="s9-key" data-s9ix="8" onclick="pressS9PadIndex(8)">9</button>
+              <button type="button" class="s9-key s9-key-zero" data-s9ix="9" onclick="pressS9PadIndex(9)">0</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="victory-overlay"></div>
+    <canvas id="confetti-canvas"></canvas>
+  </div>
+</div>
+
+<!-- Menu overlay -->
+<div id="menu-overlay" onclick="if(event.target===this)closeMenu()">
+  <div id="menu-box">
+    <div class="screen-title-bar">Колобок и его команда (2027)</div>
+    <button id="stop-btn" onclick="toggleStop();closeMenu()">⏸ Стоп</button>
+    <button onclick="resetStage();closeMenu()">↺ Сброс этапа</button>
+    <button onclick="showHelp();closeMenu()">? Правила</button>
+    <button onclick="fullReset();closeMenu()">⏮ В начало</button>
+    <button onclick="goToSetup();closeMenu()">⚙ Настройки</button>
+    <button type="button" onclick="showExtras();closeMenu()">+ Дополнительно — число NPC</button>
+    <button type="button" onclick="openGamepadSetup();closeMenu()">🎮 Геймпад — настройка</button>
+    <button type="button" id="menu-save-replay" onclick="exportReplayRecording();closeMenu();" style="display:none">💾 Сохранить запись для отправки (.json)</button>
+    <button id="menu-close" onclick="closeMenu()">Закрыть</button>
+  </div>
+</div>
+
+<div id="gamepad-setup-modal" role="dialog" aria-modal="true" aria-labelledby="gamepad-setup-title" onclick="if(event.target===this)closeGamepadSetup()">
+  <div id="gamepad-setup-box" onclick="event.stopPropagation()">
+    <button type="button" id="gamepad-setup-close" onclick="closeGamepadSetup()" aria-label="Закрыть">✕</button>
+    <h2 id="gamepad-setup-title">Геймпад — настройка</h2>
+    <p class="gamepad-setup-hint"><b>Телефон / планшет:</b> сопрягите контроллер по Bluetooth в настройках системы, откройте эту страницу в браузере и понажимайте кнопки на геймпаде — ниже должны меняться оси и D‑pad. <b>Компьютер:</b> USB или Bluetooth; этапы 1–8 — стик и D‑pad как стрелки; этап 9 — D‑pad/стик подсвечивают ячейку на экране, кнопка <b>A</b> выбирает цифру (или цифры с клавиатуры). Дополнительно можно открыть страницу с <b>?gamepaddebug=1</b> — панель в углу экрана.</p>
+    <pre id="gamepad-setup-pre">Подключите геймпад и нажмите любую кнопку…</pre>
+    <button type="button" id="gamepad-setup-done" onclick="closeGamepadSetup()">Готово</button>
+  </div>
+</div>
+
+<div id="help-modal" onclick="if(event.target===this)hideHelp()">
+<div id="help-box">
+  <button id="help-close" onclick="hideHelp()">✕</button>
+  <div class="screen-title-bar">Колобок и его команда (2027)</div>
+  <div id="help-stage9-only" style="display:none">
+    <h2 style="margin-top:0;">Этап 9 — правила</h2>
+    <p>На этом этапе сравниваются не команды, а только максимумы. Вы можете назначить колобку цифру уровня от 1 до 8, а дальше он живёт своей жизнью. Цель — колобок должен добраться до центра и не погибнуть.</p>
+    <p style="font-size:13px;color:#aaa;margin-top:0.85rem;line-height:1.55;"><b>Запись партии:</b> галочка «Писать партию» на экране перед «Начать игру»; в меню <b>☰</b> — «Сохранить запись (.json)». Чужой файл — кнопка «Открыть запись» на экране настроек. По умолчанию запись выключена.</p>
+  </div>
+  <div id="help-full">
+  <h2 style="margin-top:0;">🎮 Правила</h2>
+  <p style="font-size:13px;background:#1a2318;border:1px solid #3d5c40;border-radius:10px;padding:10px 12px;margin:0 0 14px;line-height:1.55;color:#c8e0c9;"><b>Лес — домой (2027).</b> Проходятся <b>15 мини-игр</b> подряд; код игры задаёт поле и фишки (см. экран настроек). Препятствия — <b>ёлки</b>, финиш — <b>домик</b>. После 15-й игры результат попадает в <b>таблицу чемпионов</b> (чем меньше суммарных ходов, тем лучше). Без этапа 9 и без склейки краёв. <a href="kolobok_2026.html" style="color:#9ec3ff;">Классическая 2026</a>.</p>
+  <h3>Цель</h3>
+  <p>Провести героя из левого верхнего угла в правый нижний (ФИНИШ), собрав всех персонажей в правильном порядке.</p>
+  <h3>Управление</h3>
+  <p><b>Этапы 1–8:</b> стрелки на клавиатуре, кнопки ↑↓←→ на экране, цифры <b>8·4·6·2</b> на NumPad и диагонали <b>7·9·1·3</b> там, где разрешено. <b>Геймпад:</b> на <b>телефоне или планшете</b> сопрягите контроллер по <b>Bluetooth</b> (или USB OTG, если поддерживается) и откройте игру в браузере — левый/правый <b>стик</b> и <b>D‑pad</b> дают те же ходы, что стрелки (понажимайте кнопки на геймпаде, если поле не реагирует). <b>На компьютере</b> подключите геймпад по USB или Bluetooth в системе — то же управление; для проверки осей и кнопок откройте страницу с параметром <b>?gamepaddebug=1</b> в адресе. <b>Этап 9:</b> цифры режима — с клавиатуры или сетка <b>1…9</b> и <b>0</b> на экране (телефон); на геймпаде <b>D‑pad</b> / стик двигают подсветку, кнопка <b>A</b> (нижняя лицевая) подтверждает выбор. <b>Enter</b> — сброс этапа. <b>Пробел</b> (ПК) — пауза герой и NPC.</p>
+  <h3>Запись партии и файл .json</h3>
+  <p>По умолчанию запись <b>выключена</b>. Чтобы сохранить партию: на экране <b>перед «Начать игру»</b> отметьте <b>«Писать партию»</b> (галочка запоминается в браузере), затем начните игру. Во время игры откройте меню <b>☰</b> и нажмите <b>«Сохранить запись для отправки (.json)»</b> — браузер скачает файл; его можно отправить в мессенджер или открыть на другом устройстве. На том же экране настроек кнопка <b>«Открыть запись (.json)»</b> включает просмотр: кнопки ◀ ▶ или стрелки ← → на клавиатуре (когда закрыты меню и эта справка). Запись в памяти пропадает после <b>обновления страницы</b> или полного «В начало» без предварительного сохранения файла.</p>
+  <h3>Этапы 7–8 — склейка краёв</h3>
+  <p>Стороны доски соединены как у тора: шаг <b>вверх</b> с верхнего ряда переносит на нижний, <b>вниз</b> с нижнего — на верхний; шаг <b>вправо</b> с правого столбца переносит к левому краю, <b>влево</b> с левого — к правому. Так же двигаются к-2, к-3, к-4, к-5 и к-6 (и к-7, но для неё и стены проходимы). Края поля на экране обозначены оранжевым пунктиром.</p>
+  <h3>Персонажи</h3>
+  <p>По умолчанию не больше трёх штук каждого вида (у к-4 — две пары); в игровом меню <b>«Дополнительно — число NPC»</b> задаёт пределы (1…12, пары к-4 до 8). Кнопка <b>«Применить на поле»</b> пересобирает текущий этап с этими числами; отдельной «Сохранить» нет — значения с ползунков запоминаются сами.</p>
+  <ul>
+    <li><span class="badge" style="background:#eeedfe;color:#3C3489">к-1 фиолетовые</span> — сидят в закутке («углу») поля. <b>Не двигаются.</b></li>
+    <li><span class="badge" style="background:#fceaea;color:#791F1F">к-2 красные</span> — ходят <b>в два раза реже</b> остальных NPC (раз в два тика), закрашивают поле <b>своим</b> цветом, стараются не заходить на уже закрашенные свои клетки, если есть свободная незакрашенная, и <b>не входят на территорию чужих двоек</b>.</li>
+    <li><span class="badge" style="background:#eaf3de;color:#27500A">к-3 зелёные</span> — движутся по прямой, отскакивают от стен.</li>
+    <li><span class="badge" style="background:#e6f1fb;color:#0C447C">к-4 синие</span> — ходят парами по двум соседним рядам.</li>
+    <li><span class="badge" style="background:#faeeda;color:#633806">к-5 оранжевые</span> — прыгают сквозь стены, клетка приземления вспыхивает красным.</li>
+    <li><span class="badge" style="background:#f3e8ff;color:#4a1a6b">к-6 сиреневые</span> — этапы 7–8. Ходят, как король в шахматах (на одну клетку во все стороны, включая диагонали). Стараются уклониться от войны и поглотить младших. На этапе 7 сначала ходят все к-6, затем остальные NPC, затем снова к-6; на этапе 8 перед ними ходят к-7.</li>
+    <li><span class="badge" style="background:#ccfbf1;color:#0f766e">к-7 бирюзовые</span> — только этап 8. Ходят, как шахматный король, по полу и стенам; <b>предпочитают стенки</b> и <b>стараются не возвращаться</b> на уже пройденные клетки (если некуда — допускают повтор). См. вытягивание из стены в описании этапа 8.</li>
+  </ul>
+  <h3>Числа на шариках</h3>
+  <p><b>Колобок</b> на поле без цифры на фигуре; в <b>верхней строке</b> — одна цифра текущего уровня. У остальных — «пенал» цифр на фишке; при встрече <b>герой ↔ фишка</b> учитываются только <b>максимумы</b> наборов. Если максимум фишки ровно на 1 больше максимума героя, герой <b>не гибнет</b>: с фишки снимается одна верхняя цифра пенала (как «минус один» по силе). При встрече <b>двух фишек</b> — все цифры пенала.</p>
+  <h3>Этап 9 — к‑1 и к‑2</h3>
+  <p>На поле одна <b>к‑1</b> и одна <b>к‑2</b>, FIN в центре. Сброс уровня героя: <b>0</b> или уровень этапа <b>9</b>. <b>1</b> — замереть как к‑1; <b>2</b> — ходить и закрашивать как к‑2 (см. таблицу ниже).</p>
+  <h3>Движение фишек и героя на этапе 9 (клавиши 1…8, 0 — сброс к уровню этапа)</h3>
+  <p><b>NPC</b> — как в тике игры; <b>герой</b> — на этапе 9 режим задаётся <b>цифрами 0…9</b> (клавиатура, сетка на телефоне, геймпад — см. выше); <b>на этапах 1–8</b> — шаги стрелками / 8·4·6·2 на NumPad; уровни <b>6</b> и <b>7</b> дают ещё диагонали NumPad 7·9·1·3.</p>
+  <ul style="margin-top:0.4rem;padding-left:1.2rem;">
+    <li><b>к‑1</b> — не ходят, сидят в углу/закутке. <b>Герой «1»</b> на этапе&nbsp;9: <b>не ходит</b> — остаётся там, где перешёл в режим «1» (как неподвижная к‑1).</li>
+    <li><b>к‑2</b> — в два раза медленнее остальных, закрашивают клетки своим цветом, не на чужую раскраску, по возможности не на свою уже закрашенную. <b>Герой «2»</b> на этапе&nbsp;9 — то же: <b>каждый второй</b> ваш ортогональный ход срабатывает, закраска как у первой к‑2 (красный оттенок), те же ограничения по клеткам.</li>
+    <li><b>к‑3</b> — по прямой до отскока от стены. <b>Герой «3»:</b> только ортогонально, без инерции отскока (каждый ход вы задаёте направление).</li>
+    <li><b>к‑4</b> — две связанные фишки сдвигаются вдоль коридора. <b>Герой «4»:</b> один на поле — только ортогональные шаги, не «пара».</li>
+    <li><b>к‑5</b> — прыжок по лучу до ближайшего пола через стены. <b>Герой «5»:</b> ортогонально по одной клетке, без прыжков через стены.</li>
+    <li><b>к‑6</b> — король, 8 направлений; на 7–8 ещё тор. <b>Герой «6»:</b> на этапе 9 плоский лист — 8 направлений (включая диагонали), без склейки рёбер.</li>
+    <li><b>к‑7</b> — король по полу и стенам, уклон к стенкам. <b>Герой «7»:</b> 8 направлений по <b>полу</b> только; по стенам не ходит (вытягивание к‑7 из стены — как на этапе 8, не реализовано как ход по стене).</li>
+  </ul>
+  <h3>Кооптация (поглощение)</h3>
+  <p>При встрече: <b>старший</b> (с бо́льшим максимумом набора) пытается кооптировать младшего. Кооптация возможна если в наборах есть хотя бы одна пара <b>соседних цифр</b> (разница = 1) — тогда наборы сливаются (две фишки) или герой поглощает нижнюю фишку. Если младший — <b>герой</b>, а старший — NPC, герой выживает: с NPC снимается <b>максимум набора</b> (пенал −1). Если соседних нет — <b>старший погибает</b>. Равные максимумы → проходят сквозь.</p>
+  <h3>Порядок сбора на этапах</h3>
+  <ul>
+    <li>Этап 2: к-1</li>
+    <li>Этап 3: к-2 → к-1</li>
+    <li>Этап 4: к-3 → к-2 → к-1</li>
+    <li>Этап 5: к-4 → к-3 → к-2 → к-1</li>
+    <li>Этап 6: к-5 → к-4 → к-3 → к-2 → к-1 → этап 7</li>
+    <li>Этап 7: к-6 → к-5 → … → к-1 → этап 8 (склейка краёв — см. выше).</li>
+    <li>Этап 8: к-7 → к-6 → … → к-1 → ФИНИШ. Герой уровня 8. <b>к-7</b> ходит по полю и стенам, как король, с уклоном в стенки и без повторных клеток, пока есть куда. Если к-7 стоит в стене, а герой на соседней по стороне <b>поле</b> (не стена), кооптация срабатывает — герой «вытягивает» его из стены (как при встрече в одной клетке).</li>
+  </ul>
+  <p style="font-size:12px;color:#888;margin-top:0.5rem;">У к-7 на этапе 8 действуют те же ограничения числа, что и у к-5/к-6 (не более трёх).</p>
+  </div>
+</div>
+</div>
+
+<div id="gamepad-debug-hud" aria-hidden="true"><pre id="gamepad-debug-pre"></pre></div>
+
+<!-- Дополнительно: сколько к-1 … к-7 и пар к-4 -->
+<div id="extras-modal" onclick="if(event.target===this)hideExtras()">
+  <div id="extras-box" onclick="event.stopPropagation()">
+    <button type="button" id="extras-close" onclick="hideExtras()">✕</button>
+    <div class="screen-title-bar" style="margin:-1.25rem -1.5rem 0.75rem;padding-top:calc(8px + env(safe-area-inset-top, 0px));">Колобок и его команда (2027)</div>
+    <h2>Число персонажей</h2>
+    <p class="extras-hint">Максимум каждого вида на этапах, где они есть. У к-4 — число <b>пар</b>. Ползунки сразу запоминаются в браузере. На экране первого запуска после настройки нажмите <b>«Начать игру»</b>. Во время игры кнопка <b>«Применить на поле»</b> пересобирает текущий этап с новыми числами.</p>
+    <div class="extras-row row"><label>к-1</label><input type="range" id="extras-n1" min="1" max="12" step="1"><span id="extras-out-n1" class="val" style="min-width:28px">3</span></div>
+    <div class="extras-row row"><label>к-2</label><input type="range" id="extras-n2" min="1" max="12" step="1"><span id="extras-out-n2" class="val" style="min-width:28px">3</span></div>
+    <div class="extras-row row"><label>к-3</label><input type="range" id="extras-n3" min="1" max="12" step="1"><span id="extras-out-n3" class="val" style="min-width:28px">3</span></div>
+    <div class="extras-row row"><label>к-4 пары</label><input type="range" id="extras-p4" min="1" max="8" step="1"><span id="extras-out-p4" class="val" style="min-width:28px">2</span></div>
+    <div class="extras-row row"><label>к-5</label><input type="range" id="extras-n5" min="1" max="12" step="1"><span id="extras-out-n5" class="val" style="min-width:28px">3</span></div>
+    <div class="extras-row row"><label>к-6</label><input type="range" id="extras-n6" min="1" max="12" step="1"><span id="extras-out-n6" class="val" style="min-width:28px">3</span></div>
+    <div class="extras-row row"><label>к-7</label><input type="range" id="extras-n7" min="1" max="12" step="1"><span id="extras-out-n7" class="val" style="min-width:28px">3</span></div>
+    <button type="button" id="extras-apply" onclick="applyNpcCountsToBoard()">Применить на поле</button>
+    <button type="button" id="extras-reset" onclick="resetNpcCountsDefaults()">Вернуть значения по умолчанию (3 / пары 2)</button>
+  </div>
+</div>
+
+<script>
+let N=15, wallPct=14, grid=[], won=false, stage=1, paused=false, startStage=1;
+let playerName='Игрок';
+/** Ходы героя по этапам 1–8 (индекс 0 = этап 1) */
+let movesPerStage=[0,0,0,0,0,0,0,0];
+/** Этап 9: ходы героя (включая повторы после гибели). */
+let movesStage9=0;
+/** Все ходы героя за сессию кампании (1–8 в pmove, этап 9 — в heroResolveCellAfterMove). */
+let campaignMovesTotal=0;
+/** Строки журнала: старт, переходы этапов, гибели, финиш. */
+let campaignHistory=[];
+let killedCount=0;
+let M1=[], M2=[], M3=[], P4=[], M5=[], M6=[], M7=[];
+let col1=0,col2=0,col3=0,col4=0,col5=0,col6=0,col7=0;
+let tickT=null, resetT=null, heroMoved=false;
+let k2Territory={}; // key="x,y" → index of M2 owner
+let tickCount=0;    // for k2 slow movement (every 2 ticks)
+let graveyard=[];   // maxOfSet of each absorbed NPC
+/** Запись / просмотр партии (экспорт JSON) */
+let replayRecording=false;
+let replayMode=false;
+let replayFrames=[];
+let replayIndex=0;
+let _replayLastJson='';
+let replayMeta={startStage:1,N:15,wallPct:14,npcCounts:{}};
+let _replayUiMsg='';
+let _replayUiMsgWarn=false;
+let replayAutoTimer=null;
+const REPLAY_SET_MARK='__ks';
+let keydownBound=false;
+/** Отладка геймпада: kolobok_2027.html?gamepaddebug=1 */
+const GAMEPAD_DEBUG=(function(){try{const v=new URLSearchParams(location.search).get('gamepaddebug');return v==='1'||v==='true';}catch(e){return false;}})();
+const GAMEPAD_DEAD_ZONE=0.38;
+const GAMEPAD_REPEAT_MS=145;
+let gamepadHeldKey=null;
+let gamepadLastStepAt=0;
+/** Этап 9: фокус на сетке 1…9 / 0 (индекс 0…8 → цифры 1…9, 9 → 0). */
+let s9PadFocusIx=9;
+let gamepadS9PrevA=false;
+let gamepadS9HeldNav=null;
+let gamepadS9LastNavAt=0;
+// CELL: fill screen width with the board (N tiles)
+// Use screen width divided by N, capped for desktop
+const _N_default = 15;
+// CELL recalculated in startGame() based on actual N and screen width
+let CELL = Math.max(20, Math.min(44, Math.floor((window.innerWidth - 4) / _N_default)));
+
+const CLR={
+  1:{f:'#7F77DD',fdk:'#AFA9EC',s:'#3C3489',sdk:'#534AB7',p:'#26215C'},
+  2:{f:'#E24B4A',fdk:'#F09595',s:'#791F1F',sdk:'#A32D2D',p:'#501313'},
+  3:{f:'#639922',fdk:'#C0DD97',s:'#27500A',sdk:'#3b6d11',p:'#173404'},
+  4:{f:'#378ADD',fdk:'#85B7EB',s:'#0C447C',sdk:'#185FA5',p:'#042C53'},
+  5:{f:'#BA7517',fdk:'#FAC775',s:'#633806',sdk:'#EF9F27',p:'#412402'},
+  6:{f:'#9B6BB8',fdk:'#E8D4F5',s:'#4a1a6b',sdk:'#6B2D91',p:'#2d1040'},
+  7:{f:'#14b8a6',fdk:'#5eead4',s:'#0f766e',sdk:'#0d9488',p:'#042f2e'},
+  8:{f:'#e11d48',fdk:'#fb7185',s:'#881337',sdk:'#be123c',p:'#4c0519'},
+};
+const KING_DIRS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+/** Сколько стараться поставить юнитов каждого вида (меню «Дополнительно»). */
+const NPC_COUNT_KEYS=['n1','n2','n3','p4','n5','n6','n7'];
+const DEFAULT_NPC_COUNTS={n1:3,n2:3,n3:3,p4:2,n5:3,n6:3,n7:3};
+let npcCounts={...DEFAULT_NPC_COUNTS};
+function loadNpcCounts(){
+  try{
+    const o=JSON.parse(localStorage.getItem('kolobok_2027_npc_counts')||'null');
+    if(o&&typeof o==='object'){
+      for(const k of NPC_COUNT_KEYS){
+        const v=parseInt(o[k],10);
+        const max=k==='p4'?8:12;
+        if(!isNaN(v)&&v>=1&&v<=max) npcCounts[k]=v;
+      }
+    }
+  }catch(e){}
+}
+function saveNpcCounts(){
+  try{ localStorage.setItem('kolobok_2027_npc_counts',JSON.stringify(npcCounts)); }catch(e){}
+}
+const EXTRAS_SLIDER_IDS={n1:'extras-n1',n2:'extras-n2',n3:'extras-n3',p4:'extras-p4',n5:'extras-n5',n6:'extras-n6',n7:'extras-n7'};
+function onExtrasInput(k,raw){
+  const max=k==='p4'?8:12;
+  let n=parseInt(raw,10);
+  if(isNaN(n)||n<1) n=1;
+  if(n>max) n=max;
+  npcCounts[k]=n;
+  const inp=gel(EXTRAS_SLIDER_IDS[k]);
+  if(inp&&inp!==_stub) inp.value=String(n);
+  const out=gel('extras-out-'+k);
+  if(out&&out!==_stub) out.textContent=String(n);
+  saveNpcCounts();
+}
+function syncExtrasUI(){
+  for(const k of NPC_COUNT_KEYS){
+    const v=npcCounts[k];
+    const el=gel(EXTRAS_SLIDER_IDS[k]);
+    if(el&&el!==_stub) el.value=String(v);
+    const o=gel('extras-out-'+k);
+    if(o&&o!==_stub) o.textContent=String(v);
+  }
+}
+function bindExtrasSliders(){
+  for(const k of NPC_COUNT_KEYS){
+    const el=gel(EXTRAS_SLIDER_IDS[k]);
+    if(!el||el===_stub) continue;
+    el.addEventListener('input',function(){ onExtrasInput(k,this.value); });
+  }
+}
+function showExtras(){
+  syncExtrasUI();
+  gel('extras-modal').classList.add('open');
+}
+function hideExtras(){
+  gel('extras-modal').classList.remove('open');
+}
+function resetNpcCountsDefaults(){
+  npcCounts={...DEFAULT_NPC_COUNTS};
+  saveNpcCounts();
+  syncExtrasUI();
+}
+/** Пересобрать текущий этап с выбранными лимитами NPC (счётчик ходов этапа обнуляется). */
+function applyNpcCountsToBoard(){
+  if(replayMode) return;
+  saveNpcCounts();
+  hideExtras();
+  if(!gameStarted||gel('game').style.display==='none') return;
+  clrT();
+  const sb=gel('stop-btn');
+  if(sb&&sb!==_stub){ sb.textContent='⏸ Стоп'; sb.classList.remove('active'); }
+  if(stage>=1&&stage<=8) movesPerStage[stage-1]=0;
+  paused=false;
+  won=false;
+  loadStage();
+}
+function npcCap(lvl){
+  const v=npcCounts['n'+lvl];
+  if(FOREST_CAMPAIGN_2027){
+    const n=parseInt(v,10);
+    return isNaN(n)||n<0?0:n;
+  }
+  return typeof v==='number'&&v>=1?v:3;
+}
+function npcP4Pairs(){
+  const v=npcCounts.p4;
+  if(FOREST_CAMPAIGN_2027){
+    const n=parseInt(v,10);
+    return isNaN(n)||n<0?0:n;
+  }
+  return typeof v==='number'&&v>=1?v:2;
+}
+/** Максимальная цифра уровня в наборах (герой на этапе 8). */
+const MAX_DIGIT=8;
+/** Период смены цифры в «пенале» на фишке (мс): по одной крупной цифре, по кругу. */
+const PENALTY_DIGIT_FLASH_MS=420;
+
+/** Режим 2027: кампания «лес — домой», размеры поля 6…15 (финиш при 15), без этапа 9 и без тора. */
+const FOREST_CAMPAIGN_2027=true;
+const FOREST_START_N=6;
+const FOREST_TOTAL_MINI=15; // финальный размер поля (N=15)
+const LS_FOREST_CHAMPIONS='kolobok_2027_forest_champions';
+const LS_FOREST_MUSH_CHAMPIONS='kolobok_2027_forest_mush_champions';
+const LS_FOREST_MOLE_CHAMPIONS='kolobok_2027_forest_mole_champions';
+/** Код мини-игры: «N» — поле N×N. В этой версии фишек нет, растёт только размер поля. */
+let forestMiniGameIndex=FOREST_START_N;
+let forestCampaignSpec='';
+let forestPhase='home'; // 'home' | 'mush' | 'mole'
+let forestMushrooms=new Set(); // keys "x,y" on floor cells (near trees)
+let forestMushroomsTotal=0;
+let forestMushroomsCollected=0;
+let forestMoleTaken=false;
+let forestRedFlashUntil=0;
+
+function forestIsMush(){ return forestPhase==='mush'; }
+function forestIsMole(){ return forestPhase==='mole'; }
+function forestUsesMushrooms(){ return forestIsMush()||forestIsMole(); }
+
+function triggerForestRedFlash(ms){
+  const dur=Math.max(200, ms|0);
+  forestRedFlashUntil=Date.now()+dur;
+}
+
+function parseForestSpec(raw){
+  const s=String(raw||'').trim();
+  const dot=s.indexOf('.');
+  let n=6;
+  const pairs=[];
+  if(dot<0){
+    n=parseInt(s,10)||6;
+  } else {
+    n=parseInt(s.slice(0,dot),10)||6;
+    const rest=s.slice(dot+1);
+    const parts=rest.split(',').map(x=>parseInt(x.trim(),10)).filter(x=>!isNaN(x));
+    for(let i=0;i+1<parts.length;i+=2){
+      const lvl=parts[i]|0, cnt=parts[i+1]|0;
+      if(lvl>=1&&lvl<=7&&cnt>0) pairs.push([lvl,cnt]);
+    }
+  }
+  return {n:Math.max(5,Math.min(16,n)), pairs};
+}
+
+function forestWallPctForIndex(_i){
+  return 15;
+}
+
+function applyForestMiniGameParams(idx){
+  const n=(idx|0)||FOREST_START_N;
+  forestCampaignSpec=String(n);
+  const {n:nn}=parseForestSpec(String(n));
+  N=nn;
+  wallPct=forestWallPctForIndex(n);
+  npcCounts={n1:0,n2:0,n3:0,p4:0,n5:0,n6:0,n7:0};
+  // Серия 3: кроты (к‑2), число растёт с размером поля.
+  if(forestIsMole()){
+    const round=Math.max(1, (forestMiniGameIndex-FOREST_START_N+1)|0);
+    npcCounts.n2=Math.max(1, Math.min(4, Math.floor((N-4)/3)));
+    // С 4-го этапа серии появляется дикий кабан (к‑3).
+    npcCounts.n3=(round>=4)?1:0;
+    stage=(round>=4)?4:3; // до 4-го этапа герой=3, кроты=2; с 4-го добавляется кабан (3)
+  } else {
+    stage=1; // серии 1 и 2 — без NPC
+  }
+  startStage=stage;
+}
+
+function updateForestHud(){
+  gel('stage-num').textContent=String(forestMiniGameIndex);
+  const tm=gel('stage-tMax');
+  if(tm&&tm!==_stub) tm.textContent=String(FOREST_TOTAL_MINI);
+  const sc=gel('sb-code');
+  if(sc&&sc!==_stub){
+    const tail=forestCampaignSpec?(' · '+forestCampaignSpec):'';
+    sc.textContent=(forestIsMush()?' · грибы':forestIsMole()?' · кроты+грибы':'')+tail;
+  }
+  const b1=gel('forest-phase-1'), b2=gel('forest-phase-2'), b3=gel('forest-phase-3');
+  if(b1&&b1!==_stub) b1.classList.toggle('active', forestPhase==='home');
+  if(b2&&b2!==_stub) b2.classList.toggle('active', forestIsMush());
+  if(b3&&b3!==_stub) b3.classList.toggle('active', forestIsMole());
+}
+
+function forestSwitchPhase(mode){
+  if(!FOREST_CAMPAIGN_2027 || replayMode) return;
+  const next=(mode==='mush')?'mush':(mode==='mole'?'mole':'home');
+  if(forestPhase===next && gameStarted) return;
+  forestPhase=next;
+  forestMiniGameIndex=FOREST_START_N;
+  forestCampaignSpec=String(FOREST_START_N);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  forestMoleTaken=false;
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  movesStage9=0;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  won=false;
+  paused=false;
+  if(gameStarted && gel('game').style.display!=='none'){
+    clrT();
+    loadStage();
+  } else {
+    updateForestHud();
+  }
+}
+
+function loadForestChampions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_CHAMPIONS)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
+
+function loadForestMushChampions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_MUSH_CHAMPIONS)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
+
+function loadForestMoleChampions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_MOLE_CHAMPIONS)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
+
+function saveForestChampion(name,moves){
+  const scores=loadForestChampions();
+  const entry={name:String(name||'Игрок').slice(0,24), moves:moves|0, date:new Date().toLocaleString('ru-RU')};
+  scores.push(entry);
+  scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
+  try{ localStorage.setItem(LS_FOREST_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
+}
+
+function saveForestMushChampion(name,moves){
+  const scores=loadForestMushChampions();
+  const entry={name:String(name||'Игрок').slice(0,24), moves:moves|0, date:new Date().toLocaleString('ru-RU')};
+  scores.push(entry);
+  scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
+  try{ localStorage.setItem(LS_FOREST_MUSH_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
+}
+
+function saveForestMoleChampion(name,moves){
+  const scores=loadForestMoleChampions();
+  const entry={name:String(name||'Игрок').slice(0,24), moves:moves|0, date:new Date().toLocaleString('ru-RU')};
+  scores.push(entry);
+  scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
+  try{ localStorage.setItem(LS_FOREST_MOLE_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
+}
+
+function forestAfterMiniWin(){
+  clrT();
+  launchStageFireworks(stage);
+  const si=Math.max(0,Math.min(7,stage-1));
+  campaignHistory.push('Игра '+forestMiniGameIndex+'/'+FOREST_TOTAL_MINI+' · код '+forestCampaignSpec+' (ходов: '+(movesPerStage[si]|0)+')');
+  if(forestMiniGameIndex<FOREST_TOTAL_MINI){
+    setTimeout(()=>{
+      try{
+        forestMiniGameIndex++;
+        won=false;
+        loadStage();
+      }catch(err){
+        console.error(err);
+        setMsg('Ошибка перехода к следующей игре.', true);
+      }
+    }, STAGE_SALUTE_MS);
+  } else {
+    setTimeout(()=>{ forestFinishCampaign(); }, STAGE_SALUTE_MS);
+  }
+}
+
+function forestStartMushCampaign(){
+  forestPhase='mush';
+  forestMiniGameIndex=FOREST_START_N;
+  forestCampaignSpec=String(FOREST_START_N);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  won=false;
+  setMsg('Собери грибы');
+  loadStage();
+}
+
+function forestStartMoleCampaign(){
+  forestPhase='mole';
+  forestMiniGameIndex=FOREST_START_N;
+  forestCampaignSpec=String(FOREST_START_N);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  forestMoleTaken=false;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  won=false;
+  setMsg('Кроты и грибы');
+  loadStage();
+}
+
+function forestFinishCampaign(){
+  const name=(gel('player-name').value||'').trim()||'Игрок';
+  if(forestIsMole()){
+    saveForestMoleChampion(name, campaignMovesTotal);
+    won=true;
+    clrT();
+    setMsg('Все 15 игр «Кроты и грибы» пройдены!');
+    draw();
+    showForestMoleFinalOverlay();
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-mole-win');
+    return;
+  }
+  if(forestIsMush()){
+    saveForestMushChampion(name, campaignMovesTotal);
+    setMsg('Следующая игра: кроты и грибы…');
+    setTimeout(()=>{ forestStartMoleCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-mush-finished');
+    return;
+  }
+  // После «домой» автоматически запускаем «собери грибы».
+  setMsg('Следующая игра: собери грибы…');
+  setTimeout(()=>{ forestStartMushCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+}
+
+function showForestFinalOverlay(){
+  const top=loadForestChampions().slice(0, 15);
+  const rows=top.map((e,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    return '<tr style="border-bottom:1px solid #2a3a2d"><td style="padding:8px 6px">'+medal+'</td><td style="padding:8px 6px;font-weight:600">'+String(e.name).replace(/</g,'&lt;')+'</td><td style="padding:8px 6px;text-align:right"><b>'+(e.moves|0)+'</b></td><td style="padding:8px 6px;font-size:11px;color:#888">'+String(e.date||'')+'</td></tr>';
+  }).join('');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.innerHTML='<div id="victory-box" style="max-width:540px">'+
+    '<h2>Лес пройден!</h2>'+
+    '<p class="vic-lead">Суммарно ходов: <strong style="color:#E8A020">'+campaignMovesTotal+'</strong>. Игрок: '+String((gel('player-name').value||'').trim()||'Игрок').replace(/</g,'&lt;')+'.</p>'+
+    '<h3 style="margin-top:14px">Таблица чемпионов</h3>'+
+    '<p style="font-size:12px;color:#888;margin:0 0 8px">Меньше ходов — выше в списке.</p>'+
+    '<div style="overflow-x:auto;max-height:min(48vh,320px)"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#9aab9e"><th>#</th><th>Имя</th><th>Ходы</th><th>Дата</th></tr></thead><tbody>'+
+    (rows||'<tr><td colspan="4" style="padding:12px;color:#666">Пока нет записей</td></tr>')+
+    '</tbody></table></div>'+
+    '<div id="victory-actions" style="margin-top:16px">'+
+    '<a class="vic-btn-home" href="index.html">Ко всем играм</a>'+
+    '<button type="button" class="vic-btn-setup" onclick="goToSetup();hideVictoryOverlay();">В меню</button>'+
+    '</div></div>';
+}
+
+function showForestMushFinalOverlay(){
+  const top=loadForestMushChampions().slice(0, 15);
+  const rows=top.map((e,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    return '<tr style="border-bottom:1px solid #2a3a2d"><td style="padding:8px 6px">'+medal+'</td><td style="padding:8px 6px;font-weight:600">'+String(e.name).replace(/</g,'&lt;')+'</td><td style="padding:8px 6px;text-align:right"><b>'+(e.moves|0)+'</b></td><td style="padding:8px 6px;font-size:11px;color:#888">'+String(e.date||'')+'</td></tr>';
+  }).join('');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.innerHTML='<div id="victory-box" style="max-width:540px">'+
+    '<h2>Грибы собраны!</h2>'+
+    '<p class="vic-lead">Суммарно ходов: <strong style="color:#E8A020">'+campaignMovesTotal+'</strong>. Игрок: '+String((gel('player-name').value||'').trim()||'Игрок').replace(/</g,'&lt;')+'.</p>'+
+    '<h3 style="margin-top:14px">Таблица чемпионов</h3>'+
+    '<p style="font-size:12px;color:#888;margin:0 0 8px">Меньше ходов — выше в списке.</p>'+
+    '<div style="overflow-x:auto;max-height:min(48vh,320px)"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#9aab9e"><th>#</th><th>Имя</th><th>Ходы</th><th>Дата</th></tr></thead><tbody>'+
+    (rows||'<tr><td colspan="4" style="padding:12px;color:#666">Пока нет записей</td></tr>')+
+    '</tbody></table></div>'+
+    '<div id="victory-actions" style="margin-top:16px">'+
+    '<a class="vic-btn-home" href="index.html">Ко всем играм</a>'+
+    '<button type="button" class="vic-btn-setup" onclick="goToSetup();hideVictoryOverlay();">В меню</button>'+
+    '</div></div>';
+}
+
+function showForestMoleFinalOverlay(){
+  const top=loadForestMoleChampions().slice(0, 15);
+  const rows=top.map((e,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    return '<tr style="border-bottom:1px solid #2a3a2d"><td style="padding:8px 6px">'+medal+'</td><td style="padding:8px 6px;font-weight:600">'+String(e.name).replace(/</g,'&lt;')+'</td><td style="padding:8px 6px;text-align:right"><b>'+(e.moves|0)+'</b></td><td style="padding:8px 6px;font-size:11px;color:#888">'+String(e.date||'')+'</td></tr>';
+  }).join('');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.innerHTML='<div id="victory-box" style="max-width:540px">'+
+    '<h2>Кроты и грибы пройдены!</h2>'+
+    '<p class="vic-lead">Суммарно ходов: <strong style="color:#E8A020">'+campaignMovesTotal+'</strong>. Игрок: '+String((gel('player-name').value||'').trim()||'Игрок').replace(/</g,'&lt;')+'.</p>'+
+    '<h3 style="margin-top:14px">Таблица чемпионов</h3>'+
+    '<p style="font-size:12px;color:#888;margin:0 0 8px">Меньше ходов — выше в списке.</p>'+
+    '<div style="overflow-x:auto;max-height:min(48vh,320px)"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#9aab9e"><th>#</th><th>Имя</th><th>Ходы</th><th>Дата</th></tr></thead><tbody>'+
+    (rows||'<tr><td colspan="4" style="padding:12px;color:#666">Пока нет записей</td></tr>')+
+    '</tbody></table></div>'+
+    '<div id="victory-actions" style="margin-top:16px">'+
+    '<a class="vic-btn-home" href="index.html">Ко всем играм</a>'+
+    '<button type="button" class="vic-btn-setup" onclick="goToSetup();hideVictoryOverlay();">В меню</button>'+
+    '</div></div>';
+}
+
+function drawForestTree(ctx,cx,cy,sz){
+  const s=sz;
+  ctx.fillStyle='#3e2723';
+  ctx.fillRect(cx+s*0.44,cy+s*0.58,s*0.12,s*0.34);
+  ctx.fillStyle='#1b5e20';
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.5,cy+s*0.1);
+  ctx.lineTo(cx+s*0.85,cy+s*0.62);
+  ctx.lineTo(cx+s*0.15,cy+s*0.62);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#2e7d32';
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.5,cy+s*0.22);
+  ctx.lineTo(cx+s*0.78,cy+s*0.52);
+  ctx.lineTo(cx+s*0.22,cy+s*0.52);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#43a047';
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.5,cy+s*0.3);
+  ctx.lineTo(cx+s*0.68,cy+s*0.46);
+  ctx.lineTo(cx+s*0.32,cy+s*0.46);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawForestHouse(ctx,cx,cy,sz){
+  const pad=sz*0.1;
+  ctx.fillStyle='#6d4c41';
+  ctx.fillRect(cx+pad,cy+sz*0.45,sz-2*pad,sz*0.42);
+  ctx.fillStyle='#ffb74d';
+  ctx.fillRect(cx+sz*0.38,cy+sz*0.58,sz*0.24,sz*0.22);
+  ctx.fillStyle='#8d6e63';
+  ctx.beginPath();
+  ctx.moveTo(cx+sz*0.5,cy+pad*0.9);
+  ctx.lineTo(cx+sz*0.9,cy+sz*0.48);
+  ctx.lineTo(cx+sz*0.1,cy+sz*0.48);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#fff8e1';
+  ctx.fillRect(cx+sz*0.42,cy+sz*0.52,sz*0.16, sz*0.12);
+}
+
+function drawMushroom(ctx,cx,cy,sz){
+  const s=sz;
+  const baseY=cy+s*0.78;
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.52, baseY+s*0.06, s*0.18, s*0.08, 0, 0, Math.PI*2);
+  ctx.fill();
+  // stem
+  ctx.fillStyle='#f5f5dc';
+  ctx.fillRect(cx+s*0.47, cy+s*0.62, s*0.1, s*0.18);
+  // cap
+  ctx.fillStyle='#c62828';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.52, cy+s*0.62, s*0.22, s*0.14, 0, Math.PI, Math.PI*2);
+  ctx.closePath();
+  ctx.fill();
+  // dots
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  for(const [dx,dy,r] of [[-0.08,0.0,0.03],[0.02,-0.02,0.025],[0.10,0.02,0.02],[-0.01,0.04,0.02]]){
+    ctx.beginPath();
+    ctx.arc(cx+s*(0.52+dx), cy+s*(0.58+dy), s*r, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawMole(ctx,cx,cy,sz){
+  const s=sz;
+  const bx=cx+s*0.5, by=cy+s*0.62;
+  // Body
+  ctx.fillStyle='#4e342e';
+  ctx.beginPath();
+  ctx.ellipse(bx, by, s*0.24, s*0.18, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Head
+  ctx.fillStyle='#5d4037';
+  ctx.beginPath();
+  ctx.ellipse(bx, cy+s*0.46, s*0.2, s*0.16, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Paws
+  ctx.fillStyle='#8d6e63';
+  ctx.beginPath(); ctx.ellipse(cx+s*0.4, cy+s*0.73, s*0.06, s*0.035, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+s*0.6, cy+s*0.73, s*0.06, s*0.035, 0, 0, Math.PI*2); ctx.fill();
+  // Nose
+  ctx.fillStyle='#f48fb1';
+  ctx.beginPath();
+  ctx.arc(bx, cy+s*0.5, s*0.035, 0, Math.PI*2);
+  ctx.fill();
+  // Eyes
+  ctx.fillStyle='#111';
+  ctx.beginPath(); ctx.arc(cx+s*0.45, cy+s*0.44, s*0.015, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+s*0.55, cy+s*0.44, s*0.015, 0, Math.PI*2); ctx.fill();
+}
+
+function drawBoar(ctx,cx,cy,sz){
+  const s=sz;
+  // body
+  ctx.fillStyle='#6d4c41';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.52, cy+s*0.62, s*0.28, s*0.18, 0, 0, Math.PI*2);
+  ctx.fill();
+  // head
+  ctx.fillStyle='#5d4037';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.33, cy+s*0.6, s*0.12, s*0.1, 0, 0, Math.PI*2);
+  ctx.fill();
+  // snout
+  ctx.fillStyle='#8d6e63';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.23, cy+s*0.62, s*0.07, s*0.05, 0, 0, Math.PI*2);
+  ctx.fill();
+  // tusk
+  ctx.strokeStyle='#f5f5dc';
+  ctx.lineWidth=Math.max(1, s*0.02);
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.2, cy+s*0.62);
+  ctx.lineTo(cx+s*0.14, cy+s*0.6);
+  ctx.stroke();
+  // eye
+  ctx.fillStyle='#111';
+  ctx.beginPath();
+  ctx.arc(cx+s*0.35, cy+s*0.56, s*0.015, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function useTorus(){
+  if(FOREST_CAMPAIGN_2027) return false;
+  return stage===7||stage===8;
+}
+/** Финиш: этапы 1–8 — правый нижний угол; этап 9 — центр поля (превью доски). */
+function finishGX(){
+  if(FOREST_CAMPAIGN_2027) return N-1;
+  return stage===9?(N-1)>>1:N-1;
+}
+function finishGY(){
+  if(FOREST_CAMPAIGN_2027) return N-1;
+  return stage===9?(N-1)>>1:N-1;
+}
+
+/** Территория к-2: у каждой фишки свой оттенок в одной гамме (полупрозрачная заливка). */
+const K2_TERRITORY_TINTS=[
+  'hsla(2,   78%, 50%, 0.34)', // красный (NPC индекс 0)
+  'hsla(18,  82%, 52%, 0.32)', // кораллово-терракотовый
+  'hsla(328, 70%, 54%, 0.32)', // розово-малиновый
+  'hsla(42,  88%, 48%, 0.30)', // янтарь
+  'hsla(275, 58%, 56%, 0.30)', // фиолетовый
+  'hsla(8,   85%, 52%, 0.32)', // алый
+  'hsla(340, 74%, 52%, 0.32)', // вишня
+  'hsla(195, 55%, 44%, 0.28)', // бирюза (контраст)
+];
+/** Зона героя-«2» на этапе 9 — чуть другой красный, чем у первой к‑2 на поле. */
+const K2_TERRITORY_TINT_HERO='hsla(352, 70%, 47%, 0.33)';
+/** В k2Territory: метка зоны героя с уровнем 2 (K2_OWNER_HERO). */
+const K2_OWNER_HERO=-1;
+let hero={x:0,y:0,lvl:2,dots:[],alive:true,isHero:true,navDigit:0};
+let darkMode=true; // always dark
+let gameStarted=false;
+gel('n-slider').oninput=function(){gel('n-out').textContent=this.value+'×'+this.value;};
+gel('wall-slider').oninput=function(){gel('wall-out').textContent=this.value+'%';};
+gel('start-btn').onclick=()=>{gel('start-btn').blur();startGame();};
+
+function layoutCellSize(){
+  if(!gameStarted||gel('game').style.display==='none') return;
+  const isMobile=window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  const ctrlH=isMobile?108:0;
+  let availW=window.innerWidth-4;
+  let availH=window.innerHeight-ctrlH-6;
+  // Важно: берём реальный размер области под доску, чтобы квадрат был максимален на экране.
+  const wrap=gel('canvas-wrap');
+  if(wrap&&wrap!==_stub && wrap.getBoundingClientRect){
+    const r=wrap.getBoundingClientRect();
+    if(r&&r.width>0&&r.height>0){
+      availW=Math.max(0, r.width-4);
+      availH=Math.max(0, r.height-4);
+    }
+  }
+  const raw=Math.floor(Math.min(availW, availH)/Math.max(1,N));
+  // В лесной кампании: если клеток мало — делаем клетки крупнее (без потолка 44px),
+  // чтобы квадрат поля был максимально возможным для текущего экрана.
+  CELL=FOREST_CAMPAIGN_2027
+    ? Math.max(12, raw)
+    : Math.max(18, Math.min(44, raw));
+}
+function onViewportResize(){
+  layoutCellSize();
+  try{ if(gameStarted) draw(); }catch(e){}
+}
+let _resizeT=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(_resizeT);
+  _resizeT=setTimeout(onViewportResize, 100);
+});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{
+    clearTimeout(_resizeT);
+    _resizeT=setTimeout(onViewportResize, 100);
+  });
+}
+
+
+function selectStage(s){
+  startStage=s;
+  document.querySelectorAll('.stage-sel').forEach((b,i)=>{
+    b.classList.toggle('active', i+1===s);
+  });
+}
+
+function initCampaignSession(){
+  movesStage9=0;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  if(FOREST_CAMPAIGN_2027){
+    campaignHistory.push('Старт: 15 мини-игр «лес — домой», считаем сумму ходов.');
+  } else {
+    const n0=parseInt(gel('n-slider').value)||15;
+    const w0=parseInt(gel('wall-slider').value)||14;
+    campaignHistory.push('Старт кампании: этап '+startStage+' (поле '+n0+'×'+n0+', стены '+w0+'%). Войти можно не с 1-го этапа.');
+  }
+}
+
+function hideVictoryOverlay(){
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  ov.classList.remove('victory-open');
+  ov.innerHTML='';
+  ov.style.display='none';
+}
+
+function showFinalVictoryScreen(skipHistoryPush){
+  if(!skipHistoryPush) campaignHistory.push('Финиш этапа 9 — маршрут завершён.');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  const stageLines=[];
+  for(let i=0;i<8;i++){
+    const st=i+1;
+    if(st<startStage) continue;
+    stageLines.push('этап '+st+': '+movesPerStage[i]);
+  }
+  const box=document.createElement('div');
+  box.id='victory-box';
+  const h2=document.createElement('h2');
+  h2.textContent='Вы дошли до конца маршрута';
+  box.appendChild(h2);
+  const lead=document.createElement('p');
+  lead.className='vic-lead';
+  lead.textContent='Краткая история этой кампании и ходы. Игрок: '+((gel('player-name').value||'').trim()||'Игрок')+'.';
+  box.appendChild(lead);
+  const stats=document.createElement('div');
+  stats.className='vic-stats';
+  stats.innerHTML='<div><strong>Всего ходов героя</strong> (включая после гибелей и повторы этапов): <strong>'+campaignMovesTotal+'</strong></div>'
+    +'<div style="margin-top:6px"><strong>Ходы на этапе 9</strong> (все попытки): <strong>'+movesStage9+'</strong></div>'
+    +'<div style="margin-top:8px"><strong>По этапам 1–8</strong> <em>(после гибели на этапе счётчик этого этапа обнулялся)</em>: '+(
+      stageLines.length?stageLines.join(' · '):'—'
+    )+'</div>';
+  box.appendChild(stats);
+  const h3=document.createElement('h3');
+  h3.textContent='Журнал';
+  box.appendChild(h3);
+  const ul=document.createElement('ul');
+  ul.id='victory-log';
+  for(const line of campaignHistory){
+    const li=document.createElement('li');
+    li.textContent=line;
+    ul.appendChild(li);
+  }
+  box.appendChild(ul);
+  const actions=document.createElement('div');
+  actions.id='victory-actions';
+  const aHome=document.createElement('a');
+  aHome.className='vic-btn-home';
+  aHome.href='index.html';
+  aHome.textContent='Ко всем играм';
+  const btnSetup=document.createElement('button');
+  btnSetup.type='button';
+  btnSetup.className='vic-btn-setup';
+  btnSetup.textContent='В меню этой игры';
+  btnSetup.onclick=()=>{ goToSetup(); };
+  actions.appendChild(aHome);
+  actions.appendChild(btnSetup);
+  box.appendChild(actions);
+  ov.appendChild(box);
+}
+
+function startGame(){
+  playerName=(gel('player-name').value||'').trim()||'Игрок';
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  if(FOREST_CAMPAIGN_2027){
+    forestMiniGameIndex=FOREST_START_N;
+    startStage=1;
+    N=parseInt(gel('n-slider').value)||15;
+    wallPct=parseInt(gel('wall-slider').value)||forestWallPctForIndex(1);
+    replayMeta={
+      startStage:1, N, wallPct:forestWallPctForIndex(1),
+      npcCounts:{...npcCounts}, forestMiniGameIndex:FOREST_START_N,
+    };
+  } else {
+    N=parseInt(gel('n-slider').value);
+    wallPct=parseInt(gel('wall-slider').value);
+    replayMeta={
+      startStage,
+      N,
+      wallPct,
+      npcCounts:{...npcCounts},
+    };
+  }
+  _replayLastJson='';
+  replayFrames=[];
+  replayRecording=!!(gel('replay-record-check')&&gel('replay-record-check').checked);
+  initCampaignSession();
+  gel('setup').style.display='none';
+  gel('game').style.display='flex';
+  gameStarted=true;
+  paused=false;
+  replayMode=false;
+  layoutCellSize();
+  if(FOREST_CAMPAIGN_2027) stage=1;
+  else stage=startStage;
+  loadStage();
+  ensureKeydown();
+  updateReplayMenuButtons();
+  try {
+    const cv = gel('c');
+    if (cv) cv.focus({ preventScroll: true });
+  } catch (err) {}
+}
+
+function clrT(){ if(tickT){clearInterval(tickT);tickT=null;} if(resetT){clearTimeout(resetT);resetT=null;} }
+// Safe DOM helper — never throws even if element doesn't exist
+const _stub={style:{},classList:{add:()=>{},remove:()=>{},toggle:()=>{},contains:()=>false}};
+Object.defineProperty(_stub,'textContent',{set:()=>{},get:()=>''});
+function gel(id){ return document.getElementById(id)||_stub; }
+function setMsg(t,w){ const e=gel('msg'); if(e){e.textContent=t; e.className=w?'warn':'';} }
+function markSetsForJson(val){
+  if(val===null||val===undefined) return val;
+  const t=typeof val;
+  if(t==='number'||t==='string'||t==='boolean') return val;
+  if(val instanceof Set) return { [REPLAY_SET_MARK]:1, v:[...val].map(markSetsForJson) };
+  if(Array.isArray(val)) return val.map(markSetsForJson);
+  if(t==='object'){
+    const o={};
+    for(const k of Object.keys(val)) o[k]=markSetsForJson(val[k]);
+    return o;
+  }
+  return val;
+}
+function reviveMarkedSets(val){
+  if(val===null||val===undefined) return val;
+  if(typeof val!=='object') return val;
+  if(val[REPLAY_SET_MARK]===1 && Array.isArray(val.v)) return new Set(val.v.map(reviveMarkedSets));
+  if(Array.isArray(val)) return val.map(reviveMarkedSets);
+  const o={};
+  for(const k of Object.keys(val)) o[k]=reviveMarkedSets(val[k]);
+  return o;
+}
+function cloneHeroSnapshot(h){
+  try{
+    if(!h||typeof h!=='object') return h;
+    return JSON.parse(JSON.stringify(h));
+  }catch(e){
+    return {
+      x:h.x|0,y:h.y|0,lvl:h.lvl|0,peakLvl:h.peakLvl|0,
+      dots:Array.isArray(h.dots)?h.dots.slice():[],
+      displayDots:Array.isArray(h.displayDots)?h.displayDots.slice():[],
+      absorbed:Array.isArray(h.absorbed)?h.absorbed.map(ch=>Array.isArray(ch)?ch.slice():[]):[],
+      alive:!!h.alive,isHero:!!h.isHero,navDigit:h.navDigit|0,
+    };
+  }
+}
+function buildGameStateSnapshot(){
+  const msgEl=gel('msg');
+  let uiMsg='', uiMsgWarn=false;
+  if(msgEl&&msgEl!==_stub){ uiMsg=msgEl.textContent||''; uiMsgWarn=msgEl.classList.contains('warn'); }
+  return {
+    N, wallPct, grid: grid.map(r=>[...r]),
+    won, paused, stage, startStage,
+    forestMiniGameIndex:FOREST_CAMPAIGN_2027?forestMiniGameIndex:undefined,
+    forestCampaignSpec:FOREST_CAMPAIGN_2027?forestCampaignSpec:undefined,
+    npcCounts:FOREST_CAMPAIGN_2027?{...npcCounts}:undefined,
+    forestPhase:FOREST_CAMPAIGN_2027?forestPhase:undefined,
+    forestMoleTaken:FOREST_CAMPAIGN_2027?forestMoleTaken:undefined,
+    forestMushrooms:FOREST_CAMPAIGN_2027&&forestUsesMushrooms()?Array.from(forestMushrooms):undefined,
+    forestMushroomsTotal:FOREST_CAMPAIGN_2027&&forestUsesMushrooms()?forestMushroomsTotal:undefined,
+    forestMushroomsCollected:FOREST_CAMPAIGN_2027&&forestUsesMushrooms()?forestMushroomsCollected:undefined,
+    movesPerStage: [...movesPerStage],
+    movesStage9, campaignMovesTotal, campaignHistory: [...campaignHistory],
+    killedCount,
+    M1, M2, M3, P4, M5, M6, M7,
+    col1, col2, col3, col4, col5, col6, col7,
+    tickCount, k2Territory: {...k2Territory},
+    graveyard: [...graveyard],
+    k5Flashes: k5Flashes.map(f=>({x:f.x,y:f.y,t:f.t})),
+    k5WallFlashes: k5WallFlashes.map(f=>({x:f.x,y:f.y,t:f.t})),
+    k5FreezeUntil,
+    hero: cloneHeroSnapshot(hero),
+    heroMoved,
+    s9PadFocusIx,
+    uiMsg, uiMsgWarn,
+  };
+}
+function performGameStateRestore(rawSnap){
+  const s=reviveMarkedSets(rawSnap);
+  N=s.N; wallPct=s.wallPct;
+  grid=s.grid.map(r=>[...r]);
+  won=!!s.won; paused=!!s.paused;
+  stage=s.stage|0; startStage=s.startStage|0;
+  if(FOREST_CAMPAIGN_2027){
+    if(typeof s.forestMiniGameIndex==='number') forestMiniGameIndex=s.forestMiniGameIndex|0;
+    if(typeof s.forestCampaignSpec==='string') forestCampaignSpec=s.forestCampaignSpec;
+    if(s.npcCounts&&typeof s.npcCounts==='object') npcCounts={...s.npcCounts};
+    if(typeof s.forestPhase==='string') forestPhase=s.forestPhase;
+    forestMoleTaken=!!s.forestMoleTaken;
+    if(Array.isArray(s.forestMushrooms)) forestMushrooms=new Set(s.forestMushrooms.map(String));
+    if(typeof s.forestMushroomsTotal==='number') forestMushroomsTotal=s.forestMushroomsTotal|0;
+    if(typeof s.forestMushroomsCollected==='number') forestMushroomsCollected=s.forestMushroomsCollected|0;
+  }
+  movesPerStage=[...s.movesPerStage];
+  movesStage9=s.movesStage9|0; campaignMovesTotal=s.campaignMovesTotal|0;
+  campaignHistory=Array.isArray(s.campaignHistory)?[...s.campaignHistory]:[];
+  killedCount=s.killedCount|0;
+  M1=s.M1; M2=s.M2; M3=s.M3; P4=s.P4; M5=s.M5; M6=s.M6; M7=s.M7;
+  col1=s.col1|0; col2=s.col2|0; col3=s.col3|0; col4=s.col4|0; col5=s.col5|0; col6=s.col6|0; col7=s.col7|0;
+  tickCount=s.tickCount|0;
+  k2Territory={...s.k2Territory};
+  graveyard=Array.isArray(s.graveyard)?[...s.graveyard]:[];
+  k5Flashes=Array.isArray(s.k5Flashes)?s.k5Flashes.map(f=>({x:f.x,y:f.y,t:f.t})):[];
+  k5WallFlashes=Array.isArray(s.k5WallFlashes)?s.k5WallFlashes.map(f=>({x:f.x,y:f.y,t:f.t})):[];
+  k5FreezeUntil=+s.k5FreezeUntil||0;
+  hero=s.hero;
+  heroMoved=!!s.heroMoved;
+  s9PadFocusIx=s.s9PadFocusIx|0;
+  _replayUiMsg=typeof s.uiMsg==='string'?s.uiMsg:'';
+  _replayUiMsgWarn=!!s.uiMsgWarn;
+}
+function showCounterLinesForCurrentStage(){
+  hideL();
+  if(stage<=1) return;
+  showL('line2','c1-cnt','c1-tot',col1,M1.length);
+  if(stage<=2) return;
+  showL('line3','c2-cnt','c2-tot',col2,M2.length);
+  if(stage<=3) return;
+  showL('line4','c3-cnt','c3-tot',col3,M3.length);
+  if(stage<=4) return;
+  showL('line5','c4-cnt','c4-tot',col4,P4.length*2);
+  if(stage<=5) return;
+  showL('line6','c5-cnt','c5-tot',col5,M5.length);
+  if(stage<=6) return;
+  showL('line7','c6-cnt','c6-tot',col6,M6.length);
+  if(stage<=7) return;
+  showL('line8','c7-cnt','c7-tot',col7,M7.length);
+  if(stage===8) showL('line9','c8-cnt','c8-tot',0,1);
+}
+function maybeRecordSnapshot(tag){
+  if(!replayRecording || replayMode || !gameStarted) return;
+  if(gel('game').style.display==='none') return;
+  try{
+    const snap=markSetsForJson(buildGameStateSnapshot());
+    const json=JSON.stringify(snap);
+    if(json===_replayLastJson) return;
+    _replayLastJson=json;
+    replayFrames.push({tag:String(tag||''), t:Date.now(), snap});
+    updateReplayMenuButtons();
+  }catch(err){
+    console.warn('kolobok replay: снимок не сохранён ('+String(tag||'')+')', err);
+  }
+}
+function updateReplayMenuButtons(){
+  const mb=gel('menu-save-replay');
+  const sb=gel('setup-save-replay');
+  const vis=!!(replayFrames.length>0 && !replayMode);
+  if(mb&&mb!==_stub) mb.style.display=(vis && gameStarted && gel('game').style.display!=='none')?'block':'none';
+  if(sb&&sb!==_stub) sb.style.display=vis?'block':'none';
+}
+function stopReplayAuto(){
+  if(replayAutoTimer){ clearInterval(replayAutoTimer); replayAutoTimer=null; }
+  const b=gel('replay-auto-btn');
+  if(b&&b!==_stub) b.textContent='▶ Авто';
+}
+function updateReplayToolbar(){
+  const tb=gel('replay-toolbar');
+  if(!tb||tb===_stub) return;
+  if(!replayMode){ tb.classList.remove('open'); return; }
+  tb.classList.add('open');
+  const fr=replayFrames[replayIndex];
+  gel('replay-pos').textContent=(replayIndex+1)+' / '+replayFrames.length;
+  gel('replay-tag').textContent=fr&&fr.tag?fr.tag:'—';
+}
+function replayApplyUiAfterFrame(){
+  clrT();
+  layoutCellSize();
+  if(FOREST_CAMPAIGN_2027) updateForestHud();
+  else gel('stage-num').textContent=String(stage);
+  showCounterLinesForCurrentStage();
+  const sb=gel('stop-btn');
+  if(sb&&sb!==_stub){ sb.textContent='⏸ Стоп'; sb.classList.remove('active'); }
+  refreshCounters();
+  syncCtrlMode();
+  updateS9PadDomHighlight();
+  syncHelpPanelsForStage();
+  setMsg(_replayUiMsg, _replayUiMsgWarn);
+  hideVictoryOverlay();
+  if(won && stage===9) showFinalVictoryScreen(true);
+  draw();
+  updateReplayToolbar();
+}
+function replaySeek(d){
+  if(!replayMode || !replayFrames.length) return;
+  let i=replayIndex+(d|0);
+  if(i<0) i=0;
+  if(i>=replayFrames.length) i=replayFrames.length-1;
+  if(i===replayIndex) return;
+  replayIndex=i;
+  performGameStateRestore(replayFrames[i].snap);
+  replayApplyUiAfterFrame();
+}
+function toggleReplayAuto(btn){
+  if(!replayMode) return;
+  if(replayAutoTimer){
+    stopReplayAuto();
+    return;
+  }
+  replayAutoTimer=setInterval(()=>{
+    if(replayIndex>=replayFrames.length-1){ stopReplayAuto(); return; }
+    replaySeek(1);
+  }, 380);
+  if(btn) btn.textContent='⏸ Авто';
+}
+function exitReplayModeCore(){
+  stopReplayAuto();
+  replayMode=false;
+  replayIndex=0;
+  _replayLastJson='';
+  gel('replay-toolbar').classList.remove('open');
+}
+function exitReplayToSetup(){
+  exitReplayModeCore();
+  replayFrames=[];
+  hideVictoryOverlay();
+  clrT();
+  gameStarted=false;
+  paused=false;
+  won=false;
+  gel('game').style.display='none';
+  gel('setup').style.display='flex';
+  updateReplayMenuButtons();
+}
+function ensureKeydown(){
+  if(keydownBound) return;
+  keydownBound=true;
+  document.addEventListener('keydown',onKey,{capture:true});
+}
+async function exportReplayRecording(){
+  if(!replayFrames.length) return;
+  const payload={
+    v:1,
+    app:'kolobok_2027',
+    savedAt:new Date().toISOString(),
+    meta:{
+      playerName:(gel('player-name').value||'').trim()||'Игрок',
+      startStage:replayMeta.startStage,
+      N:replayMeta.N,
+      wallPct:replayMeta.wallPct,
+      npcCounts:{...replayMeta.npcCounts},
+    },
+    frames: replayFrames,
+  };
+  const text=JSON.stringify(payload);
+  const name='kolobok-zapis-'+(new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'))+'.json';
+  const file=new File([text],name,{type:'application/json'});
+  if(navigator.share&&navigator.canShare){
+    try{
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Запись — Колобок и его команда (2027)'});
+        return;
+      }
+    }catch(e){}
+  }
+  const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+  const a=document.createElement('a');
+  a.href=url; a.download=name; a.click();
+  URL.revokeObjectURL(url);
+}
+function startReplayFromJson(data){
+  if(!data||data.v!==1||data.app!=='kolobok_2027') throw new Error('Нужен файл записи этой игры (kolobok_2027).');
+  if(!Array.isArray(data.frames)||!data.frames.length) throw new Error('В файле нет кадров.');
+  exitReplayModeCore();
+  hideVictoryOverlay();
+  closeMenu();
+  hideHelp();
+  gel('extras-modal').classList.remove('open');
+  gel('lb-modal').style.display='none';
+  stopReplayAuto();
+  replayMode=true;
+  replayRecording=false;
+  replayFrames=data.frames;
+  replayIndex=0;
+  if(data.meta&&typeof data.meta==='object'){
+    const m=data.meta;
+    replayMeta={
+      startStage:typeof m.startStage==='number'?m.startStage:((data.frames[0]&&data.frames[0].snap&&data.frames[0].snap.startStage)|0),
+      N:typeof m.N==='number'?m.N:((data.frames[0]&&data.frames[0].snap&&data.frames[0].snap.N)|15),
+      wallPct:typeof m.wallPct==='number'?m.wallPct:((data.frames[0]&&data.frames[0].snap&&data.frames[0].snap.wallPct)|14),
+      npcCounts:{...DEFAULT_NPC_COUNTS},
+    };
+    if(m.npcCounts&&typeof m.npcCounts==='object'){
+      for(const k of NPC_COUNT_KEYS){
+        const v=parseInt(m.npcCounts[k],10);
+        const max=k==='p4'?8:12;
+        if(!isNaN(v)&&v>=1&&v<=max) replayMeta.npcCounts[k]=v;
+      }
+    }
+  }else if(data.frames[0]&&data.frames[0].snap){
+    const s=data.frames[0].snap;
+    replayMeta={startStage:s.startStage|0,N:s.N|0,wallPct:s.wallPct|0,npcCounts:{...DEFAULT_NPC_COUNTS}};
+  }
+  gameStarted=true;
+  paused=false;
+  gel('setup').style.display='none';
+  gel('game').style.display='flex';
+  ensureKeydown();
+  try{ gel('c').focus({preventScroll:true}); }catch(e){}
+  performGameStateRestore(replayFrames[0].snap);
+  replayApplyUiAfterFrame();
+  updateReplayMenuButtons();
+}
+function showL(id,ci,ti,c,t){ const e=gel(id),ec=gel(ci),et=gel(ti); if(e)e.style.display='block'; if(ec)ec.textContent=c; if(et)et.textContent=t; }
+function hideL(){ ['line2','line3','line4','line5','line6','line7','line8','line9'].forEach(id=>{const e=gel(id);if(e)e.style.display='none';}); }
+function kxy(m){ return m.x+','+m.y; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];} }
+
+function maxNpcLvl(){
+  if(stage>=8&&M7.some(m=>!m.collected)) return 7;
+  if(stage>=7&&M6.some(m=>!m.collected)) return 6;
+  if(stage>=6&&M5.some(m=>!m.collected)) return 5;
+  if(stage>=5&&P4.some(p=>!p.a.collected||!p.b.collected)) return 4;
+  if(stage>=4&&M3.some(m=>!m.collected)) return 3;
+  if(stage>=3&&M2.some(m=>!m.collected)) return 2;
+  if(stage>=2&&M1.some(m=>!m.collected)) return 1;
+  return 0;
+}
+
+function updateHeroLvl(){
+  drawPanels();
+}
+
+/** Эффективный ранг героя для правил движения (как к-N): выбранная цифра или уровень этапа. */
+function heroMovementRank(){
+  if(!hero||!hero.alive) return 0;
+  const nd=hero.navDigit|0;
+  if(nd>=1&&nd<=MAX_DIGIT) return nd;
+  if(nd===9) return 9;
+  const L=hero.lvl|0;
+  if(L>=1&&L<=MAX_DIGIT) return L;
+  return L===9?9:Math.min(Math.max(1,L),MAX_DIGIT);
+}
+
+/** Этап 9 + уровень героя 1: как к‑1 — не выбирает ходов, стоит там, где «пойман» режимом. */
+function heroImmobileLikeK1(){
+  return stage===9 && heroMovementRank()===1;
+}
+
+function heroActsLikeK2(){
+  return stage===9 && heroMovementRank()===2;
+}
+
+function k2OwnerBlocksHeroAtCell(ow){
+  if(ow===undefined||ow===K2_OWNER_HERO) return false;
+  if(ow>=0&&ow<M2.length&&M2[ow]&&!M2[ow].collected) return true;
+  return false;
+}
+
+function heroK2UnpaintedOrthExists(){
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  for(const[dx,dy] of dirs){
+    let ox=hero.x+dx, oy=hero.y+dy;
+    if(useTorus()){[ox,oy]=torusXY(ox,oy);}
+    else if(ox<0||ox>=N||oy<0||oy>=N) continue;
+    if(grid[oy][ox]===1) continue;
+    const o=k2Territory[ox+','+oy];
+    if(k2OwnerBlocksHeroAtCell(o)) continue;
+    if(o===undefined) return true;
+  }
+  return false;
+}
+
+function heroK2TargetAllowed(nx,ny){
+  const ow=k2Territory[nx+','+ny];
+  if(k2OwnerBlocksHeroAtCell(ow)) return false;
+  if(ow===K2_OWNER_HERO && heroK2UnpaintedOrthExists()) return false;
+  return true;
+}
+
+/** В наборе героя есть и 2, и 3 («32» после кооптации и т.п.). */
+function heroCarriesDigitsTwoAndThree(){
+  if(!hero||!hero.alive) return false;
+  const s=fullSet(hero);
+  return s.has(2)&&s.has(3);
+}
+
+/** Герой стоит на клетке, закрашенной чужой к‑2. */
+function heroStandsOnEnemyK2Paint(){
+  if(stage!==9||!hero) return false;
+  const ow=k2Territory[hero.x+','+hero.y];
+  return k2OwnerBlocksHeroAtCell(ow);
+}
+
+function heroWantsExitEnemyK2Paint32(){
+  return stage===9&&hero&&hero.alive&&heroCarriesDigitsTwoAndThree()&&heroStandsOnEnemyK2Paint();
+}
+
+/** Куда ступить с чужой раскраски: 0 — чистое поле, 1 — своя к‑2, иначе хуже. */
+function heroK2ExitStepScore(nx,ny){
+  const ow=k2Territory[nx+','+ny];
+  if(ow===undefined) return 0;
+  if(ow===K2_OWNER_HERO) return 1;
+  if(k2OwnerBlocksHeroAtCell(ow)) return 3;
+  return 2;
+}
+
+function pickBestK2ExitMoves(coords){
+  let best=999;
+  const out=[];
+  for(const p of coords){
+    const sc=heroK2ExitStepScore(p[0],p[1]);
+    if(sc<best){ best=sc; out.length=0; out.push(p); }
+    else if(sc===best) out.push(p);
+  }
+  return out.length?out:coords;
+}
+
+function clearHeroK2Paint(){
+  for(const k of Object.keys(k2Territory)){
+    if(k2Territory[k]===K2_OWNER_HERO) delete k2Territory[k];
+  }
+}
+
+/** Клетка заблокирована для «пустых» спутников героя-4: стена, край, живый NPC. */
+function heroNpcBlocksCell(x,y){
+  if(x<0||x>=N||y<0||y>=N||grid[y][x]!==0) return true;
+  for(const o of getAllNPC()) if(!o.collected&&o.x===x&&o.y===y) return true;
+  return false;
+}
+
+/** Пара пустых кружков слева/справа от направления (dx,dy): перпендикуляры (-dy,dx) и (dy,-dx). */
+function initHeroMode4Satellites(keepDir){
+  hero._satL=null; hero._satR=null;
+  const base=[[1,0],[-1,0],[0,1],[0,-1]];
+  const tryDirs=[];
+  if(keepDir && ((hero._bdx|0)!==0||(hero._bdy|0)!==0)){
+    tryDirs.push([hero._bdx|0,hero._bdy|0]);
+    for(const d of base) if(d[0]!==(hero._bdx|0)||d[1]!==(hero._bdy|0)) tryDirs.push(d);
+  } else for(const d of base) tryDirs.push(d);
+  for(const[dx,dy] of tryDirs){
+    const lx=-dy, ly=dx, rx=dy, ry=-dx;
+    const ax=hero.x+lx, ay=hero.y+ly, bx=hero.x+rx, by=hero.y+ry;
+    if(heroNpcBlocksCell(ax,ay)||heroNpcBlocksCell(bx,by)) continue;
+    if((ax===bx&&ay===by)||(ax===hero.x&&ay===hero.y)||(bx===hero.x&&by===hero.y)) continue;
+    hero._bdx=dx; hero._bdy=dy;
+    hero._satL={x:ax,y:ay};
+    hero._satR={x:bx,y:by};
+    return;
+  }
+  hero._bdx=0; hero._bdy=0;
+}
+
+/** Как к-6/к-7: король ходит по 8 направлениям на этапах 7–8 и 9. */
+function heroMayMoveDiagonal(){
+  if(!hero||!hero.alive) return false;
+  if(heroImmobileLikeK1()) return false;
+  const r=heroMovementRank();
+  if(r!==6&&r!==7) return false;
+  return (stage>=7&&stage<=8)||stage===9;
+}
+
+function fullSet(obj){
+  const s=new Set(obj.dots||[]);
+  s.add(obj.lvl);
+  if(obj.isHero && (obj.navDigit|0)===0 && obj.peakLvl) s.add(obj.peakLvl);
+  return s;
+}
+
+/** Цифра с клавиатуры: уровень героя = N (встречи, движение как к-N); 0 — уровень этапа. */
+function applyHeroChosenDigit(raw){
+  if(!hero||!hero.alive) return;
+  const wasS9=stage===9;
+  try{
+  const D=raw|0;
+  const prevNav=hero.navDigit|0;
+  if(stage===9 && D!==2){
+    clearHeroK2Paint();
+    hero._k2Pulse=0;
+  }
+  if(D===0){
+    const st=stage===9?9:Math.min(8,Math.max(1,stage));
+    hero.navDigit=0;
+    hero.lvl=st;
+    hero.peakLvl=st;
+    hero.dots=[st];
+    hero.displayDots=[st];
+    hero.absorbed=[];
+    hero._bdx=0; hero._bdy=0; hero._satL=null; hero._satR=null;
+    hero._k5LastWasJump=false;
+    return;
+  }
+  if(D>=1&&D<=MAX_DIGIT){
+    hero.navDigit=D;
+    hero.lvl=D;
+    hero.peakLvl=D;
+    hero.dots=[D];
+    hero.displayDots=[D];
+    hero.absorbed=[];
+    if(stage===9&&D===2){
+      hero._k2Pulse=0;
+      k2Territory[hero.x+','+hero.y]=K2_OWNER_HERO;
+    }
+    if(stage===9){
+      if(D===3){
+        hero._satL=null; hero._satR=null;
+        if(prevNav!==3&&prevNav!==4){ hero._bdx=0; hero._bdy=0; }
+        hero._k5LastWasJump=false;
+      } else if(D===4){
+        initHeroMode4Satellites(prevNav===3||prevNav===4);
+        hero._k5LastWasJump=false;
+      } else {
+        hero._bdx=0; hero._bdy=0;
+        hero._satL=null; hero._satR=null;
+        hero._k5LastWasJump=false;
+      }
+    }
+    return;
+  }
+  if(D===9&&stage===9){
+    hero.navDigit=9;
+    hero.lvl=9;
+    hero.peakLvl=9;
+    hero.dots=[9];
+    hero.displayDots=[9];
+    hero.absorbed=[];
+    hero._bdx=0; hero._bdy=0; hero._satL=null; hero._satR=null;
+    hero._k5LastWasJump=false;
+  }
+  }finally{
+    if(wasS9&&replayRecording&&!replayMode) maybeRecordSnapshot('digit');
+  }
+}
+
+function getDigitSeq(lvl, dots){
+  // Show exactly what's in dots (which includes own starting lvl)
+  const all=new Set([...(dots||[])]);
+  if(!all.size) all.add(lvl);
+  return [...all].filter(d=>d>=1&&d<=MAX_DIGIT).sort((a,b)=>b-a);
+}
+
+function maxOfSet(s){ let m=0; s.forEach(v=>{if(v>m)m=v;}); return m; }
+
+/** Одна цифра уровня героя для панели и клетки (без «пенала» из нескольких цифр). */
+function heroDisplayLvl(){
+  return Math.min(maxOfSet(fullSet(hero)),9);
+}
+
+/** Этапы 1–8: строка «пенал» (все цифры набора по убыванию) и через « · » хвосты кооптированных наборов. */
+function penaltyUIFullText(mob){
+  if(!mob||stage===9) return '';
+  const base=[...fullSet(mob)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a).join(' ');
+  const tail=(mob.absorbed&&mob.absorbed.length)
+    ?mob.absorbed.map(ch=>[...ch].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a).join(' ')).join(' · ')
+    :'';
+  if(base&&tail) return base+' · '+tail;
+  if(base) return base;
+  if(tail) return tail;
+  return String(mob.lvl!=null?mob.lvl:1);
+}
+
+/** Цифры пенала по порядку (база по убыванию, затем хвосты через «·») — для мигания по одной. */
+function digitsFromPenaltyUIText(t){
+  if(t==null||t==='') return [];
+  const list=[];
+  for(const seg of String(t).split(/\s*·\s*/)){
+    for(const w of seg.trim().split(/\s+/)){
+      if(/^[1-9]$/.test(w)) list.push(w);
+    }
+  }
+  return list;
+}
+
+/** У NPC снять самую большую цифру из набора (lvl+dots); остальное — новый пенал. Пусто → собрана. */
+function npcPenaltyMinusOne(npc){
+  const s=new Set();
+  for(const d of fullSet(npc)) if((d|0)>=1&&(d|0)<=9) s.add(d|0);
+  if(!s.size){ npc.collected=true; return; }
+  const mx=Math.max(...s);
+  s.delete(mx);
+  if(!s.size){ npc.collected=true; return; }
+  const sorted=[...s].sort((a,b)=>b-a);
+  npc.lvl=sorted[0];
+  npc.dots=sorted.length>1?sorted.slice(1):[];
+  npc.displayDots=[...sorted];
+}
+
+/** После поглощения героем — обновить счётчики сбора по типу фишки. */
+function registerNpcCollectedByHero(npc){
+  if(!npc) return;
+  const n=npc.lvl|0;
+  if(FOREST_CAMPAIGN_2027 && forestIsMole() && n===2){
+    forestMoleTaken=true;
+    setMsg('Крот с вами. Теперь можно собирать грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+  }
+  if(n===1){col1++;gel('c1-cnt').textContent=col1;}
+  else if(n===2){col2++;gel('c2-cnt').textContent=col2;}
+  else if(n===3){col3++;gel('c3-cnt').textContent=col3;}
+  else if(n===4){col4++;gel('c4-cnt').textContent=col4;}
+  else if(n===5){col5++;gel('c5-cnt').textContent=col5;}
+  else if(n===6){col6++;gel('c6-cnt').textContent=col6;}
+  else if(n===7&&stage>=8){col7++;gel('c7-cnt').textContent=col7;}
+}
+
+function meetPriorityPair(a,b){
+  return Math.max(maxOfSet(fullSet(a)),maxOfSet(fullSet(b)));
+}
+function sortPartnersForMeet(mover, partners){
+  return [...partners].sort((x,y)=>{
+    const px=meetPriorityPair(mover,x), py=meetPriorityPair(mover,y);
+    if(py!==px) return py-px;
+    return maxOfSet(fullSet(y))-maxOfSet(fullSet(x));
+  });
+}
+
+function isK7Mob(m){ return m&&!m.isHero&&m.isK7===true; }
+/** к‑7 с к‑6 или с героем с максимумом 8 — встреча и на той же клетке, и по соседству короля. */
+function k7ExtendedMeetPartner(other){
+  if(!other||other.collected) return false;
+  if(other.isHero) return maxOfSet(fullSet(other))===8;
+  return M6.includes(other);
+}
+
+/** Встреча двух NPC: одна клетка (этапы 1–8); этап 9 — ортогональное соседство; к‑7↔к‑6 / к‑7↔герой‑8 — ещё соседство по королю. */
+function npcAdjacentForMeeting(a,b){
+  if(a.x===b.x&&a.y===b.y) return true;
+  if(stage===9) return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)===1;
+  if((isK7Mob(a)&&k7ExtendedMeetPartner(b))||(isK7Mob(b)&&k7ExtendedMeetPartner(a)))
+    return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))<=1;
+  return false;
+}
+
+/** Погибнет ли к‑7 при meet с other (без мутации). */
+function k7DiesInMeetWith(k7,other){
+  const maxK=maxOfSet(fullSet(k7)), maxO=maxOfSet(fullSet(other));
+  if(maxK===maxO) return false;
+  const senior=maxK>maxO?k7:other;
+  const junior=maxK>maxO?other:k7;
+  if(canCooptPair(senior,junior)) return junior===k7;
+  return senior===k7;
+}
+/** Избегать соседства с этим юнитом (не для к‑6 и не для героя с макс. 8). */
+function k7ShouldEvadeMob(k7,o){
+  if(!o||o===k7||o.collected) return false;
+  if(M6.includes(o)) return false;
+  if(o.isHero&&maxOfSet(fullSet(o))===8) return false;
+  return k7DiesInMeetWith(k7,o);
+}
+function k7WouldMeetAtPosition(k7,nx,ny,o){
+  if(nx===o.x&&ny===o.y) return true;
+  if(isK7Mob(k7)&&k7ExtendedMeetPartner(o))
+    return Math.max(Math.abs(nx-o.x),Math.abs(ny-o.y))<=1;
+  return false;
+}
+function k7MoveIsEvadeSafe(k7,nx,ny){
+  for(const o of getAllNPC()){
+    if(!k7ShouldEvadeMob(k7,o)) continue;
+    if(k7WouldMeetAtPosition(k7,nx,ny,o)) return false;
+  }
+  if(hero.alive&&k7ShouldEvadeMob(k7,hero)&&k7WouldMeetAtPosition(k7,nx,ny,hero)) return false;
+  return true;
+}
+
+function meet(A,B){
+  const aOk=A.isHero?A.alive:!A.collected;
+  const bOk=B.isHero?B.alive:!B.collected;
+  if(!aOk||!bOk) return null;
+
+  const setA=fullSet(A), setB=fullSet(B);
+  const maxA=maxOfSet(setA), maxB=maxOfSet(setB);
+
+  if(maxA===maxB){
+    if(stage===9 && (A.isHero||B.isHero)){
+      const npc=A.isHero?B:A;
+      const hr=A.isHero?A:B;
+      if(hr.isHero&&!npc.isHero){ npc.collected=true; return null; }
+    }
+    return null;
+  }
+
+  const[senior,junior]=maxA>maxB?[A,B]:[B,A];
+  const sSets=fullSet(senior), jSets=fullSet(junior);
+
+  let canC=false;
+  if(stage===9) canC=Math.abs(maxA-maxB)===1;
+  else for(const a of sSets){ for(const b of jSets){ if(Math.abs(a-b)===1){canC=true;break;} } if(canC)break; }
+
+  if(canC){
+    if(junior.isHero && !senior.isHero){
+      npcPenaltyMinusOne(senior);
+      return null;
+    }
+    const toAdd=[junior.lvl,...(junior.dots||[])];
+    // dots — unique set for logic
+    for(const d of toAdd){ if(d>=1&&d<=MAX_DIGIT&&!senior.dots.includes(d)) senior.dots.push(d); }
+    if(!senior.absorbed) senior.absorbed=[];
+    if(stage!==9) senior.absorbed.push([...jSets].sort((a,b)=>b-a));
+    if(senior.isHero){
+      const mx=maxOfSet(fullSet(senior));
+      const dLv=Math.min(mx,9);
+      senior.lvl=mx;
+      senior.peakLvl=dLv;
+      senior.navDigit=(mx<=MAX_DIGIT)?mx:(mx===9?9:0);
+      if(stage===9){
+        senior.displayDots=[dLv];
+        if(senior.navDigit!==2){
+          clearHeroK2Paint();
+          senior._k2Pulse=0;
+        }
+        senior._k5LastWasJump=false;
+        const nd=senior.navDigit|0;
+        if(nd!==3&&nd!==4){
+          senior._bdx=senior._bdy=0;
+          senior._satL=senior._satR=null;
+        } else if(nd===3){
+          senior._satL=senior._satR=null;
+        } else if(nd===4){
+          initHeroMode4Satellites(true);
+        }
+      } else {
+        const sorted=[...fullSet(senior)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a);
+        senior.displayDots=sorted.length?sorted:[dLv];
+      }
+    } else {
+      const sorted=[...fullSet(senior)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a);
+      senior.displayDots=sorted.length?sorted:[senior.lvl];
+    }
+    if(junior.isHero) junior.alive=false; else junior.collected=true;
+    return null;
+  } else {
+    const info={
+      seniorSets:[...sSets].sort((a,b)=>b-a),
+      juniorSets:[...jSets].sort((a,b)=>b-a),
+      heroWasSenior:senior.isHero
+    };
+    // Count killed (senior died — not absorbed)
+    if(!senior.isHero) killedCount++;
+    if(senior.isHero) senior.alive=false; else senior.collected=true;
+    return info;
+  }
+}
+
+function checkMeetings(mover){
+  const ok=mover.isHero?mover.alive:!mover.collected;
+  if(!ok) return;
+  if(!mover.isHero&&hero.alive){
+    updateHeroLvl();
+    while(hero.alive){
+      const adj=getAllNPC().filter(n=>!n.collected&&heroNpcManhattanMeetOk(n));
+      if(!adj.length) break;
+      const order=sortPartnersForMeet(hero,adj);
+      const target=order[0];
+      if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(target))) break;
+      const info=meet(hero,target);
+      if(target.collected) registerNpcCollectedByHero(target);
+      updateHeroLvl(); refreshCounters();
+      if(!hero.alive){ handleHeroDeath(info); return; }
+    }
+  }
+  const stillOk=mover.isHero?mover.alive:!mover.collected;
+  if(!stillOk) return;
+  while(true){
+    const partners=getAllNPC().filter(o=>!o.collected&&o!==mover&&npcAdjacentForMeeting(mover,o));
+    if(!partners.length) break;
+    const order=sortPartnersForMeet(mover,partners);
+    const o=order[0];
+    const oWas=o.collected, mWas=mover.collected;
+    meet(mover,o);
+    if(o.collected===oWas&&mover.collected===mWas) break;
+    if(mover.collected) break;
+  }
+  refreshCounters();
+}
+
+function handleHeroDeath(info){
+  let deathLine='Погиб: этап '+stage;
+  if(info&&info.seniorSets&&info.juniorSets)
+    deathLine+=' — старший ['+info.seniorSets.join(' ')+'] vs младший ['+info.juniorSets.join(' ')+']';
+  campaignHistory.push(deathLine);
+  maybeRecordSnapshot('death');
+  clrT(); // stop tick and animation timers
+  draw();
+  // Gray overlay on entire canvas
+  const cv=gel('c');
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='rgba(80,80,80,0.62)';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  ctx.font=`bold ${0|CELL*0.6}px system-ui,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ГЕРОЙ ПОГИБ', cv.width/2, cv.height/2-CELL*0.5);
+  ctx.font=`${0|CELL*0.38}px system-ui,sans-serif`;
+  ctx.fillStyle='rgba(255,255,255,0.75)';
+  if(info){
+    ctx.fillText('['+info.seniorSets.join(',')+'] vs ['+info.juniorSets.join(',')+']', cv.width/2, cv.height/2+CELL*0.3);
+  }
+  ctx.font=`${0|CELL*0.32}px system-ui,sans-serif`;
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.fillText('нажми любую клавишу', cv.width/2, cv.height/2+CELL*1.0);
+  setMsg('');
+
+  // Wait for any key to restart stage — minimum 1 second
+  function onAnyKey(e){
+    document.removeEventListener('keydown', onAnyKey);
+    document.removeEventListener('click', onAnyKey);
+    resetStage();
+  }
+  setTimeout(()=>{
+    document.addEventListener('keydown', onAnyKey);
+    document.addEventListener('click', onAnyKey);
+  }, 1000);
+}
+
+function getAllNPC(){
+  const all=[...M1,...M2,...M3,...M5,...M6];
+  if(stage>=8) for(const m of M7) all.push(m);
+  for(const p of P4) all.push(p.a,p.b);
+  return all;
+}
+
+const PANEL_COLORS={
+  1:{bg:'#1a1040',border:'#7F77DD',text:'#AFA9EC'},
+  2:{bg:'#2a0808',border:'#E24B4A',text:'#F09595'},
+  3:{bg:'#0e2004',border:'#639922',text:'#C0DD97'},
+  4:{bg:'#041428',border:'#378ADD',text:'#85B7EB'},
+  5:{bg:'#1e0e00',border:'#BA7517',text:'#FAC775'},
+  6:{bg:'#2a1040',border:'#9B6BB8',text:'#E8D4F5'},
+  7:{bg:'#042f2e',border:'#14b8a6',text:'#5eead4'},
+  8:{bg:'#3f0d1f',border:'#f43f5e',text:'#fda4af'},
+};
+
+function makePanel(lvl,small){
+  const c=PANEL_COLORS[lvl]||PANEL_COLORS[1];
+  const el=document.createElement('span');
+  el.className='panel';
+  el.style.cssText=`background:${c.bg};border-color:${c.border};color:${c.text}${small?';font-size:10px;padding:1px 5px':''}`;
+  el.textContent=String(lvl);
+  return el;
+}
+
+/** Этап 9: какие виды фишек (1…7) ещё есть на поле. */
+function aliveNpcKindDigits(){
+  const kinds=[];
+  if(M1.some(m=>!m.collected)) kinds.push(1);
+  if(M2.some(m=>!m.collected)) kinds.push(2);
+  if(M3.some(m=>!m.collected)) kinds.push(3);
+  for(const p of P4) if(!p.a.collected||!p.b.collected){ kinds.push(4); break; }
+  if(M5.some(m=>!m.collected)) kinds.push(5);
+  if(M6.some(m=>!m.collected)) kinds.push(6);
+  if(M7.some(m=>!m.collected)) kinds.push(7);
+  return kinds;
+}
+
+function drawPanels(){
+  const bar=gel('panels-bar'); if(!bar||bar===_stub) return;
+
+  const hp=gel('hero-panel');
+  if(stage===9 && won){
+    if(hp&&hp!==_stub){
+      hp.textContent='';
+      hp.style.display='none';
+    }
+    bar.innerHTML='';
+    bar.style.display='none';
+    return;
+  }
+
+  if(hp&&hp!==_stub){
+    const hLv=heroDisplayLvl();
+    const chip=Math.min(Math.max(1,hLv),9);
+    const pc=PANEL_COLORS[chip<=8?chip:8]||PANEL_COLORS[1];
+    const fs=12;
+    hp.style.cssText='display:inline-flex;align-items:center;min-height:22px;padding:0 6px;border-radius:4px;font-size:'+fs+'px;font-weight:900;border:1.5px solid '+pc.border+';background:'+pc.bg+';color:'+pc.text+';letter-spacing:0.06em;white-space:nowrap;max-width:min(92vw,520px);overflow-x:auto;';
+    if(stage===9) hp.textContent='Уровень\u00A0'+hLv;
+    else hp.textContent=penaltyUIFullText(hero);
+  }
+
+  if(stage===9){
+    if(hp&&hp!==_stub) hp.style.removeProperty('display');
+    bar.style.display='flex';
+    bar.innerHTML='';
+    const lab=document.createElement('span');
+    lab.style.cssText='font-size:10px;color:#888;font-weight:600;flex-shrink:0;margin-right:4px;align-self:center;';
+    lab.textContent='Живы:';
+    bar.appendChild(lab);
+    const kinds=aliveNpcKindDigits();
+    if(!kinds.length){
+      const empty=document.createElement('span');
+      empty.style.cssText='font-size:11px;color:#666;align-self:center;';
+      empty.textContent='—';
+      bar.appendChild(empty);
+    } else for(const k of kinds) bar.appendChild(makePanel(k,true));
+    if(killedCount>0){
+      const g=document.createElement('span');
+      g.className='panel-dead';
+      g.style.marginLeft='6px';
+      g.textContent='⚰ '+killedCount;
+      bar.appendChild(g);
+    }
+    return;
+  }
+  bar.style.display='flex';
+  bar.innerHTML='';
+
+  if(stage<2) return;
+
+  // All live NPCs, sorted by lvl desc
+  const allNPC=[];
+  if(stage>=8) for(const m of M7) if(!m.collected) allNPC.push(m);
+  if(stage>=7) for(const m of M6) if(!m.collected) allNPC.push(m);
+  if(stage>=6) for(const m of M5) if(!m.collected) allNPC.push(m);
+  if(stage>=5) for(const p of P4){ if(!p.a.collected) allNPC.push(p.a); if(!p.b.collected) allNPC.push(p.b); }
+  if(stage>=4) for(const m of M3) if(!m.collected) allNPC.push(m);
+  if(stage>=3) for(const m of M2) if(!m.collected) allNPC.push(m);
+  if(stage>=2) for(const m of M1) if(!m.collected) allNPC.push(m);
+  allNPC.sort((a,b)=>maxOfSet(fullSet(b))-maxOfSet(fullSet(a)));
+
+  // Каждый NPC — панель с полным пеналом и хвостом кооптаций (этапы 1–8)
+  for(const npc of allNPC){
+    const maxD=maxOfSet(fullSet(npc));
+    const c=PANEL_COLORS[maxD]||PANEL_COLORS[npc.lvl]||PANEL_COLORS[1];
+    const el=document.createElement('span');
+    el.className='panel';
+    el.style.cssText=`background:${c.bg};border-color:${c.border};color:${c.text}`;
+    const txt=penaltyUIFullText(npc);
+    el.textContent=txt;
+    if(txt.length>14) el.style.fontSize='8px';
+    else if(txt.length>8) el.style.fontSize='9px';
+    else if(txt.length>5) el.style.fontSize='10px';
+    bar.appendChild(el);
+  }
+
+  // Graveyard — only truly killed (senior died, incompatible sets)
+  if(killedCount>0){
+    const g=document.createElement('span');
+    g.className='panel-dead';
+    g.textContent='⚰ '+killedCount;
+    bar.appendChild(g);
+  }
+}
+
+function refreshCounters(){
+  if(stage>=2) gel('c1-tot').textContent=M1.filter(x=>!x.collected).length+col1;
+  if(stage>=3) gel('c2-tot').textContent=M2.filter(x=>!x.collected).length+col2;
+  if(stage>=4) gel('c3-tot').textContent=M3.filter(x=>!x.collected).length+col3;
+  if(stage>=5) gel('c4-tot').textContent=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0)+col4;
+  if(stage>=6) gel('c5-tot').textContent=M5.filter(x=>!x.collected).length+col5;
+  if(stage>=7) gel('c6-tot').textContent=M6.filter(x=>!x.collected).length+col6;
+  if(stage>=8) gel('c7-tot').textContent=M7.filter(x=>!x.collected).length+col7;
+  if(stage===8) gel('c8-tot').textContent='1';
+  drawPanels();
+}
+
+function loadStage(){
+  hideVictoryOverlay();
+  const conf=gel('confetti-canvas');
+  if(conf&&conf!==_stub) conf.style.display='none';
+  clrT(); won=false; paused=false; M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
+  col1=0;col2=0;col3=0;col4=0;col5=0;col6=0;col7=0;
+  if(FOREST_CAMPAIGN_2027 && !replayMode){
+    applyForestMiniGameParams(forestMiniGameIndex);
+    // Важно: код мини-игры меняет N, поэтому пересчитываем размер клетки после применения параметров.
+    layoutCellSize();
+    if(stage>=1&&stage<=8) movesPerStage[stage-1]=0;
+  }
+  // Герой: обычно уровень = номер этапа.
+  // Для серии 3 («Кроты и грибы») фиксируем уровень героя = 3 по просьбе пользователя.
+  const lvl=(FOREST_CAMPAIGN_2027 && forestIsMole())
+    ? 3
+    : ((!FOREST_CAMPAIGN_2027&&stage===9)?9:Math.min(8,Math.max(1,stage)));
+  const dots=[lvl];
+  hero={x:0,y:0,lvl,peakLvl:lvl,dots,displayDots:[lvl],absorbed:[],alive:true,isHero:true,navDigit:0};
+  killedCount=0;
+  k5Flashes=[]; k5WallFlashes=[]; k5FreezeUntil=0; k2Territory={}; tickCount=0; graveyard=[];
+  gel('new-btn').style.display='none';
+  if(FOREST_CAMPAIGN_2027) updateForestHud();
+  else gel('stage-num').textContent=stage;
+  const hp=gel('hero-panel'); if(hp&&hp!==_stub) hp.textContent='';
+  hideL(); setMsg('');
+
+  if(stage===1){ genGrid(); }
+  else if(stage===2){ genGrid(); plM1(); showL('line2','c1-cnt','c1-tot',0,M1.length); }
+  else if(stage===3){ let ok=false,a=0; while(!ok&&a++<200){genGrid();plM1();plM2();ok=vS3();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); }
+  else if(stage===4){ let ok=false,a=0; while(!ok&&a++<200){genGrid();plM1();plM2();plM3();ok=vS4();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); }
+  else if(stage===5){ let ok=false,a=0; while(!ok&&a++<200){genGrid();plM1();plM2();plM3();plP4();ok=vS5();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); }
+  else if(stage===6){ let ok=false,a=0; while(!ok&&a++<400){genGrid();plM1();plM2();plM3();plP4();plM5();ok=vS6();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); }
+  else if(stage===7){ let ok=false,a=0; while(!ok&&a++<500){genGrid();plM1();plM2();plM3();plP4();plM5();plM6();ok=vS7();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); }
+  else if(stage===8){ let ok=false,a=0; while(!ok&&a++<700){M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[]; genGrid(); plM1(); plM2(); plM3(); plP4(); plM5(); plM6(); plM7(); ok=vS8();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); showL('line8','c7-cnt','c7-tot',0,M7.length); showL('line9','c8-cnt','c8-tot',0,1); }
+  else if(stage===9 && !FOREST_CAMPAIGN_2027){
+    const saved={...npcCounts};
+    npcCounts={n1:1,n2:1,n3:1,p4:1,n5:1,n6:1,n7:1};
+    let ok9=false,a9=0;
+    while(!ok9&&a9++<2500){
+      M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
+      genGrid();
+      plM1();
+      plM2();
+      plM3();
+      plP4();
+      plM5();
+      plM6();
+      plM7();
+      ok9=vS9Full();
+    }
+    npcCounts=saved;
+    hero.x=0; hero.y=0;
+    hideL();
+    showL('line2','c1-cnt','c1-tot',0,M1.length);
+    showL('line3','c2-cnt','c2-tot',0,M2.length);
+    showL('line4','c3-cnt','c3-tot',0,M3.length);
+    showL('line5','c4-cnt','c4-tot',0,P4.length*2);
+    showL('line6','c5-cnt','c5-tot',0,M5.length);
+    showL('line7','c6-cnt','c6-tot',0,M6.length);
+    showL('line8','c7-cnt','c7-tot',0,M7.length);
+    if(!ok9) setMsg('Этап 9: не удалось разместить набор фишек. Нажмите «Заново».');
+    else setMsg('Этап 9: к‑1…к‑7. FIN в центре. к‑7 ходит по полу и стенам, тянет к камням стены; цифры — режим; встреча на клетке или соседней. 0 — сброс.');
+  }
+  if(stage===9 && !FOREST_CAMPAIGN_2027){
+    heroMoved=true;
+    tickT=setInterval(tick,tickMs());
+  } else {
+    heroMoved=false;
+  }
+
+  if(FOREST_CAMPAIGN_2027){
+    forestMushrooms=new Set();
+    forestMushroomsTotal=0;
+    forestMushroomsCollected=0;
+    forestMoleTaken=false;
+    if(forestUsesMushrooms()){
+      // Грибы: размещаем на клетках пола рядом с ёлками.
+      const cand=[];
+      const fx=finishGX(), fy=finishGY();
+      for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+        if(grid[y][x]!==0) continue;
+        if((x===0&&y===0)||(x===fx&&y===fy)) continue;
+        let nearTree=false;
+        for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const nx=x+dx, ny=y+dy;
+          if(nx<0||nx>=N||ny<0||ny>=N) continue;
+          if(grid[ny][nx]===1){ nearTree=true; break; }
+        }
+        if(nearTree) cand.push({x,y});
+      }
+      shuffle(cand);
+      // В серии 3 «Кроты и грибы» грибов столько же, сколько кротов.
+      const need=forestIsMole()
+        ? Math.max(1, Math.min((npcCounts.n2|0)||0, cand.length))
+        : Math.max(1, Math.min(N, cand.length));
+      forestMushroomsTotal=need;
+      for(let i=0;i<need;i++){
+        const p=cand[i];
+        forestMushrooms.add(p.x+','+p.y);
+      }
+      if(forestIsMole()) setMsg('Возьми крота, затем грибы: 0/'+forestMushroomsTotal);
+      else setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+    } else {
+      setMsg('Помоги колобку вернуться домой');
+    }
+  }
+
+  // Save snapshot at stage start (for retry)
+  hero._stageStartDots=[...dots];
+  drawPanels();
+  draw();
+  syncCtrlMode();
+  gamepadS9PrevA=false;
+  gamepadS9HeldNav=null;
+  gamepadS9LastNavAt=0;
+  maybeRecordSnapshot('stage');
+}
+
+/** Все клетки пола (grid===0) в одной 4-связной компоненте с (sx,sy) — нет «карманов» за замкнутым контуром стен. */
+function allFloorConnectedFrom(sx,sy){
+  if(grid[sy][sx]!==0) return false;
+  const v=Array.from({length:N},()=>new Array(N).fill(false));
+  const q=[[sx,sy]];
+  v[sy][sx]=true;
+  let seen=0;
+  while(q.length){
+    const[x,y]=q.shift();
+    seen++;
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx,ny=y+dy;
+      if(nx<0||nx>=N||ny<0||ny>=N) continue;
+      if(grid[ny][nx]!==0||v[ny][nx]) continue;
+      v[ny][nx]=true;
+      q.push([nx,ny]);
+    }
+  }
+  let floorCells=0;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++) if(grid[y][x]===0) floorCells++;
+  return seen===floorCells;
+}
+
+function genGridValidForTryPct(tryPct){
+  grid=Array.from({length:N},()=>new Array(N).fill(0));
+  const wc=0|N*N*tryPct/100;
+  const fx=finishGX(), fy=finishGY();
+  let p=0,t=0;
+  while(p<wc&&t++<10000){
+    const rx=0|Math.random()*N,ry=0|Math.random()*N;
+    if((rx===0&&ry===0)||(rx===fx&&ry===fy)) continue;
+    if(grid[ry][rx]===0){ grid[ry][rx]=1; p++; }
+  }
+  return pOK(0,0,fx,fy)&&allFloorConnectedFrom(0,0);
+}
+
+function genGrid(){
+  let tryPct=wallPct;
+  for(let down=0; down<50; down++){
+    for(let att=0; att<320; att++){
+      if(genGridValidForTryPct(tryPct)) return;
+    }
+    if(tryPct<=0) break;
+    tryPct=Math.max(0, tryPct-2);
+  }
+  grid=Array.from({length:N},()=>new Array(N).fill(0));
+}
+
+function cscore(x,y){
+  const fx=finishGX(), fy=finishGY();
+  if(grid[y][x]===1||(x===0&&y===0)||(x===fx&&y===fy))return -1;
+  let s=0;
+  for(const[[d1x,d1y],[d2x,d2y]]of[[[-1,0],[0,-1]],[[1,0],[0,-1]],[[-1,0],[0,1]],[[1,0],[0,1]]]){
+    const w1=(x+d1x<0||x+d1x>=N||y+d1y<0||y+d1y>=N)?1:grid[y+d1y][x+d1x];
+    const w2=(x+d2x<0||x+d2x>=N||y+d2y<0||y+d2y>=N)?1:grid[y+d2y][x+d2x];
+    if(w1&&w2)s++;
+  }
+  let wn=0;
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=x+dx,ny=y+dy;
+    if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1)wn++;
+  }
+  return s*10+wn;
+}
+
+function mkNPC(x,y,lvl){ return {x,y,lvl,collected:false,dots:[lvl],displayDots:[lvl],absorbed:[]}; }
+
+function getReachable(sx,sy){
+  const visited=new Set();
+  const q=[[sx,sy]];
+  visited.add(`${sx},${sy}`);
+  while(q.length){
+    const[x,y]=q.shift();
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx,ny=y+dy;
+      if(nx>=0&&nx<N&&ny>=0&&ny<N&&grid[ny][nx]===0&&!visited.has(`${nx},${ny}`)){
+        visited.add(`${nx},${ny}`);
+        q.push([nx,ny]);
+      }
+    }
+  }
+  return visited;
+}
+
+function plM1(){
+  const reachable=getReachable(0,0);
+  const c=[];
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+    if(!reachable.has(`${x},${y}`)) continue;
+    const s=cscore(x,y);
+    if(s>=0) c.push({x,y,s});
+  }
+  c.sort((a,b)=>b.s-a.s);
+  const ch=[],md=Math.max(2,0|N/4),cap=npcCap(1);
+  for(const v of c){
+    if(ch.length>=cap) break;
+    if(ch.every(m=>Math.abs(m.x-v.x)+Math.abs(m.y-v.y)>=md)) ch.push(v);
+  }
+  if(ch.length<cap){
+    for(const v of c){
+      if(ch.length>=cap) break;
+      if(!ch.find(m=>m.x===v.x&&m.y===v.y)) ch.push(v);
+    }
+  }
+  M1=ch.map(({x,y})=>mkNPC(x,y,1));
+}
+
+/** Этапы 7–8: тор (противоположные стороны склеены). Иначе координаты не меняются. */
+function torusXY(x,y){
+  if(!useTorus()) return[x,y];
+  return[((x%N)+N)%N,((y%N)+N)%N];
+}
+
+/** К-2 и к-3: есть ход на соседнюю по стороне свободную клетку (стена/край не дают сдвинуться). */
+function orthWalkerPlayable(x,y){
+  if(useTorus()){
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+      const [nx,ny]=torusXY(x+dx,y+dy);
+      if(grid[ny][nx]===0) return true;
+    }
+    return false;
+  }
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=x+dx, ny=y+dy;
+    if(nx>=0&&nx<N&&ny>=0&&ny<N&&grid[ny][nx]===0) return true;
+  }
+  return false;
+}
+
+/** К-5: по хотя бы одному лучу из первой клетки встречается проходимая клетка (прыжок сквозь стены). */
+function m5RayPlayable(x,y){
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+    let cx=x+dx, cy=y+dy;
+    const limit=useTorus()?N*N+2:Math.max(N*2,8);
+    for(let s=0;s<limit;s++){
+      if(useTorus())[cx,cy]=torusXY(cx,cy);
+      else if(cx<0||cx>=N||cy<0||cy>=N) break;
+      if(grid[cy][cx]===0) return true;
+      cx+=dx; cy+=dy;
+    }
+  }
+  return false;
+}
+
+/** К-6: как король — хотя бы одна из 8 клеток назначения не стена. */
+function k6SpawnPlayable(x,y){
+  for(const[dx,dy] of KING_DIRS){
+    const x1=x+dx, y1=y+dy;
+    if(!useTorus() && (x1<0||x1>=N||y1<0||y1>=N)) continue;
+    const[nx,ny]=torusXY(x1,y1);
+    if(grid[ny][nx]===0) return true;
+  }
+  return false;
+}
+
+/** К-4: в коридоре есть две соседние по оси допустимые позиции (иначе пара не сдвинется). На торе соседство учитывает склейку 0↔N−1. */
+function p4PairPlayable(p){
+  for(const pos of p.freeSet){
+    if(p.freeSet.has(pos+1)||p.freeSet.has(pos-1)) return true;
+  }
+  if(useTorus()&&p.freeSet.has(0)&&p.freeSet.has(N-1)) return true;
+  return false;
+}
+
+function plM2(){
+  const occ=bOcc();
+  let fr=freeC(occ).filter(p=>orthWalkerPlayable(p.x,p.y));
+  if(fr.length<npcCap(2)) fr=freeC(occ);
+  shuffle(fr);
+  M2=fr.slice(0,Math.min(npcCap(2),fr.length)).map(({x,y})=>mkNPC(x,y,2));
+}
+
+function plM3(){
+  const occ=bOcc(); for(const m of M2)occ.add(kxy(m));
+  let fr=freeC(occ).filter(p=>orthWalkerPlayable(p.x,p.y));
+  if(fr.length<npcCap(3)) fr=freeC(occ);
+  shuffle(fr);
+  M3=fr.slice(0,Math.min(npcCap(3),fr.length)).map(({x,y})=>{
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>{
+      const [nx,ny]=torusXY(x+dx,y+dy);
+      if(!useTorus()&&(x+dx<0||x+dx>=N||y+dy<0||y+dy>=N)) return false;
+      return grid[ny][nx]===0;
+    });
+    const[dx,dy]=dirs.length?dirs[0|Math.random()*dirs.length]:[1,0];
+    return{...mkNPC(x,y,3),dx,dy};
+  });
+}
+
+function plP4(){
+  P4=[];
+  const occ=bOcc(); for(const m of M2)occ.add(kxy(m)); for(const m of M3)occ.add(kxy(m));
+  const pc=[];
+  for(let row=0;row<N-1;row++){ const fx=[]; for(let x=0;x<N;x++)if(grid[row][x]===0&&grid[row+1][x]===0)fx.push(x); if(fx.length>=2)pc.push({horiz:true,line1:row,line2:row+1,fp:fx}); }
+  for(let col=0;col<N-1;col++){ const fy=[]; for(let y=0;y<N;y++)if(grid[y][col]===0&&grid[y][col+1]===0)fy.push(y); if(fy.length>=2)pc.push({horiz:false,line1:col,line2:col+1,fp:fy}); }
+  shuffle(pc);
+  for(const p of pc){
+    if(P4.length>=npcP4Pairs()) break;
+    const fx=finishGX(), fy=finishGY();
+    const av=p.fp.filter(pos=>{
+      const[x1,y1]=p.horiz?[pos,p.line1]:[p.line1,pos];
+      const[x2,y2]=p.horiz?[pos,p.line2]:[p.line2,pos];
+      return !occ.has(`${x1},${y1}`)&&!occ.has(`${x2},${y2}`)&&!(x1===0&&y1===0)&&!(x1===fx&&y1===fy)&&!(x2===0&&y2===0)&&!(x2===fx&&y2===fy);
+    });
+    if(!av.length)continue;
+    const sp=av[0|Math.random()*av.length];
+    const[x1,y1]=p.horiz?[sp,p.line1]:[p.line1,sp];
+    const[x2,y2]=p.horiz?[sp,p.line2]:[p.line2,sp];
+    occ.add(`${x1},${y1}`);occ.add(`${x2},${y2}`);
+    P4.push({horiz:p.horiz,line1:p.line1,line2:p.line2,pos:sp,dir:Math.random()<0.5?1:-1,freeSet:new Set(p.fp),
+      a:{...mkNPC(x1,y1,4)},b:{...mkNPC(x2,y2,4)}});
+  }
+}
+
+function plM5(){
+  const occ=bOcc();
+  for(const m of M2) occ.add(kxy(m));
+  for(const m of M3) occ.add(kxy(m));
+  for(const p of P4){ occ.add(kxy(p.a)); occ.add(kxy(p.b)); }
+  let fr=freeC(occ).filter(p=>m5RayPlayable(p.x,p.y));
+  if(fr.length<npcCap(5)){
+    const occ2=bOcc();
+    fr=freeC(occ2).filter(p=>m5RayPlayable(p.x,p.y));
+  }
+  if(fr.length<npcCap(5)){
+    const occ3=bOcc();
+    fr=freeC(occ3); shuffle(fr);
+  } else shuffle(fr);
+  M5=fr.slice(0,Math.min(npcCap(5),fr.length)).map(({x,y})=>mkNPC(x,y,5));
+}
+
+function plM6(){
+  const occ=bOcc();
+  for(const m of M2) occ.add(kxy(m));
+  for(const m of M3) occ.add(kxy(m));
+  for(const p of P4){ occ.add(kxy(p.a)); occ.add(kxy(p.b)); }
+  for(const m of M5) occ.add(kxy(m));
+  let fr=freeC(occ).filter(p=>k6SpawnPlayable(p.x,p.y));
+  if(fr.length<npcCap(6)){
+    const occ2=bOcc();
+    fr=freeC(occ2).filter(p=>k6SpawnPlayable(p.x,p.y));
+  }
+  if(fr.length<npcCap(6)){ const occ3=bOcc(); fr=freeC(occ3); shuffle(fr); }
+  else shuffle(fr);
+  M6=fr.slice(0,Math.min(npcCap(6),fr.length)).map(({x,y})=>mkNPC(x,y,6));
+}
+
+/** к-7: любая клетка кроме старта/финиша и занятых (включая стены). */
+function plM7(){
+  const occ=bOcc();
+  for(const m of M2) occ.add(kxy(m));
+  for(const m of M3) occ.add(kxy(m));
+  for(const p of P4){ occ.add(kxy(p.a)); occ.add(kxy(p.b)); }
+  for(const m of M5) occ.add(kxy(m));
+  for(const m of M6) occ.add(kxy(m));
+  const fgx=finishGX(), fgy=finishGY();
+  const pool=[];
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    if(occ.has(`${x},${y}`)) continue;
+    if((x===0&&y===0)||(x===fgx&&y===fgy)) continue;
+    pool.push({x,y});
+  }
+  shuffle(pool);
+  M7=pool.slice(0,Math.min(npcCap(7),pool.length)).map(({x,y})=>{
+    const n=mkNPC(x,y,7);
+    n.isK7=true;
+    n.k7Visited=new Set([`${x},${y}`]);
+    return n;
+  });
+}
+
+function vS8(){
+  if(!vS7()) return false;
+  if(M7.length<npcCap(7)) return false;
+  return true;
+}
+
+function vS9(){
+  if(!vS7()) return false;
+  if(M7.length<npcCap(7)) return false;
+  if(M1.length!==1||M2.length!==1||M3.length!==1||M5.length!==1||M6.length!==1||M7.length!==1) return false;
+  if(P4.length!==1) return false;
+  return true;
+}
+
+/** Этап 9: полный набор к‑1…к‑7 и пара к‑4; связность пола старт–центр (FIN). */
+function vS9Full(){
+  if(!vS9()) return false;
+  return pOK(0,0,finishGX(),finishGY())&&allFloorConnectedFrom(0,0);
+}
+
+// Track k5 landing flashes: [{x,y,t}]; стены по траектории прыжка — [{x,y,t}]
+let k5Flashes=[];
+let k5WallFlashes=[];
+let k5FreezeUntil=0; // timestamp until which all movement is frozen
+
+/** К‑5 / герой‑5: после прыжка следующий ход — один шаг на соседнее поле (без луча). */
+function k5StepEntity(ent){
+  if(!ent||ent.collected) return;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  if(ent._k5LastWasJump){
+    ent._k5LastWasJump=false;
+    const order=[...dirs]; shuffle(order);
+    for(const[dx,dy] of order){
+      let nx=ent.x+dx, ny=ent.y+dy;
+      if(useTorus()) [nx,ny]=torusXY(nx,ny);
+      else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+      if(grid[ny][nx]===0){ ent.x=nx; ent.y=ny; return; }
+    }
+    return;
+  }
+  const jumps=[];
+  const limit=useTorus()?N*N+4:Math.max(N*N,32);
+  for(const[dx,dy] of dirs){
+    let cx=ent.x+dx, cy=ent.y+dy;
+    const walls=[];
+    let seenWall=false;
+    for(let s=0;s<limit;s++){
+      if(useTorus()) [cx,cy]=torusXY(cx,cy);
+      else if(cx<0||cx>=N||cy<0||cy>=N){ seenWall=false; walls.length=0; break; }
+      if(grid[cy][cx]===0){
+        if(seenWall) jumps.push({x:cx,y:cy,walls:walls.slice()});
+        break;
+      }
+      if(grid[cy][cx]===1){
+        seenWall=true;
+        if(!useTorus()) walls.push({x:cx,y:cy});
+        cx+=dx; cy+=dy;
+        continue;
+      }
+      break;
+    }
+  }
+  if(jumps.length){
+    const j=jumps[0|Math.random()*jumps.length];
+    ent.x=j.x; ent.y=j.y;
+    ent._k5LastWasJump=true;
+    const t0=Date.now();
+    k5Flashes.push({x:j.x,y:j.y,t:t0});
+    for(const w of j.walls) k5WallFlashes.push({x:w.x,y:w.y,t:t0});
+    return;
+  }
+  const steps=[];
+  for(const[dx,dy] of dirs){
+    let nx=ent.x+dx, ny=ent.y+dy;
+    if(useTorus()) [nx,ny]=torusXY(nx,ny);
+    else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+    if(grid[ny][nx]===0) steps.push({x:nx,y:ny});
+  }
+  if(steps.length){
+    const st=steps[0|Math.random()*steps.length];
+    ent.x=st.x; ent.y=st.y;
+  }
+}
+
+function stepM5(m){
+  if(m.collected) return;
+  k5StepEntity(m);
+}
+
+function stepP4(pair){
+  if(pair.a.collected&&pair.b.collected)return;
+  const npRaw=pair.pos+pair.dir;
+  const npTorus=((npRaw%N)+N)%N;
+  const bl=useTorus()
+    ? !pair.freeSet.has(npTorus)
+    : (npRaw<0||npRaw>=N||!pair.freeSet.has(npRaw));
+  if(bl){
+    pair.dir=-pair.dir;
+    const np2Raw=pair.pos+pair.dir;
+    const np2Torus=((np2Raw%N)+N)%N;
+    if(useTorus()){
+      if(!pair.freeSet.has(np2Torus)) return;
+      pair.pos=np2Torus;
+    } else {
+      if(np2Raw<0||np2Raw>=N||!pair.freeSet.has(np2Raw)) return;
+      pair.pos=np2Raw;
+    }
+  } else {
+    pair.pos=useTorus() ? npTorus : npRaw;
+  }
+  if(pair.horiz){ if(!pair.a.collected){pair.a.x=pair.pos;pair.a.y=pair.line1;} if(!pair.b.collected){pair.b.x=pair.pos;pair.b.y=pair.line2;} }
+  else{ if(!pair.a.collected){pair.a.x=pair.line1;pair.a.y=pair.pos;} if(!pair.b.collected){pair.b.x=pair.line2;pair.b.y=pair.pos;} }
+  if(!pair.a.collected) checkMeetings(pair.a);
+  if(!pair.b.collected) checkMeetings(pair.b);
+}
+
+function allM1Reachable(){ return M1.every(m=>pOK(0,0,m.x,m.y)); }
+function vS3(){
+  if(!allM1Reachable()) return false;
+  for(const m2 of M2){
+    if(!orthWalkerPlayable(m2.x,m2.y)) return false;
+    for(const m1 of M1) if(m2.x===m1.x&&m2.y===m1.y) return false;
+  }
+  return true;
+}
+function vS4(){
+  if(!vS3()) return false;
+  for(const m3 of M3){
+    if(!orthWalkerPlayable(m3.x,m3.y)) return false;
+    for(const m1 of M1) if(m3.x===m1.x&&m3.y===m1.y) return false;
+    for(const m2 of M2) if(m3.x===m2.x&&m3.y===m2.y) return false;
+  }
+  return true;
+}
+function vS5(){
+  if(!vS4()) return false;
+  if(P4.length<npcP4Pairs()) return false;
+  for(const p of P4) if(!p4PairPlayable(p)) return false;
+  return true;
+}
+function vS6(){
+  if(!vS5()) return false;
+  if(M5.length<npcCap(5)) return false;
+  for(const m of M5) if(!m5RayPlayable(m.x,m.y)) return false;
+  return true;
+}
+function vS7(){
+  if(!vS6()) return false;
+  for(const m of M6) if(!k6SpawnPlayable(m.x,m.y)) return false;
+  return M6.length>=npcCap(6);
+}
+
+function entitiesAtCell(x,y, ignoreMob){
+  const res=[];
+  if(hero.alive&&hero.x===x&&hero.y===y) res.push(hero);
+  for(const o of getAllNPC()){
+    if(ignoreMob&&o===ignoreMob) continue;
+    if(!o.collected&&o.x===x&&o.y===y) res.push(o);
+  }
+  return res;
+}
+function canCooptPair(senior, junior){
+  if(stage===9) return Math.abs(maxOfSet(fullSet(senior))-maxOfSet(fullSet(junior)))===1;
+  const sSets=fullSet(senior), jSets=fullSet(junior);
+  for(const a of sSets) for(const b of jSets) if(Math.abs(a-b)===1) return true;
+  return false;
+}
+/** Если бы k6 и other оказались в одной клетке — выживает ли k6? */
+function k6SurvivesMeet(k6, other){
+  const maxK=maxOfSet(fullSet(k6)), maxO=maxOfSet(fullSet(other));
+  if(maxK===maxO) return true;
+  const senior=maxK>maxO?k6:other;
+  const junior=maxK>maxO?other:k6;
+  if(canCooptPair(senior, junior)) return junior!==k6;
+  return senior!==k6;
+}
+function cellUnsafeForK6(m, nx, ny){
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    if(dx===0&&dy===0) continue;
+    let ex=nx+dx, ey=ny+dy;
+    if(useTorus())[ex,ey]=torusXY(ex,ey);
+    else if(ex<0||ex>=N||ey<0||ey>=N) continue;
+    for(const o of entitiesAtCell(ex,ey,m)){
+      if(!k6SurvivesMeet(m,o)) return true;
+    }
+  }
+  return false;
+}
+/** Классификация кооптации на клетке: NPC (предпочтительно) или только герой. */
+function k6CooptKindOnCell(m, nx, ny){
+  const maxK=maxOfSet(fullSet(m));
+  let npc=false, h=false;
+  for(const o of entitiesAtCell(nx,ny,m)){
+    const maxO=maxOfSet(fullSet(o));
+    if(maxK<=maxO||!canCooptPair(m,o)) continue;
+    if(o.isHero) h=true; else npc=true;
+  }
+  if(npc) return 'npc';
+  if(h) return 'hero';
+  return '';
+}
+function stepM6AI(m){
+  if(m.collected||!hero.alive) return;
+  const moves=[];
+  for(const[dx,dy] of KING_DIRS){
+    let nx=m.x+dx, ny=m.y+dy;
+    if(useTorus())[nx,ny]=torusXY(nx,ny);
+    else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+    if(grid[ny][nx]===1) continue;
+    moves.push([nx,ny]);
+  }
+  if(!moves.length) return;
+  const cooptNpc=[], cooptHero=[], safe=[], risky=[];
+  for(const [nx,ny] of moves){
+    const occ=entitiesAtCell(nx,ny,m);
+    let dead=false;
+    for(const o of occ){
+      if(!k6SurvivesMeet(m,o)){ dead=true; break; }
+    }
+    if(dead) continue;
+    const ck=k6CooptKindOnCell(m,nx,ny);
+    if(ck==='npc') cooptNpc.push([nx,ny]);
+    else if(ck==='hero') cooptHero.push([nx,ny]);
+    else if(occ.length) risky.push([nx,ny]);
+    else if(!cellUnsafeForK6(m,nx,ny)) safe.push([nx,ny]);
+    else risky.push([nx,ny]);
+  }
+  let pick=null;
+  if(cooptNpc.length) pick=cooptNpc[0|Math.random()*cooptNpc.length];
+  else if(cooptHero.length) pick=cooptHero[0|Math.random()*cooptHero.length];
+  else if(safe.length) pick=safe[0|Math.random()*safe.length];
+  else if(risky.length) pick=risky[0|Math.random()*risky.length];
+  if(!pick) return;
+  m.x=pick[0]; m.y=pick[1];
+  checkMeetings(m);
+}
+
+function stepAllM6(){
+  if(stage<7) return true;
+  for(const m of M6){
+    if(m.collected) continue;
+    stepM6AI(m);
+    if(!hero.alive) return false;
+  }
+  return true;
+}
+function bOcc(){
+  const fx=finishGX(), fy=finishGY();
+  const o=new Set(['0,0',`${fx},${fy}`]);
+  for(const m of M1)o.add(kxy(m));
+  return o;
+}
+function freeC(occ){ const f=[]; for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(grid[y][x]===0&&!occ.has(`${x},${y}`))f.push({x,y}); return f; }
+function pOK(sx,sy,ex,ey){
+  const v=Array.from({length:N},()=>new Array(N).fill(false));
+  const q=[[sx,sy]]; v[sy][sx]=true;
+  while(q.length){
+    const[x,y]=q.shift();
+    if(x===ex&&y===ey) return true;
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx,ny=y+dy;
+      if(nx>=0&&nx<N&&ny>=0&&ny<N&&!v[ny][nx]&&grid[ny][nx]===0){v[ny][nx]=true;q.push([nx,ny]);}
+    }
+  }
+  return false;
+}
+
+/** к‑2: ортогональный шаг по правилам закраски; ownerId — индекс в M2. */
+function stepK2PaintMob(m,ownerId){
+  if(m.collected||!hero.alive) return;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  const ps=[];
+  for(const[dx,dy]of dirs){
+    let nx=m.x+dx, ny=m.y+dy;
+    if(useTorus()){
+      [nx,ny]=torusXY(nx,ny);
+      if(grid[ny][nx]===1) continue;
+    } else if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1) continue;
+    const owner=k2Territory[nx+','+ny];
+    if(owner!==undefined&&owner!==ownerId) continue;
+    ps.push([nx,ny]);
+  }
+  if(!ps.length) return;
+  const avoidOwn=ps.filter(([nx,ny])=>k2Territory[nx+','+ny]!==ownerId);
+  let pickPool=avoidOwn.length?avoidOwn:ps;
+  // Если к-2 может следующим ходом съесть гриб — делает это приоритетно.
+  if(FOREST_CAMPAIGN_2027 && forestUsesMushrooms() && forestMushrooms && forestMushrooms.size){
+    const mushNext=pickPool.filter(([nx,ny])=>forestMushrooms.has(nx+','+ny));
+    if(mushNext.length) pickPool=mushNext;
+  }
+  // Серия 3: крот старается закрасить побольше — выбираем ход, который
+  // оставляет больше соседних клеток, доступных к закраске этим же кротом.
+  if(FOREST_CAMPAIGN_2027 && forestIsMole()){
+    let best=-1;
+    const rated=[];
+    for(const [nx,ny] of pickPool){
+      let score=0;
+      for(const [dx,dy] of dirs){
+        let tx=nx+dx, ty=ny+dy;
+        if(useTorus()) [tx,ty]=torusXY(tx,ty);
+        else if(tx<0||tx>=N||ty<0||ty>=N) continue;
+        if(grid[ty][tx]===1) continue;
+        const own=k2Territory[tx+','+ty];
+        if(own===undefined) score+=2;       // новая клетка
+        else if(own===ownerId) score+=0.4;  // своя территория (нейтрально+)
+        else score-=3;                      // чужая территория (и так запрещена)
+      }
+      rated.push({nx,ny,score});
+      if(score>best) best=score;
+    }
+    pickPool=rated.filter(r=>r.score>=best-0.001).map(r=>[r.nx,r.ny]);
+  }
+  const[nx,ny]=pickPool[0|Math.random()*pickPool.length];
+  m.x=nx; m.y=ny;
+  k2Territory[nx+','+ny]=ownerId;
+  if(FOREST_CAMPAIGN_2027 && forestUsesMushrooms()){
+    const k=nx+','+ny;
+    if(forestMushrooms.has(k)){
+      forestMushrooms.delete(k);
+      if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
+      if(forestIsMole()){
+        const prefix=forestMoleTaken?'Собери грибы':'Возьми крота, затем грибы';
+        setMsg(prefix+': '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+      } else {
+        setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+      }
+    }
+  }
+}
+
+function stepM7(m){
+  if(m.collected||!hero.alive) return;
+  if(!m.k7Visited) m.k7Visited=new Set([`${m.x},${m.y}`]);
+  const k7Key=(x,y)=>`${x},${y}`;
+  const walkK7=(nx,ny)=>grid[ny][nx]===0||grid[ny][nx]===1;
+  const opts=[];
+  for(const[dx,dy] of KING_DIRS){
+    let nx=m.x+dx, ny=m.y+dy;
+    if(useTorus()) [nx,ny]=torusXY(nx,ny);
+    else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+    if(!walkK7(nx,ny)) continue;
+    opts.push([nx,ny]);
+  }
+  if(!opts.length) return;
+  const isWall=(nx,ny)=>grid[ny][nx]===1;
+  const tiers=[
+    opts.filter(([nx,ny])=>!m.k7Visited.has(k7Key(nx,ny))&&isWall(nx,ny)),
+    opts.filter(([nx,ny])=>!m.k7Visited.has(k7Key(nx,ny))&&!isWall(nx,ny)),
+    opts.filter(([nx,ny])=>m.k7Visited.has(k7Key(nx,ny))&&isWall(nx,ny)),
+    opts.filter(([nx,ny])=>m.k7Visited.has(k7Key(nx,ny))&&!isWall(nx,ny)),
+  ];
+  const pool=tiers.find(t=>t.length)||opts;
+  const safe=pool.filter(([nx,ny])=>k7MoveIsEvadeSafe(m,nx,ny));
+  const pickPool=safe.length?safe:pool;
+  const pick=pickPool[0|Math.random()*pickPool.length];
+  m.x=pick[0]; m.y=pick[1];
+  m.k7Visited.add(k7Key(m.x,m.y));
+  if(m.k7Visited.size>N*N*3) m.k7Visited=new Set([k7Key(m.x,m.y)]);
+  checkMeetings(m);
+}
+
+function tick(){
+  if(won||resetT||paused) return;
+  tickCount++;
+  // к‑6: первый проход до к‑7 и остальных
+  if(!stepAllM6()) return;
+  if(stage>=8){
+    for(const m of M7){
+      if(m.collected) continue;
+      stepM7(m);
+      if(!hero.alive) return;
+    }
+  }
+  if(stage>=3){
+    // к-2: раз в два тика
+    if(tickCount%2===0){
+      for(let i=0;i<M2.length;i++){
+        const m=M2[i];
+        if(m.collected) continue;
+        stepK2PaintMob(m,i);
+        checkMeetings(m);
+        if(!hero.alive) return;
+      }
+      if(stage===9&&(hero.navDigit|0)!==0){
+        if(heroActsLikeK2()){
+          if(!stepHeroAutopilotK2()) return;
+        }
+      }
+    }
+  }
+  if(stage>=4){
+    for(const m of M3){
+      if(m.collected) continue;
+      if(useTorus()){
+        let nx=((m.x+m.dx)%N+N)%N, ny=((m.y+m.dy)%N+N)%N;
+        if(grid[ny][nx]===1){
+          m.dx=-m.dx; m.dy=-m.dy;
+          nx=((m.x+m.dx)%N+N)%N;
+          ny=((m.y+m.dy)%N+N)%N;
+        }
+        if(grid[ny][nx]===1){
+          const free=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>{
+            const x=((m.x+dx)%N+N)%N, y=((m.y+dy)%N+N)%N;
+            return grid[y][x]===0;
+          });
+          if(free.length){
+            [m.dx,m.dy]=free[0|Math.random()*free.length];
+            nx=((m.x+m.dx)%N+N)%N;
+            ny=((m.y+m.dy)%N+N)%N;
+          }
+        }
+        if(grid[ny][nx]===0){ m.x=nx; m.y=ny; }
+      } else {
+        let nx=m.x+m.dx, ny=m.y+m.dy;
+        if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1){
+          m.dx=-m.dx; m.dy=-m.dy;
+          nx=m.x+m.dx; ny=m.y+m.dy;
+        }
+        if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1){
+          const free=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>{
+            const x=m.x+dx, y=m.y+dy;
+            return x>=0&&x<N&&y>=0&&y<N&&grid[y][x]===0;
+          });
+          if(free.length){
+            [m.dx,m.dy]=free[0|Math.random()*free.length];
+            nx=m.x+m.dx; ny=m.y+m.dy;
+          }
+        }
+        if(nx>=0&&nx<N&&ny>=0&&ny<N&&grid[ny][nx]===0){ m.x=nx; m.y=ny; }
+      }
+      checkMeetings(m);
+      if(!hero.alive) return;
+    }
+  }
+  if(stage>=5){ for(const p of P4){stepP4(p); if(!hero.alive)return;} }
+  if(stage>=6){ for(const m of M5){ if(m.collected)continue; stepM5(m); checkMeetings(m); if(!hero.alive)return; } }
+  if(!stepAllM6()) return;
+  if(stage===9&&(hero.navDigit|0)!==0&&!heroActsLikeK2()&&!heroImmobileLikeK1()){
+    const hr=heroMovementRank();
+    if(hr===3){ if(!stepHeroAutopilotK3()) return; }
+    else if(hr===4){ if(!stepHeroAutopilotK4()) return; }
+    else if(hr===5){ if(!stepHeroAutopilotK5()) return; }
+    else if(!stepHeroAutopilotLoose()) return;
+  }
+  updateHeroLvl(); refreshCounters(); draw();
+  // Check win in case last NPC was absorbed automatically while hero is on finish
+  if(hero.alive) checkWin();
+  if(won) draw();
+  if(replayRecording && !replayMode) maybeRecordSnapshot('tick');
+}
+
+function draw(){
+  try{
+  const cv=gel('c'); if(!cv) return;
+  const sz=N*CELL; cv.width=sz;cv.height=sz;
+  const ctx=cv.getContext('2d'); const dk=darkMode;
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,sz,sz);
+
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const cx=x*CELL,cy=y*CELL;
+    if(grid[y][x]===1){
+      if(FOREST_CAMPAIGN_2027){
+        const g1='#15261a', g2='#122015';
+        ctx.fillStyle=((x+y)%2===0)?g1:g2;
+        ctx.fillRect(cx,cy,CELL,CELL);
+        drawForestTree(ctx,cx,cy,CELL);
+      } else {
+        ctx.fillStyle='#8B3A1A';
+        ctx.fillRect(cx,cy,CELL,CELL);
+        ctx.fillStyle='#A04520';
+        ctx.fillRect(cx+1,cy+1,CELL-2,CELL-2);
+      }
+    }
+    else if(x===finishGX()&&y===finishGY()){
+      if(FOREST_CAMPAIGN_2027){
+        const g='#1a2e18';
+        ctx.fillStyle=g; ctx.fillRect(cx,cy,CELL,CELL);
+        ctx.strokeStyle='#558b2f'; ctx.lineWidth=2; ctx.strokeRect(cx+1,cy+1,CELL-2,CELL-2);
+        drawForestHouse(ctx,cx,cy,CELL);
+      } else {
+        ctx.fillStyle='#0d2e12'; ctx.fillRect(cx,cy,CELL,CELL);
+        ctx.strokeStyle='#4caf50'; ctx.lineWidth=2; ctx.strokeRect(cx+1,cy+1,CELL-2,CELL-2);
+        ctx.fillStyle='#4caf50'; ctx.font=`600 ${Math.max(7,CELL*0.28)}px system-ui,sans-serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('FIN',cx+CELL/2,cy+CELL/2);
+      }
+    }
+    else{
+      if(FOREST_CAMPAIGN_2027){
+        ctx.fillStyle=(x+y)%2===0?'#193524':'#142b1e';
+        ctx.fillRect(cx,cy,CELL,CELL);
+        ctx.strokeStyle='rgba(60,90,55,0.35)'; ctx.lineWidth=0.5;
+        ctx.strokeRect(cx+0.25,cy+0.25,CELL-0.5,CELL-0.5);
+        if(forestUsesMushrooms() && forestMushrooms && forestMushrooms.has(x+','+y)){
+          drawMushroom(ctx,cx,cy,CELL);
+        }
+      } else {
+        ctx.fillStyle=(x+y)%2===0?'#1a1a1a':'#161616';
+        ctx.fillRect(cx,cy,CELL,CELL);
+        ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=0.5;
+        ctx.strokeRect(cx+0.25,cy+0.25,CELL-0.5,CELL-0.5);
+      }
+    }
+  }
+
+  if(useTorus()){
+    ctx.strokeStyle='rgba(232,160,32,0.4)';
+    ctx.lineWidth=2;
+    ctx.setLineDash([5,5]);
+    ctx.strokeRect(0.5,0.5,sz-1,sz-1);
+    ctx.setLineDash([]);
+  }
+
+  // к-2 территория — индекс M2 или герой «2» (этап 9)
+  if((stage>=3||stage===9) && Object.keys(k2Territory).length){
+    for(const [key,owner] of Object.entries(k2Territory)){
+      const[tx,ty]=key.split(',').map(Number);
+      if(owner===K2_OWNER_HERO) ctx.fillStyle=K2_TERRITORY_TINT_HERO;
+      else{
+        if(M2[owner]&&M2[owner].collected) continue;
+        ctx.fillStyle=K2_TERRITORY_TINTS[owner%K2_TERRITORY_TINTS.length];
+      }
+      ctx.fillRect(tx*CELL,ty*CELL,CELL,CELL);
+    }
+  }
+
+  // к-5: красная вспышка приземления и перепрыгнутых стен (~600 ms)
+  if((stage>=6||stage===9) && (k5Flashes.length||k5WallFlashes.length)){
+    const now=Date.now();
+    k5Flashes=k5Flashes.filter(f=>now-f.t<600);
+    k5WallFlashes=k5WallFlashes.filter(f=>now-f.t<600);
+    const frozen=now<k5FreezeUntil;
+    for(const f of k5WallFlashes){
+      if(grid[f.y][f.x]!==1) continue;
+      ctx.fillStyle=frozen?'rgba(200,25,25,0.88)':'rgba(200,25,25,0.42)';
+      ctx.fillRect(f.x*CELL, f.y*CELL, CELL, CELL);
+    }
+    for(const f of k5Flashes){
+      ctx.fillStyle=frozen?'rgba(220,20,20,0.95)':'rgba(220,20,20,0.4)';
+      ctx.fillRect(f.x*CELL, f.y*CELL, CELL, CELL);
+      if(frozen){
+        ctx.fillStyle='rgba(255,255,255,0.7)';
+        ctx.fillRect(f.x*CELL+CELL*0.38, f.y*CELL+CELL*0.12, CELL*0.24, CELL*0.76);
+        ctx.fillRect(f.x*CELL+CELL*0.12, f.y*CELL+CELL*0.38, CELL*0.76, CELL*0.24);
+      }
+    }
+  }
+
+  if(stage>=5) for(const p of P4){
+    ctx.fillStyle=dk?'rgba(56,138,221,0.07)':'rgba(56,138,221,0.09)';
+    if(p.horiz){ctx.fillRect(0,p.line1*CELL,N*CELL,CELL);ctx.fillRect(0,p.line2*CELL,N*CELL,CELL);}
+    else{ctx.fillRect(p.line1*CELL,0,CELL,N*CELL);ctx.fillRect(p.line2*CELL,0,CELL,N*CELL);}
+    if(!p.a.collected&&!p.b.collected){
+      ctx.strokeStyle=dk?'rgba(133,183,235,0.5)':'rgba(55,138,221,0.4)';
+      ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(p.a.x*CELL+CELL/2,p.a.y*CELL+CELL/2);ctx.lineTo(p.b.x*CELL+CELL/2,p.b.y*CELL+CELL/2);ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // к-5 jump ring
+  if(stage>=6) for(const m of M5) if(!m.collected){
+    const cx=m.x*CELL+CELL/2,cy=m.y*CELL+CELL/2,r=CELL*0.22;
+    ctx.strokeStyle=dk?'rgba(250,199,117,0.5)':'rgba(186,117,23,0.4)';
+    ctx.lineWidth=1;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.arc(cx,cy,r*1.7,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  }
+
+  if(stage>=7) for(const m of M6) if(!m.collected){
+    ctx.strokeStyle=dk?'rgba(200,160,230,0.55)':'rgba(155,107,184,0.45)';
+    ctx.lineWidth=1.2; ctx.setLineDash([3,2]);
+    ctx.strokeRect(m.x*CELL+CELL*0.12, m.y*CELL+CELL*0.12, CELL*0.76, CELL*0.76);
+    ctx.setLineDash([]);
+  }
+
+  if(stage>=8) for(const m of M7) if(!m.collected){
+    ctx.strokeStyle=dk?'rgba(20,184,166,0.5)':'rgba(20,184,166,0.4)';
+    ctx.lineWidth=1.2; ctx.setLineDash([2,2]);
+    ctx.strokeRect(m.x*CELL+CELL*0.1, m.y*CELL+CELL*0.1, CELL*0.8, CELL*0.8);
+    ctx.setLineDash([]);
+  }
+
+  if(stage>=2) for(const m of M1) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage>=3) for(const m of M2) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage>=4) for(const m of M3) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage>=5) for(const p of P4){ if(!p.a.collected)drawBall(ctx,p.a,0,dk); if(!p.b.collected)drawBall(ctx,p.b,0,dk); }
+  if(stage>=6) for(const m of M5) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage>=7) for(const m of M6) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage>=8) for(const m of M7) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage===9 && hero && hero.alive && heroMovementRank()===4 && hero._satL && hero._satR){
+    for(const g of[hero._satL,hero._satR]){
+      const cx=g.x*CELL+CELL/2, cy=g.y*CELL+CELL/2, rr=CELL*0.38;
+      ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
+      ctx.strokeStyle=dk?'rgba(200,215,238,0.58)':'rgba(90,110,145,0.65)';
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+  }
+  if(hero.alive) drawHero(ctx,dk);
+  if(FOREST_CAMPAIGN_2027 && Date.now()<forestRedFlashUntil){
+    ctx.fillStyle='rgba(200,0,0,0.45)';
+    ctx.fillRect(0,0,sz,sz);
+  }
+  }catch(e){}
+}
+
+function safeCLR(lvl){
+  return CLR[lvl]||CLR[1];
+}
+
+function drawSquareBall(ctx, gx, gy, lvl, dots, frameOffset, rawText){
+  try{
+    const pad=2;
+    const x=gx*CELL+pad, y=gy*CELL+pad;
+    const s=CELL-pad*2;
+
+    const ownC=safeCLR(lvl);
+    let text;
+    let shrinkMulti=false;
+    const t0=performance.now()+((frameOffset|0)*67);
+
+    if(rawText!=null&&String(rawText).length){
+      const seq=digitsFromPenaltyUIText(String(rawText));
+      if(seq.length>1) text=seq[Math.floor(t0/PENALTY_DIGIT_FLASH_MS)%seq.length];
+      else if(seq.length===1) text=seq[0];
+      else { text=String(rawText); shrinkMulti=text.length>1; }
+    } else {
+      let dd=Array.isArray(dots)&&dots.length?[...dots].filter(d=>d>=1&&d<=9):getDigitSeq(lvl,dots||[]);
+      if(!dd.length) dd=[Math.min(Math.max(1,lvl),9)];
+      const seq=dd.map(String);
+      if(seq.length>1) text=seq[Math.floor(t0/PENALTY_DIGIT_FLASH_MS)%seq.length];
+      else text=seq[0];
+    }
+    ctx.strokeStyle=ownC.fdk;
+    ctx.lineWidth=2.5;
+    ctx.strokeRect(x+1.25,y+1.25,s-2.5,s-2.5);
+    let fs=Math.max(10, 0|s*0.82);
+    if(shrinkMulti||text.length>1){
+      const approx=Math.max(1, text.replace(/\s/g,'').length+Math.max(0,text.split(' ').length-1)*0.35);
+      fs=Math.max(6, Math.min(0|s*0.82, (s*0.88)/(approx*0.52)));
+    }
+    ctx.font=`900 ${0|fs}px system-ui,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(text, x+s/2, y+s/2);
+  }catch(e){}
+}
+
+function drawBall(ctx,m,r,dk){
+  if(!m||m.collected) return;
+  if(FOREST_CAMPAIGN_2027 && forestIsMole()){
+    const pad=2;
+    const x=m.x*CELL+pad, y=m.y*CELL+pad;
+    const s=CELL-pad*2;
+    if((m.lvl|0)===1){
+      drawMushroom(ctx,x,y,s);
+      return;
+    }
+    if((m.lvl|0)===2){
+      drawMole(ctx,x,y,s);
+      return;
+    }
+    if((m.lvl|0)===3){
+      drawBoar(ctx,x,y,s);
+      return;
+    }
+  }
+  const frameOff=((m.x||0)*7+(m.y||0)*13)%97;
+  if(stage===9) drawSquareBall(ctx,m.x,m.y,m.lvl,[m.lvl],frameOff);
+  else drawSquareBall(ctx,m.x,m.y,m.lvl,null,frameOff,penaltyUIFullText(m));
+}
+
+function drawHero(ctx,dk){
+  if(!hero||!hero.alive) return;
+  const hcx=hero.x*CELL, hcy=hero.y*CELL;
+  const hMax=heroDisplayLvl();
+  const hk=Math.min(Math.max(1,hMax),MAX_DIGIT);
+  const br=safeCLR(hk).fdk;
+  const m=br.match(/^#([0-9a-f]{6})$/i);
+  if(m){
+    const r=parseInt(m[1].slice(0,2),16), g=parseInt(m[1].slice(2,4),16), b=parseInt(m[1].slice(4,6),16);
+    ctx.fillStyle=dk?`rgba(${r},${g},${b},0.12)`:`rgba(${r},${g},${b},0.2)`;
+  } else ctx.fillStyle='rgba(232,160,32,0.22)';
+  ctx.fillRect(hcx,hcy,CELL,CELL);
+  const pad=1;
+  const x=hero.x*CELL+pad, y=hero.y*CELL+pad;
+  const s=CELL-pad*2;
+  const cx=x+s/2, cy=y+s/2, rr=s*0.45;
+  ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
+  ctx.fillStyle='#E8A020'; ctx.fill();
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(cx-rr*0.3, cy-rr*0.18, rr*0.13, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+rr*0.3, cy-rr*0.18, rr*0.13, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1a0a00';
+  ctx.beginPath(); ctx.arc(cx-rr*0.3, cy-rr*0.15, rr*0.06, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+rr*0.3, cy-rr*0.15, rr*0.06, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy+rr*0.08, rr*0.35, 0.25, Math.PI-0.25);
+  ctx.strokeStyle='#1a0a00'; ctx.lineWidth=rr*0.11; ctx.stroke();
+  if(stage>=1&&stage<=8&&hero){
+    const cap=penaltyUIFullText(hero);
+    if(cap){
+      const seq=digitsFromPenaltyUIText(cap);
+      const tHero=performance.now()+(hero.x||0)*41+(hero.y||0)*19;
+      const show=seq.length>1
+        ? seq[Math.floor(tHero/PENALTY_DIGIT_FLASH_MS)%seq.length]
+        :(seq.length===1?seq[0]:cap);
+      const fs=show.length>1
+        ? Math.max(5,Math.min(0|CELL*0.16,112/Math.max(show.length,3)))
+        : Math.max(8,Math.min(0|CELL*0.22,52));
+      ctx.fillStyle=dk?'rgba(255,255,255,0.92)':'rgba(30,30,30,0.95)';
+      ctx.font=`700 ${0|fs}px system-ui,sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText(show,x+s/2,y+s-2);
+    }
+  }
+}
+
+/** Длительность салюта (мс); по истечении — переход на следующий этап (или только конец игры для этапа 9). */
+const STAGE_SALUTE_MS=4800;
+
+/** Салют из вылетающих цифр завершённого этапа (1…9). */
+function launchStageFireworks(stageDigit){
+  const ch=String(stageDigit);
+  const cv=gel('confetti-canvas');
+  cv.style.display='block';
+  cv.width=window.innerWidth;
+  cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const particles=[];
+  const bursts=11;
+  for(let r=0;r<bursts;r++){
+    setTimeout(()=>{
+      const bx=Math.random()*cv.width*0.75+cv.width*0.125;
+      const by=cv.height*0.12+Math.random()*cv.height*0.38;
+      for(let i=0;i<42;i++){
+        const angle=Math.random()*Math.PI*2;
+        const speed=2+Math.random()*7;
+        particles.push({
+          x:bx,y:by,
+          vx:Math.cos(angle)*speed,
+          vy:Math.sin(angle)*speed-1.1,
+          alpha:1,
+          size:12+Math.random()*24,
+          decay:0.009+Math.random()*0.014,
+          gravity:0.072,
+          char:ch
+        });
+      }
+    }, r*100);
+  }
+  let frame=0;
+  function animate(){
+    ctx.fillStyle='rgba(0,0,0,0.14)';
+    ctx.fillRect(0,0,cv.width,cv.height);
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity;
+      p.vx*=0.985; p.alpha-=p.decay;
+      if(p.alpha<=0){particles.splice(i,1);continue;}
+      ctx.save();
+      ctx.globalAlpha=p.alpha;
+      ctx.font=`900 ${p.size}px system-ui,sans-serif`;
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.strokeStyle='#E8A020';
+      ctx.lineWidth=Math.max(2,p.size*0.07);
+      ctx.strokeText(p.char,p.x,p.y);
+      ctx.fillStyle='#fff';
+      ctx.fillText(p.char,p.x,p.y);
+      ctx.restore();
+    }
+    frame++;
+    if(frame<275) requestAnimationFrame(animate);
+    else{ ctx.clearRect(0,0,cv.width,cv.height); cv.style.display='none'; }
+  }
+  animate();
+}
+
+function scheduleNextStage(completedStage,nextStage){
+  if(FOREST_CAMPAIGN_2027){
+    forestAfterMiniWin();
+    return;
+  }
+  clrT();
+  launchStageFireworks(completedStage);
+  setTimeout(()=>{
+    try{
+      const idx=completedStage-1;
+      const mvc=(idx>=0&&idx<8)?movesPerStage[idx]:0;
+      campaignHistory.push('Этап '+completedStage+' завершён (ходов на этапе: '+mvc+'). Переход на этап '+nextStage+'.');
+      stage=nextStage;
+      loadStage();
+    }catch(err){
+      console.error('kolobok: переход на этап '+nextStage, err);
+      setMsg('Ошибка при переходе на этап '+nextStage+'. Обновите страницу.', true);
+    }
+  }, STAGE_SALUTE_MS);
+}
+
+function launchFireworks(){
+  const cv=gel('confetti-canvas');
+  cv.style.display='block';
+  cv.width=window.innerWidth; cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const particles=[];
+  const colors=['#FAC775','#EF9F27','#7F77DD','#E24B4A','#639922','#378ADD','#fff','#FF6B6B','#FFE66D'];
+
+  // Launch 12 rockets
+  for(let r=0;r<12;r++){
+    const x=Math.random()*cv.width;
+    const targetY=cv.height*0.1+Math.random()*cv.height*0.4;
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    // Burst particles from random positions
+    setTimeout(()=>{
+      const bx=Math.random()*cv.width;
+      const by=cv.height*0.1+Math.random()*cv.height*0.5;
+      for(let i=0;i<60;i++){
+        const angle=Math.random()*Math.PI*2;
+        const speed=2+Math.random()*6;
+        particles.push({
+          x:bx,y:by,
+          vx:Math.cos(angle)*speed,
+          vy:Math.sin(angle)*speed,
+          color:colors[Math.floor(Math.random()*colors.length)],
+          alpha:1,size:2+Math.random()*4,
+          decay:0.012+Math.random()*0.015,
+          gravity:0.08
+        });
+      }
+    }, r*180);
+  }
+
+  let frame=0;
+  function animate(){
+    ctx.fillStyle='rgba(0,0,0,0.15)';
+    ctx.fillRect(0,0,cv.width,cv.height);
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity;
+      p.vx*=0.98; p.alpha-=p.decay;
+      if(p.alpha<=0){particles.splice(i,1);continue;}
+      ctx.save();
+      ctx.globalAlpha=p.alpha;
+      ctx.fillStyle=p.color;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    frame++;
+    if(frame<300) requestAnimationFrame(animate);
+    else{ ctx.clearRect(0,0,cv.width,cv.height); cv.style.display='none'; }
+  }
+  animate();
+}
+
+function trigReset(msg){
+  if(replayMode) return;
+  setMsg(msg,true); clrT();
+  resetT=setTimeout(()=>{ if(stage>=1&&stage<=8) movesPerStage[stage-1]=0; loadStage(); },2200);
+}
+
+function tickMs(){
+  if(stage>=8) return 420;
+  if(stage>=7) return 450;
+  if(stage>=6) return 500;
+  if(stage>=5) return 600;
+  if(stage>=4) return 700;
+  return 900;
+}
+
+/** к-7 в стене: герой на соседнем поле — встреча через meet() (кооптация или гибель старшего). */
+function tryHeroPullK7FromWall(){
+  if((stage!==8&&stage!==9)||!hero.alive) return;
+  if(grid[hero.y][hero.x]!==0) return;
+  for(const m of M7){
+    if(m.collected) continue;
+    if(grid[m.y][m.x]!==1) continue;
+    if(Math.abs(hero.x-m.x)+Math.abs(hero.y-m.y)!==1) continue;
+    const info=meet(hero,m);
+    if(m.collected){
+      col7++; gel('c7-cnt').textContent=col7;
+    }
+    if(!hero.alive){ refreshCounters(); draw(); handleHeroDeath(info); return; }
+  }
+}
+
+/** Герой и NPC: этапы 1–8 — одна клетка; этап 8 + к‑7 + герой с макс. 8 — ещё соседство короля; этап 9 — ортогональное соседство. */
+function heroNpcManhattanMeetOk(npc){
+  if(!hero||!hero.alive||!npc||npc.collected) return false;
+  if(hero.x===npc.x&&hero.y===npc.y) return true;
+  if(stage===9) return Math.abs(hero.x-npc.x)+Math.abs(hero.y-npc.y)===1;
+  if(stage===8&&isK7Mob(npc)&&maxOfSet(fullSet(hero))===8)
+    return Math.max(Math.abs(hero.x-npc.x),Math.abs(hero.y-npc.y))<=1;
+  return false;
+}
+
+/** Встречи на клетке после шага героя; false — герой погиб (уже показана смерть). */
+function heroResolveCellAfterMove(){
+  if(!hero||!hero.alive) return false;
+  if(stage===9){
+    movesStage9++;
+    campaignMovesTotal++;
+  }
+  if(FOREST_CAMPAIGN_2027 && forestUsesMushrooms()){
+    const k=hero.x+','+hero.y;
+    if(forestMushrooms.has(k)){
+      const standingNpc=getAllNPC().some(n=>!n.collected&&n.x===hero.x&&n.y===hero.y);
+      if(forestIsMole() && !forestMoleTaken && !standingNpc){
+        setMsg('');
+        triggerForestRedFlash(1000);
+        draw();
+        clrT();
+        resetT=setTimeout(()=>{ loadStage(); }, 1000);
+        return false;
+      }
+      forestMushrooms.delete(k);
+      forestMushroomsCollected++;
+      if(forestIsMole()){
+        setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+      } else {
+        setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
+      }
+    }
+  }
+  updateHeroLvl();
+  while(hero.alive){
+    const adj=getAllNPC().filter(n=>!n.collected&&heroNpcManhattanMeetOk(n));
+    if(!adj.length) break;
+    const order=sortPartnersForMeet(hero,adj);
+    const npc=order[0];
+    if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(npc))) break;
+    const info=meet(hero,npc);
+    if(npc.collected) registerNpcCollectedByHero(npc);
+    if(!hero.alive){ refreshCounters(); draw(); handleHeroDeath(info); return false; }
+    updateHeroLvl(); refreshCounters();
+  }
+  tryHeroPullK7FromWall();
+  if(!hero.alive) return false;
+  refreshCounters(); updateHeroLvl();
+  gel('hset').textContent=String(heroDisplayLvl());
+  return true;
+}
+
+/** Этап 9: ход героя как к‑2 по тикам (как у M2). */
+function stepHeroAutopilotK2(){
+  if(!heroActsLikeK2()||!hero.alive) return true;
+  const i=K2_OWNER_HERO;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  const ps=[];
+  for(const[dx,dy] of dirs){
+    let nx=hero.x+dx, ny=hero.y+dy;
+    if(useTorus()){
+      [nx,ny]=torusXY(nx,ny);
+      if(grid[ny][nx]===1) continue;
+    } else if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1) continue;
+    const owner=k2Territory[nx+','+ny];
+    if(owner!==undefined&&owner!==i) continue;
+    ps.push([nx,ny]);
+  }
+  if(!ps.length) return true;
+  const avoidOwn=ps.filter(([nx,ny])=>k2Territory[nx+','+ny]!==i);
+  let pickPool=avoidOwn.length?avoidOwn:ps;
+  if(heroWantsExitEnemyK2Paint32()) pickPool=pickBestK2ExitMoves(pickPool);
+  const[nx,ny]=pickPool[0|Math.random()*pickPool.length];
+  hero.x=nx; hero.y=ny;
+  k2Territory[nx+','+ny]=i;
+  return heroResolveCellAfterMove();
+}
+
+/** Этап 9: прямая с отражением (как M3 на плоскости); для 3 всегда, для 4 — если нет пары спутников. */
+function stepHeroAutopilotBallisticSolo(){
+  if(stage!==9||!hero||!hero.alive) return true;
+  const r=heroMovementRank();
+  if(r!==3&&!(r===4&&(!hero._satL||!hero._satR))) return true;
+  if(heroWantsExitEnemyK2Paint32()){
+    const cands=[];
+    for(const[dx,dy] of[[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=hero.x+dx, ny=hero.y+dy;
+      if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]!==0) continue;
+      cands.push([nx,ny]);
+    }
+    if(cands.length){
+      const pool=pickBestK2ExitMoves(cands);
+      const[nx,ny]=pool[0|Math.random()*pool.length];
+      hero._bdx=nx-hero.x; hero._bdy=ny-hero.y;
+      hero.x=nx; hero.y=ny;
+      return heroResolveCellAfterMove();
+    }
+  }
+  let dx=hero._bdx|0, dy=hero._bdy|0;
+  if(dx===0&&dy===0){
+    const freeDirs=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dxx,dyy])=>{
+      const x=hero.x+dxx, y=hero.y+dyy;
+      return x>=0&&x<N&&y>=0&&y<N&&grid[y][x]===0;
+    });
+    if(!freeDirs.length) return true;
+    [dx,dy]=freeDirs[0|Math.random()*freeDirs.length];
+    hero._bdx=dx; hero._bdy=dy;
+  }
+  let nx=hero.x+dx, ny=hero.y+dy;
+  if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1){
+    dx=-dx; dy=-dy; hero._bdx=dx; hero._bdy=dy;
+    nx=hero.x+dx; ny=hero.y+dy;
+  }
+  if(nx<0||nx>=N||ny<0||ny>=N||grid[ny][nx]===1){
+    const free=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dxx,dyy])=>{
+      const x=hero.x+dxx, y=hero.y+dyy;
+      return x>=0&&x<N&&y>=0&&y<N&&grid[y][x]===0;
+    });
+    if(free.length){
+      [dx,dy]=free[0|Math.random()*free.length];
+      hero._bdx=dx; hero._bdy=dy;
+      nx=hero.x+dx; ny=hero.y+dy;
+    } else return true;
+  }
+  if(nx>=0&&nx<N&&ny>=0&&ny<N&&grid[ny][nx]===0){
+    hero.x=nx; hero.y=ny;
+    return heroResolveCellAfterMove();
+  }
+  return true;
+}
+
+function stepHeroAutopilotK3(){
+  if(heroMovementRank()!==3) return true;
+  return stepHeroAutopilotBallisticSolo();
+}
+
+function stepHeroTrioSharedDir(){
+  let dx=hero._bdx|0, dy=hero._bdy|0;
+  if(dx===0&&dy===0){
+    initHeroMode4Satellites(true);
+    if(!hero._satL||!hero._satR) return stepHeroAutopilotBallisticSolo();
+    dx=hero._bdx|0; dy=hero._bdy|0;
+  }
+  function canStep(dxx,dyy){
+    const hx=hero.x+dxx, hy=hero.y+dyy;
+    const lx=hero._satL.x+dxx, ly=hero._satL.y+dyy;
+    const rx=hero._satR.x+dxx, ry=hero._satR.y+dyy;
+    if(heroNpcBlocksCell(hx,hy)||heroNpcBlocksCell(lx,ly)||heroNpcBlocksCell(rx,ry)) return false;
+    if(new Set([`${hx},${hy}`,`${lx},${ly}`,`${rx},${ry}`]).size!==3) return false;
+    return true;
+  }
+  if(heroWantsExitEnemyK2Paint32()){
+    const candDirs=[];
+    for(const d of[[1,0],[-1,0],[0,1],[0,-1]]) if(canStep(d[0],d[1])) candDirs.push(d);
+    if(candDirs.length){
+      let bestPick={b:999,p:[]};
+      for(const d of candDirs){
+        const hx=hero.x+d[0], hy=hero.y+d[1];
+        const sc=heroK2ExitStepScore(hx,hy);
+        if(sc<bestPick.b){ bestPick={b:sc,p:[d]}; }
+        else if(sc===bestPick.b) bestPick.p.push(d);
+      }
+      const[chx,chy]=bestPick.p[0|Math.random()*bestPick.p.length];
+      hero._bdx=chx; hero._bdy=chy;
+      hero.x+=chx; hero.y+=chy;
+      hero._satL.x+=chx; hero._satL.y+=chy;
+      hero._satR.x+=chx; hero._satR.y+=chy;
+      return heroResolveCellAfterMove();
+    }
+  }
+  if(!canStep(dx,dy)){
+    dx=-dx; dy=-dy; hero._bdx=dx; hero._bdy=dy;
+    if(!canStep(dx,dy)) return true;
+  }
+  hero.x+=dx; hero.y+=dy;
+  hero._satL.x+=dx; hero._satL.y+=dy;
+  hero._satR.x+=dx; hero._satR.y+=dy;
+  return heroResolveCellAfterMove();
+}
+
+function stepHeroAutopilotK4(){
+  if(heroMovementRank()!==4) return true;
+  if(!hero._satL||!hero._satR) initHeroMode4Satellites((hero._bdx|0)!==0||(hero._bdy|0)!==0);
+  if(!hero._satL||!hero._satR) return stepHeroAutopilotBallisticSolo();
+  return stepHeroTrioSharedDir();
+}
+
+/** Этап 9: герой‑5 — как к‑5 (прыжок через стену или соседний шаг без инерции луча). */
+function stepHeroAutopilotK5(){
+  if(stage!==9||!hero||!hero.alive||heroMovementRank()!==5) return true;
+  const px=hero.x, py=hero.y;
+  k5StepEntity(hero);
+  if(hero.x!==px||hero.y!==py) return heroResolveCellAfterMove();
+  return true;
+}
+
+/** Этап 9: не к‑2 — случайный ортогональный ход или ход короля (6/7). */
+function stepHeroAutopilotLoose(){
+  if(stage!==9||!hero||!hero.alive||heroImmobileLikeK1()||heroActsLikeK2()) return true;
+  const r=heroMovementRank();
+  if(r===3||r===4||r===5) return true;
+  const king=r===6||r===7;
+  const dirs=king?KING_DIRS:[[1,0],[-1,0],[0,1],[0,-1]];
+  const opts=[];
+  for(const[dx,dy] of dirs){
+    let nx=hero.x+dx, ny=hero.y+dy;
+    if(useTorus()){[nx,ny]=torusXY(nx,ny);}
+    else if(nx<0||nx>=N||ny<0||ny>=N) continue;
+    if(grid[ny][nx]===1) continue;
+    opts.push([nx,ny]);
+  }
+  if(!opts.length) return true;
+  let pool=opts;
+  if(heroWantsExitEnemyK2Paint32()) pool=pickBestK2ExitMoves(opts);
+  const[nx,ny]=pool[0|Math.random()*pool.length];
+  hero.x=nx; hero.y=ny;
+  return heroResolveCellAfterMove();
+}
+
+function s9IxToDigit(ix){
+  if(ix===9) return 0;
+  if(ix>=0&&ix<=8) return ix+1;
+  return 5;
+}
+function digitToS9Ix(d){
+  const v=d|0;
+  if(v===0) return 9;
+  if(v>=1&&v<=9) return v-1;
+  return 4;
+}
+function s9MoveFocus(dx,dy){
+  if(dx===0&&dy===0) return;
+  const ix=s9PadFocusIx;
+  if(ix===9){
+    if(dy===-1) s9PadFocusIx=7;
+    return;
+  }
+  const r=(ix/3)|0, c=ix%3;
+  if(r===2&&dy===1){
+    if(c===1) s9PadFocusIx=9;
+    return;
+  }
+  const nc=c+dx, nr=r+dy;
+  if(nr<0||nr>2||nc<0||nc>2) return;
+  s9PadFocusIx=nr*3+nc;
+}
+function updateS9PadDomHighlight(){
+  const grid=gel('ctrl-s9-grid');
+  if(!grid||grid===_stub) return;
+  grid.querySelectorAll('.s9-key').forEach(btn=>{
+    const ix=parseInt(btn.getAttribute('data-s9ix'),10);
+    btn.classList.toggle('s9-selected',ix===s9PadFocusIx);
+  });
+}
+function syncS9PadFocusFromHero(){
+  if(stage!==9||!hero) return;
+  s9PadFocusIx=digitToS9Ix(hero.navDigit|0);
+}
+function syncCtrlMode(){
+  const dpad=gel('ctrl-dpad');
+  const s9=gel('ctrl-s9pad');
+  if(!dpad||dpad===_stub||!s9||s9===_stub) return;
+  if(stage===9){
+    dpad.style.display='none';
+    s9.style.display='flex';
+    syncS9PadFocusFromHero();
+    updateS9PadDomHighlight();
+  } else {
+    dpad.style.display='flex';
+    s9.style.display='none';
+  }
+}
+function pressS9PadIndex(ix){
+  if(replayMode) return;
+  if(stage!==9||won||resetT||!hero||!hero.alive||paused) return;
+  if(gel('help-modal').classList.contains('open')) return;
+  if(gel('menu-overlay').classList.contains('open')) return;
+  if(gel('lb-modal').style.display==='flex') return;
+  if(gel('extras-modal').classList.contains('open')) return;
+  if(gamepadSetupModalIsOpen()) return;
+  s9PadFocusIx=ix|0;
+  applyHeroChosenDigit(s9IxToDigit(s9PadFocusIx));
+  updateHeroLvl();
+  draw();
+  updateS9PadDomHighlight();
+}
+
+function pmove(dx,dy){
+  if(replayMode) return;
+  if(won||resetT||!hero.alive||paused) return;
+  if(stage===9) return;
+  if(heroImmobileLikeK1()) return;
+  if(Date.now()<k5FreezeUntil) return;
+  if(Math.abs(dx)+Math.abs(dy)===2 && !heroMayMoveDiagonal()) return;
+  let nx=hero.x+dx, ny=hero.y+dy;
+  if(useTorus()){
+    nx=((nx%N)+N)%N;
+    ny=((ny%N)+N)%N;
+  } else if(nx<0||nx>=N||ny<0||ny>=N) return;
+  if(grid[ny][nx]===1) return;
+
+  if(heroActsLikeK2()){
+    if(!heroK2TargetAllowed(nx,ny)) return;
+    hero._k2Pulse=(hero._k2Pulse|0)+1;
+    if(hero._k2Pulse%2===1) return;
+  }
+
+  // Start NPC movement on first hero move
+  if(!heroMoved && stage>=3){
+    heroMoved=true;
+    tickT=setInterval(tick,tickMs());
+  }
+  hero.x=nx; hero.y=ny;
+  if(heroActsLikeK2()) k2Territory[nx+','+ny]=K2_OWNER_HERO;
+  if(stage>=1&&stage<=8){
+    movesPerStage[stage-1]++;
+    campaignMovesTotal++;
+  }
+  if(!heroResolveCellAfterMove()) return;
+
+  draw(); checkWin();
+  if(won) draw();
+  if(replayRecording && !replayMode) maybeRecordSnapshot('move');
+}
+
+function gamepadSetupModalIsOpen(){
+  const m=gel('gamepad-setup-modal');
+  return !!(m&&m!==_stub&&m.classList.contains('open'));
+}
+function openGamepadSetup(){
+  const m=gel('gamepad-setup-modal');
+  if(!m||m===_stub) return;
+  m.classList.add('open');
+  const btn=gel('gamepad-setup-close');
+  if(btn&&btn!==_stub) requestAnimationFrame(()=>{ try{ btn.focus(); }catch(e){} });
+}
+function closeGamepadSetup(){
+  const m=gel('gamepad-setup-modal');
+  if(m&&m!==_stub) m.classList.remove('open');
+  gamepadHeldKey=null;
+  gamepadLastStepAt=0;
+  gamepadS9PrevA=false;
+  gamepadS9HeldNav=null;
+  gamepadS9LastNavAt=0;
+}
+
+function gamepadMovementAllowed(){
+  if(replayMode) return false;
+  if(!gameStarted||gel('game').style.display==='none') return false;
+  if(gel('help-modal').classList.contains('open')) return false;
+  if(gel('menu-overlay').classList.contains('open')) return false;
+  if(gel('lb-modal').style.display==='flex') return false;
+  if(gel('extras-modal').classList.contains('open')) return false;
+  if(gamepadSetupModalIsOpen()) return false;
+  if(stage===9) return false;
+  if(!hero||!hero.alive||won||paused) return false;
+  return true;
+}
+function dpadDeltaFromGamepad(gp){
+  if(!gp.buttons||gp.buttons.length<16) return null;
+  const b=gp.buttons;
+  if(b[12]?.pressed) return [0,-1];
+  if(b[13]?.pressed) return [0,1];
+  if(b[14]?.pressed) return [-1,0];
+  if(b[15]?.pressed) return [1,0];
+  return null;
+}
+function stickToDeltaHero(ax,ay){
+  const dz=GAMEPAD_DEAD_ZONE;
+  const x=Math.abs(ax)<dz?0:ax;
+  const y=Math.abs(ay)<dz?0:ay;
+  if(x===0&&y===0) return null;
+  const sx=x===0?0:(x>0?1:-1);
+  const sy=y===0?0:(y>0?1:-1);
+  if(sx!==0&&sy!==0){
+    if(!heroMayMoveDiagonal()){
+      if(Math.abs(ax)>=Math.abs(ay)) return [sx,0];
+      return [0,sy];
+    }
+    return [sx,sy];
+  }
+  return [sx,sy];
+}
+/** Направление для сетки цифр этапа 9 (включая диагональ со стика). */
+function stickToDeltaGrid(ax,ay){
+  const dz=GAMEPAD_DEAD_ZONE;
+  const x=Math.abs(ax)<dz?0:ax;
+  const y=Math.abs(ay)<dz?0:ay;
+  if(x===0&&y===0) return null;
+  const sx=x===0?0:(x>0?1:-1);
+  const sy=y===0?0:(y>0?1:-1);
+  return [sx,sy];
+}
+function tryGamepadPmove(dx,dy){
+  if(!gamepadMovementAllowed()) return;
+  if(dx===0&&dy===0) return;
+  pmove(dx,dy);
+}
+function renderGamepadDebugHud(gp,dThis){
+  if(!GAMEPAD_DEBUG) return;
+  const pre=gel('gamepad-debug-pre');
+  if(!pre||pre===_stub) return;
+  const lines=[];
+  lines.push('gamepaddebug=1 · Колобок и его команда (2027)');
+  lines.push('Этапы 1–8: стик / D-pad; этап 9 — сетка на экране + D-pad/стик и A, либо цифры на клавиатуре.');
+  if(typeof navigator.getGamepads!=='function'){
+    lines.push('navigator.getGamepads недоступен.');
+    pre.textContent=lines.join('\n'); return;
+  }
+  if(!gp){
+    lines.push('Геймпад не найден.');
+    pre.textContent=lines.join('\n'); return;
+  }
+  lines.push('id: '+(gp.id||'—'));
+  lines.push('index='+gp.index+' mapping='+(gp.mapping||'—'));
+  lines.push('оси: '+(gp.axes||[]).map((v,i)=>i+'='+(typeof v==='number'?v.toFixed(2):String(v))).join(' '));
+  if(gp.buttons&&gp.buttons.length>=16)
+    lines.push('dpad 12–15: '+[12,13,14,15].map(i=>(gp.buttons[i]?.pressed?'1':'0')).join(' '));
+  lines.push('ход: '+(dThis?dThis[0]+','+dThis[1]:'—'));
+  lines.push('движение: '+(gamepadMovementAllowed()?'да':'нет'));
+  pre.textContent=lines.join('\n');
+}
+function renderGamepadSetupPanel(gp,dThis){
+  if(!gamepadSetupModalIsOpen()) return;
+  const pre=gel('gamepad-setup-pre');
+  if(!pre||pre===_stub) return;
+  const lines=[];
+  lines.push('— Сигнал с геймпада (обновляется постоянно) —');
+  if(typeof navigator.getGamepads!=='function'){
+    lines.push('Браузер не отдаёт Gamepad API (getGamepads).');
+    pre.textContent=lines.join('\n'); return;
+  }
+  if(!gp){
+    lines.push('Состояние: контроллер не виден.');
+    lines.push('Включите геймпад, сопрягите по Bluetooth или USB, затем нажмите несколько кнопок.');
+    pre.textContent=lines.join('\n'); return;
+  }
+  lines.push('Состояние: OK');
+  lines.push('Устройство: '+(gp.id||'—'));
+  lines.push('index='+gp.index+' · mapping='+(gp.mapping||'—'));
+  lines.push('Оси: '+(gp.axes||[]).map((v,i)=>i+'='+(typeof v==='number'?v.toFixed(2):String(v))).join(' '));
+  if(gp.buttons&&gp.buttons.length>=16)
+    lines.push('D-pad (хват 12–15): '+[12,13,14,15].map(i=>(gp.buttons[i]?.pressed?'ON ':'· ')).join(''));
+  lines.push('Направление как в игре: '+(dThis&&!(dThis[0]===0&&dThis[1]===0)?dThis[0]+','+dThis[1]:'—'));
+  lines.push('Ходы на поле сейчас: '+(stage===9?'этап 9 — сетка цифр (A)':(gamepadMovementAllowed()?'да (идёт игра, меню закрыто)':'нет (настройка / меню / пауза…)')));
+  pre.textContent=lines.join('\n');
+}
+function gamepadStage9NavAllowed(){
+  if(replayMode) return false;
+  if(!gameStarted||gel('game').style.display==='none') return false;
+  if(gel('help-modal').classList.contains('open')) return false;
+  if(gel('menu-overlay').classList.contains('open')) return false;
+  if(gel('lb-modal').style.display==='flex') return false;
+  if(gel('extras-modal').classList.contains('open')) return false;
+  if(gamepadSetupModalIsOpen()) return false;
+  if(!hero||!hero.alive||won||paused) return false;
+  return stage===9;
+}
+function pollGamepadStage9(gp){
+  let nav=dpadDeltaFromGamepad(gp);
+  if(!nav||nav[0]===0&&nav[1]===0){
+    nav=stickToDeltaGrid(gp.axes[0]??0,gp.axes[1]??0);
+    if((!nav||nav[0]===0&&nav[1]===0)&&gp.axes.length>=4)
+      nav=stickToDeltaGrid(gp.axes[2]??0,gp.axes[3]??0);
+  }
+  const now=performance.now();
+  const nKey=nav&&!(nav[0]===0&&nav[1]===0)?nav[0]+','+nav[1]:null;
+  if(!nKey){
+    gamepadS9HeldNav=null;
+    gamepadS9LastNavAt=0;
+  } else if(gamepadStage9NavAllowed()){
+    if(gamepadS9HeldNav!==nKey){
+      gamepadS9HeldNav=nKey;
+      gamepadS9LastNavAt=now;
+      s9MoveFocus(nav[0],nav[1]);
+      updateS9PadDomHighlight();
+    } else if(now-gamepadS9LastNavAt>=GAMEPAD_REPEAT_MS){
+      gamepadS9LastNavAt=now;
+      s9MoveFocus(nav[0],nav[1]);
+      updateS9PadDomHighlight();
+    }
+  }
+  const aPressed=!!(gp.buttons&&gp.buttons[0]?.pressed);
+  if(gamepadStage9NavAllowed()&&aPressed&&!gamepadS9PrevA){
+    applyHeroChosenDigit(s9IxToDigit(s9PadFocusIx));
+    updateHeroLvl();
+    draw();
+    syncS9PadFocusFromHero();
+    updateS9PadDomHighlight();
+  }
+  gamepadS9PrevA=aPressed;
+  if(GAMEPAD_DEBUG){
+    const pre=gel('gamepad-debug-pre');
+    if(pre&&pre!==_stub){
+      const lines=['gamepaddebug=1 · этап 9','фокус: '+s9IxToDigit(s9PadFocusIx)+' (ячейка '+s9PadFocusIx+')','A (кн. 0): выбрать цифру'];
+      pre.textContent=lines.join('\n');
+    }
+  }
+  if(gamepadSetupModalIsOpen()) renderGamepadSetupPanel(gp,nav);
+}
+function pollGamepadHero(){
+  if(replayMode) return;
+  const refreshUi=(gp,d)=>{ if(GAMEPAD_DEBUG&&stage!==9) renderGamepadDebugHud(gp,d); if(gamepadSetupModalIsOpen()&&stage!==9) renderGamepadSetupPanel(gp,d); };
+  if(typeof navigator.getGamepads!=='function'){ refreshUi(null,null); return; }
+  const pads=navigator.getGamepads();
+  let gp=null;
+  for(let i=0;i<pads.length;i++){ if(pads[i]){ gp=pads[i]; break; } }
+  if(stage===9){
+    if(!gp){
+      gamepadHeldKey=null;
+      gamepadLastStepAt=0;
+      gamepadS9HeldNav=null;
+      gamepadS9LastNavAt=0;
+      gamepadS9PrevA=false;
+      if(GAMEPAD_DEBUG){
+        const pre=gel('gamepad-debug-pre');
+        if(pre&&pre!==_stub) pre.textContent='gamepaddebug=1 · этап 9\nгеймпад не найден';
+      }
+      if(gamepadSetupModalIsOpen()) renderGamepadSetupPanel(null,null);
+      return;
+    }
+    pollGamepadStage9(gp);
+    gamepadHeldKey=null;
+    gamepadLastStepAt=0;
+    return;
+  }
+  gamepadS9PrevA=false;
+  gamepadS9HeldNav=null;
+  gamepadS9LastNavAt=0;
+  let dThis=null;
+  if(gp){
+    dThis=dpadDeltaFromGamepad(gp);
+    if(!dThis){
+      dThis=stickToDeltaHero(gp.axes[0]??0,gp.axes[1]??0);
+      if(!dThis&&gp.axes.length>=4)
+        dThis=stickToDeltaHero(gp.axes[2]??0,gp.axes[3]??0);
+    }
+  }
+  if(!gp){ gamepadHeldKey=null; gamepadLastStepAt=0; refreshUi(null,null); return; }
+  const now=performance.now();
+  if(!dThis||dThis[0]===0&&dThis[1]===0){
+    gamepadHeldKey=null; gamepadLastStepAt=0; refreshUi(gp,null); return;
+  }
+  const key=dThis[0]+','+dThis[1];
+  if(!gamepadMovementAllowed()){ refreshUi(gp,dThis); return; }
+  if(gamepadHeldKey!==key){
+    gamepadHeldKey=key; gamepadLastStepAt=now;
+    tryGamepadPmove(dThis[0],dThis[1]);
+    refreshUi(gp,dThis); return;
+  }
+  if(now-gamepadLastStepAt>=GAMEPAD_REPEAT_MS){
+    gamepadLastStepAt=now;
+    tryGamepadPmove(dThis[0],dThis[1]);
+  }
+  refreshUi(gp,dThis);
+}
+function gamepadLoop(){
+  pollGamepadHero();
+  requestAnimationFrame(gamepadLoop);
+}
+
+function checkWin(){
+  if(won) return;
+  if(FOREST_CAMPAIGN_2027 && stage===9) return;
+  if(stage===9){
+    if(hero.x!==finishGX()||hero.y!==finishGY()) return;
+    if(!hero.alive) return;
+    won=true;
+    clrT();
+    setMsg('Вы дошли до конца маршрута');
+    refreshCounters();
+    draw();
+    launchStageFireworks(9);
+    showFinalVictoryScreen();
+    if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+    return;
+  }
+  if(FOREST_CAMPAIGN_2027){
+    if(hero.x!==finishGX()||hero.y!==finishGY()) return;
+    if(forestUsesMushrooms() && forestMushrooms.size) return;
+    if(forestIsMole() && !forestMoleTaken) return;
+    won=true;
+    setMsg(forestUsesMushrooms()?'Игра пройдена!':'Вы дошли до домика!');
+    scheduleNextStage(1,2);
+    if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+    return;
+  }
+  if(hero.x!==finishGX()||hero.y!==finishGY()) return;
+  const a1=M1.filter(m=>!m.collected).length,a2=M2.filter(m=>!m.collected).length;
+  const a3=M3.filter(m=>!m.collected).length,a4=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0);
+  const a5=M5.filter(m=>!m.collected).length,a6=M6.filter(m=>!m.collected).length;
+  const a7=stage>=8?M7.filter(m=>!m.collected).length:0;
+  if(stage===1){won=true;setMsg('Этап 1 пройден!');scheduleNextStage(1,2);if(replayRecording && !replayMode) maybeRecordSnapshot('win');}
+  else if(stage===2){if(a1>0) return; won=true;setMsg('Этап 2 пройден!');scheduleNextStage(2,3);if(replayRecording && !replayMode) maybeRecordSnapshot('win');}
+  else if(stage===3){
+    if(a2>0||a1>0) return;
+    won=true;setMsg('Этап 3 пройден!');scheduleNextStage(3,4);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+  }
+  else if(stage===4){
+    if(a3>0||a2>0||a1>0) return;
+    won=true;setMsg('Этап 4 пройден!');scheduleNextStage(4,5);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+  }
+  else if(stage===5){
+    if(a4>0||a3>0||a2>0||a1>0) return;
+    won=true;setMsg('Этап 5 пройден!');scheduleNextStage(5,6);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+  }
+  else if(stage===6){
+    if(a5>0||a4>0||a3>0||a2>0||a1>0) return;
+    won=true;setMsg('Этап 6 пройден!');scheduleNextStage(6,7);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+  }
+  else if(stage===7){
+    if(a6>0||a5>0||a4>0||a3>0||a2>0||a1>0) return;
+    won=true;setMsg('Этап 7 пройден!');scheduleNextStage(7,8);if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+  }
+  else if(stage===8){
+    if(a7>0||a6>0||a5>0||a4>0||a3>0||a2>0||a1>0) return;
+    won=true; setMsg('Этап 8 пройден! Открываем этап 9…');
+    scheduleNextStage(8,9);
+    if(replayRecording && !replayMode) maybeRecordSnapshot('win');
+  }
+}
+
+function isDesktopFinePointer(){
+  try{ return window.matchMedia('(pointer: fine)').matches; }catch(err){ return false; }
+}
+/** Код клавиши → цифра навигации (ряд Digit* и NumPad*). */
+function keyCodeToNavDigit(code){
+  const map={
+    Digit0:0,Digit1:1,Digit2:2,Digit3:3,Digit4:4,Digit5:5,Digit6:6,Digit7:7,Digit8:8,Digit9:9,
+    Numpad0:0,Numpad1:1,Numpad2:2,Numpad3:3,Numpad4:4,Numpad5:5,Numpad6:6,Numpad7:7,Numpad8:8,Numpad9:9
+  };
+  return Object.prototype.hasOwnProperty.call(map,code)?map[code]:null;
+}
+function onKey(e){
+  if(gel('extras-modal').classList.contains('open')){
+    if(e.key==='Escape'){e.preventDefault();hideExtras();}
+    return;
+  }
+  if(gamepadSetupModalIsOpen()){
+    if(e.key==='Escape'){ e.preventDefault(); closeGamepadSetup(); }
+    return;
+  }
+  if(replayMode){
+    if(e.code==='Escape'){
+      if(gel('help-modal').classList.contains('open')){ e.preventDefault(); hideHelp(); return; }
+      if(gel('menu-overlay').classList.contains('open')){ e.preventDefault(); closeMenu(); return; }
+      e.preventDefault(); exitReplayToSetup(); return;
+    }
+    if(!gel('menu-overlay').classList.contains('open')&&!gel('help-modal').classList.contains('open')&&gel('lb-modal').style.display!=='flex'){
+      if(e.code==='ArrowLeft'){ e.preventDefault(); replaySeek(-1); return; }
+      if(e.code==='ArrowRight'){ e.preventDefault(); replaySeek(1); return; }
+    }
+    return;
+  }
+  if(isDesktopFinePointer() && e.code==='Space'){
+    if(!gameStarted || gel('game').style.display==='none') return;
+    if(gel('help-modal').classList.contains('open')) return;
+    if(gel('menu-overlay').classList.contains('open')) return;
+    if(gel('lb-modal').style.display==='flex') return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleStop();
+    try {
+      const cv = gel('c');
+      if (cv) cv.focus({ preventScroll: true });
+    } catch (err) {}
+    return;
+  }
+
+  const keysNeedFocus=!gel('help-modal').classList.contains('open')&&!gel('menu-overlay').classList.contains('open')&&
+    gel('lb-modal').style.display!=='flex'&&gameStarted&&gel('game').style.display!=='none';
+
+  const canAct=keysNeedFocus&&hero&&hero.alive&&!won&&!paused;
+
+  // Этап 9: допклавиши 2/4/6/8 и 1/3/7/9 — только цифры режима, не «стрелки» NumPad.
+  if(stage===9 && canAct){
+    const navS9=keyCodeToNavDigit(e.code);
+    if(navS9!==null){
+      e.preventDefault();
+      applyHeroChosenDigit(navS9);
+      updateHeroLvl();
+      draw();
+      syncS9PadFocusFromHero();
+      updateS9PadDomHighlight();
+      return;
+    }
+  }
+
+  const arrowByCode={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
+  if(arrowByCode[e.code]){
+    if(canAct){e.preventDefault();pmove(...arrowByCode[e.code]);}
+    return;
+  }
+
+  const numpadDir={Numpad8:[0,-1],Numpad2:[0,1],Numpad4:[-1,0],Numpad6:[1,0]};
+  if(numpadDir[e.code]){
+    if(canAct){e.preventDefault();pmove(...numpadDir[e.code]);}
+    return;
+  }
+
+  const numpadKing={Numpad7:[-1,-1],Numpad9:[1,-1],Numpad1:[-1,1],Numpad3:[1,1]};
+  if(numpadKing[e.code]&&canAct&&heroMayMoveDiagonal()){
+    e.preventDefault();
+    pmove(...numpadKing[e.code]);
+    return;
+  }
+
+  const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],Up:[0,-1],Down:[0,1],Left:[-1,0],Right:[1,0]};
+  if(map[e.key]){
+    if(canAct){e.preventDefault();pmove(...map[e.key]);}
+  }
+  else if(e.key==='Enter'){e.preventDefault();resetStage();}
+  else if(e.key==='Escape'){hideHelp();}
+}
+
+// Touch swipe support
+let touchStartX=0, touchStartY=0;
+document.addEventListener('touchstart',e=>{
+  if(!gameStarted||gel('game').style.display==='none') return;
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!gameStarted||gel('game').style.display==='none') return;
+  if(replayMode) return;
+  if(gel('help-modal').classList.contains('open')) return;
+  if(gel('extras-modal').classList.contains('open')) return;
+  if(gamepadSetupModalIsOpen()) return;
+  if(gel('menu-overlay').classList.contains('open')) return;
+  if(gel('lb-modal').style.display==='flex') return;
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  const dy=e.changedTouches[0].clientY-touchStartY;
+  const adx=Math.abs(dx), ady=Math.abs(dy);
+  if(Math.max(adx,ady)<20) return; // too small
+  if(stage===9) return;
+  if(adx>ady){ pmove(dx>0?1:-1,0); }
+  else { pmove(0,dy>0?1:-1); }
+},{passive:true});
+function syncHelpPanelsForStage(){
+  const full=gel('help-full');
+  const s9=gel('help-stage9-only');
+  if(full&&full!==_stub&&s9&&s9!==_stub){
+    if(FOREST_CAMPAIGN_2027||stage!==9){ full.style.display='block'; s9.style.display='none'; }
+    else{ full.style.display='none'; s9.style.display='block'; }
+  }
+}
+function showHelp(){ syncHelpPanelsForStage(); gel('help-modal').classList.add('open'); }
+function hideHelp(){ gel('help-modal').classList.remove('open'); }
+function openMenu(){ gel('menu-overlay').classList.add('open'); }
+function closeMenu(){ gel('menu-overlay').classList.remove('open'); }
+function restartFull(){
+  if(replayMode) return;
+  if(FOREST_CAMPAIGN_2027){
+    forestMiniGameIndex=FOREST_START_N;
+    startStage=1;
+    stage=1;
+  }
+  clrT(); if(!FOREST_CAMPAIGN_2027) stage=startStage; paused=false; movesPerStage=[0,0,0,0,0,0,0,0];
+  initCampaignSession();
+  const sb=gel('stop-btn'); if(sb){sb.classList.remove('active');sb.textContent='⏸ Стоп';}
+  loadStage();
+}
+function toggleStop(){
+  if(replayMode) return;
+  paused=!paused;
+  const btn=gel('stop-btn');
+  if(paused){ clrT(); btn.textContent='▶ Продолжить'; btn.classList.add('active'); }
+  else{ btn.textContent='⏸ Стоп'; btn.classList.remove('active'); resumeTick(); }
+}
+function resetStage(){
+  if(replayMode) return;
+  clrT(); paused=false;
+  const sb=gel('stop-btn');
+  if(sb){ sb.textContent='⏸ Стоп'; sb.classList.remove('active'); }
+  if(stage>=1&&stage<=8) movesPerStage[stage-1]=0;
+  loadStage();
+}
+function resumeTick(){
+  if(stage>=3 && heroMoved) tickT=setInterval(tick, tickMs());
+}
+function goToSetup(){
+  stopReplayAuto();
+  if(replayMode){
+    exitReplayToSetup();
+    return;
+  }
+  hideVictoryOverlay();
+  won=false;
+  clrT(); paused=false;
+  const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
+  gel('game').style.display='none';
+  gel('setup').style.display='flex';
+  updateReplayMenuButtons();
+}
+function fullReset(){
+  if(replayMode) exitReplayToSetup();
+  exitReplayModeCore();
+  replayFrames=[];
+  _replayLastJson='';
+  clrT(); paused=false; stage=1; startStage=1; won=false; movesPerStage=[0,0,0,0,0,0,0,0];
+  hideVictoryOverlay();
+  movesStage9=0;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  if(FOREST_CAMPAIGN_2027) forestMiniGameIndex=FOREST_START_N;
+  gameStarted=false;
+  const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
+  document.querySelectorAll('.stage-sel').forEach((b,i)=>b.classList.toggle('active',i===0));
+  gel('game').style.display='none';
+  gel('setup').style.display='flex';
+  updateReplayMenuButtons();
+}
+
+// Leaderboard — stored in localStorage
+function loadScores(){
+  try{ return JSON.parse(localStorage.getItem('kolobok_2027_scores')||'[]'); }catch(e){ return []; }
+}
+function lbSortKey(e){
+  if(Array.isArray(e.stages)&&e.stages.length>=8) return e.stages[7];
+  if(Array.isArray(e.stages)&&e.stages.length>=7) return e.stages[6];
+  if(Array.isArray(e.stages)&&e.stages.length>=6) return e.stages[5];
+  if(typeof e.moves==='number') return e.moves;
+  return 1e9;
+}
+function lbSumStages(e){
+  if(Array.isArray(e.stages)&&e.stages.length>=6) return e.stages.reduce((a,b)=>a+b,0);
+  if(typeof e.moves==='number') return e.moves;
+  return 1e9;
+}
+function saveScore(name,stages){
+  const scores=loadScores();
+  scores.push({name,stages:stages.slice(),date:new Date().toLocaleDateString()});
+  scores.sort((a,b)=>{
+    const d=lbSortKey(a)-lbSortKey(b);
+    if(d!==0) return d;
+    return lbSumStages(a)-lbSumStages(b);
+  });
+  localStorage.setItem('kolobok_2027_scores',JSON.stringify(scores.slice(0,20)));
+  showLeaderboard();
+}
+function showLeaderboard(){
+  const el=gel('lb-content');
+  if(!el||el===_stub) return;
+  if(FOREST_CAMPAIGN_2027){
+    const scores=forestIsMole()?loadForestMoleChampions():(forestIsMush()?loadForestMushChampions():loadForestChampions());
+    const modeTitle=forestIsMole()?'«Кроты и грибы»':(forestIsMush()?'«Собери грибы»':'«Домой»');
+    if(!scores.length){
+      el.innerHTML='<p style="color:#666;font-size:13px;">Пока нет результатов для режима '+modeTitle+'. Меньше суммарных ходов — выше в таблице.</p>';
+    } else {
+      el.innerHTML=scores.map((s,i)=>{
+        const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+        return '<div style="padding:10px 0;border-bottom:1px solid #2a2a2a"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px;width:28px">'+medal+'</span><div style="flex:1"><div style="font-weight:700">'+String(s.name).replace(/</g,'&lt;')+'</div><div style="font-size:12px;color:#888">'+(s.date||'')+'</div></div><div style="font-size:16px;font-weight:800;color:#E8A020">'+(s.moves|0)+'</div></div></div>';
+      }).join('');
+    }
+    gel('lb-modal').style.display='flex';
+    return;
+  }
+  const scores=loadScores();
+  if(!scores.length){
+    el.innerHTML='<p style="color:#666;font-size:13px;">Пока нет результатов. Пройди все 8 этапов!</p>';
+  } else {
+    const medals=['🥇','🥈','🥉'];
+    el.innerHTML=scores.map((s,i)=>{
+      let stagesBlock='';
+      const lastIdx=(Array.isArray(s.stages)&&s.stages.length>=8)?7:(Array.isArray(s.stages)&&s.stages.length>=7)?6:(Array.isArray(s.stages)&&s.stages.length===6)?5:-1;
+      if(Array.isArray(s.stages)&&(s.stages.length===6||s.stages.length===7||s.stages.length===8)){
+        stagesBlock=`<div style="display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:4px;font-size:12px;font-weight:600;color:#ccc;">${
+          s.stages.map((n,si)=>`<span style="color:${si===lastIdx?'#E8A020':'#aaa'};">Э${si+1}: ${n}</span>`).join('')
+        }</div>`;
+      } else if(typeof s.moves==='number'){
+        stagesBlock=`<div style="margin-top:4px;font-size:11px;color:#666;">Старый формат: всего ${s.moves} ходов</div>`;
+      }
+      return `<div style="padding:10px 0;border-bottom:1px solid #2a2a2a;">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <span style="font-size:18px;width:28px;text-align:center;flex-shrink:0;">${medals[i]||'  '+(i+1)}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:14px;font-weight:600;color:#fff;">${s.name}</span>
+              <span style="font-size:11px;color:#555;flex-shrink:0;">${s.date}</span>
+            </div>
+            ${stagesBlock}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  gel('lb-modal').style.display='flex';
+}
+function clearLeaderboard(){
+  localStorage.removeItem('kolobok_2027_scores');
+  try{
+    if(FOREST_CAMPAIGN_2027){
+      localStorage.removeItem(LS_FOREST_CHAMPIONS);
+      localStorage.removeItem(LS_FOREST_MUSH_CHAMPIONS);
+      localStorage.removeItem(LS_FOREST_MOLE_CHAMPIONS);
+    }
+  }catch(e){}
+  showLeaderboard();
+}
+
+(function () {
+  const cv = document.getElementById('c');
+  if (cv) cv.addEventListener('click', function () { this.focus({ preventScroll: true }); });
+})();
+window.addEventListener('gamepadconnected', function (ev) {
+  try { gel('c')?.focus({ preventScroll: true }); } catch (e) {}
+  if (GAMEPAD_DEBUG && ev.gamepad) console.log('[gamepaddebug]', ev.gamepad.id, ev.gamepad.index);
+});
+requestAnimationFrame(gamepadLoop);
+if (GAMEPAD_DEBUG) {
+  const h = gel('gamepad-debug-hud');
+  if (h && h !== _stub) { h.classList.add('is-on'); h.removeAttribute('aria-hidden'); }
+}
+if(FOREST_CAMPAIGN_2027){
+  try{ document.documentElement.classList.add('forest2027'); }catch(e){}
+}
+loadNpcCounts();
+bindExtrasSliders();
+const LS_REPLAY_CHK='kolobok_2027_replay_check';
+(function initReplaySetupUi(){
+  const chk=gel('replay-record-check');
+  if(chk&&chk!==_stub){
+    try{
+      const v=localStorage.getItem(LS_REPLAY_CHK);
+      chk.checked=v==='1';
+    }catch(err){ chk.checked=false; }
+    chk.addEventListener('change',function(){
+      try{ localStorage.setItem(LS_REPLAY_CHK,this.checked?'1':'0'); }catch(e){}
+    });
+  }
+  const pick=gel('replay-pick-file-btn');
+  const finp=gel('replay-file-input');
+  if(pick&&pick!==_stub&&finp&&finp!==_stub){
+    pick.addEventListener('click',()=>finp.click());
+    finp.addEventListener('change',function(){
+      const f=this.files&&this.files[0];
+      if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{
+        try{
+          startReplayFromJson(JSON.parse(String(r.result||'')));
+        }catch(err){
+          alert(err&&err.message?err.message:'Не удалось прочитать файл.');
+        }
+      };
+      r.readAsText(f);
+      this.value='';
+    });
+  }
+})();
+
+// 2027 лесная кампания: сразу стартуем в игре (код '6'), без экрана настроек.
+if(FOREST_CAMPAIGN_2027){
+  setTimeout(()=>{
+    try{
+      if(!gameStarted && !replayMode){
+        const pn=gel('player-name');
+        if(pn&&pn!==_stub && !(pn.value||'').trim()) pn.value='Игрок';
+        startGame();
+      }
+    }catch(e){}
+  }, 0);
+}
+</script>
+<!-- Leaderboard modal -->
+<div id="lb-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:5000;align-items:center;justify-content:center;">
+  <div id="lb-panel" style="background:#1e1e1e;border-radius:14px;max-width:560px;width:92%;max-height:80vh;overflow-y:auto;padding:1.5rem;border:1px solid #333;position:relative;">
+    <button onclick="gel('lb-modal').style.display='none'" style="position:absolute;top:0.75rem;right:0.75rem;background:#333;border:none;width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;color:#aaa;z-index:1;">✕</button>
+    <div class="screen-title-bar">Колобок и его команда (2027)</div>
+    <h2 style="font-size:17px;font-weight:600;margin-bottom:1rem;color:#fff;">🏆 Таблица чемпионов (лес, 15 игр)</h2>
+    <div id="lb-content"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:1rem;">
+      <button type="button" onclick="gel('lb-modal').style.display='none';fullReset();" style="padding:8px 16px;font-size:13px;cursor:pointer;border-radius:8px;border:1px solid #E8A020;background:#2a2210;color:#E8A020;font-weight:600;">К началу</button>
+      <button type="button" onclick="clearLeaderboard()" style="padding:8px 16px;font-size:12px;cursor:pointer;border-radius:8px;border:1px solid #444;background:#2a2a2a;color:#666;">Очистить</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
