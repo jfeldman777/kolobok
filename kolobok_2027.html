@@ -1013,8 +1013,11 @@ function forestFinishCampaign(){
   }
   if(forestIsMush()){
     saveForestMushChampion(name, campaignMovesTotal);
-    setMsg('Следующая игра: кроты и грибы…');
-    setTimeout(()=>{ forestStartMoleCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+    setMsg('');
+    setTimeout(()=>{
+      if(replayMode){ forestStartMoleCampaign(); return; }
+      showForestMushToMoleStory();
+    }, Math.max(250, STAGE_SALUTE_MS-500));
     if(replayRecording && !replayMode) maybeRecordSnapshot('forest-mush-finished');
     return;
   }
@@ -1082,6 +1085,67 @@ function showForestHomeToMushStory(){
     const ox=Math.round((css-sz)/2);
     const oy=Math.round((css-sz)*0.42);
     drawMushroom(ctx, ox, oy, sz);
+  });
+}
+
+function forestMushToMoleStoryDismiss(){
+  window.removeEventListener('keydown', forestMushToMoleStoryOnKeydown, true);
+  const ov=gel('victory-overlay');
+  if(ov&&ov!==_stub){
+    try{ ov.removeEventListener('pointerdown', forestMushToMoleStoryOnPointer, true); }catch(e){}
+  }
+  hideVictoryOverlay();
+  forestStartMoleCampaign();
+}
+function forestMushToMoleStoryOnKeydown(ev){
+  try{
+    ev.preventDefault();
+    ev.stopPropagation();
+  }catch(e){}
+  forestMushToMoleStoryDismiss();
+}
+function forestMushToMoleStoryOnPointer(ev){
+  if(ev.button!=null&&ev.button!==0) return;
+  try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+  forestMushToMoleStoryDismiss();
+}
+
+/** Между серией 2 («грибы») и серией 3 («кроты и грибы»). */
+function showForestMushToMoleStory(){
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub){ forestStartMoleCampaign(); return; }
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.setAttribute('tabindex','-1');
+  const p1='После дождя из нор вылезли кроты.';
+  const p2='Теперь, чтобы собрать хотя бы один гриб, надо сначала взять с собой хотя бы одного крота.';
+  ov.innerHTML='<div id="victory-box" style="max-width:520px;text-align:center">'+
+    '<canvas id="forest-mole-bridge-canvas" width="220" height="220" style="display:block;margin:0 auto 8px;width:min(220px,55vw);height:min(220px,55vw);image-rendering:auto"></canvas>'+
+    '<p class="vic-lead" style="margin:0;font-size:clamp(1.05rem,3.8vw,1.35rem);line-height:1.55;color:#dce8df;font-weight:600">'+p1+'</p>'+
+    '<p class="vic-lead" style="margin:14px 0 0;font-size:clamp(1.02rem,3.5vw,1.28rem);line-height:1.5;color:#c8d8ce;font-weight:600">'+p2+'</p>'+
+    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">Дальше нажми любую клавишу или коснись экрана.</p>'+
+    '</div>';
+  window.addEventListener('keydown', forestMushToMoleStoryOnKeydown, true);
+  ov.addEventListener('pointerdown', forestMushToMoleStoryOnPointer, true);
+  try{ ov.focus({ preventScroll: true }); }catch(e){ try{ ov.focus(); }catch(e2){} }
+  queueMicrotask(()=>{
+    const c=document.getElementById('forest-mole-bridge-canvas');
+    if(!c) return;
+    const css=Math.min(220, Math.max(160, Math.min(window.innerWidth*0.55, 240)));
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    c.width=Math.round(css*dpr);
+    c.height=Math.round(css*dpr);
+    c.style.width=css+'px';
+    c.style.height=css+'px';
+    const ctx=c.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,css,css);
+    const sz=Math.round(css*0.82);
+    const ox=Math.round((css-sz)/2);
+    const oy=Math.round((css-sz)*0.42);
+    drawMole(ctx, ox, oy, sz);
   });
 }
 
@@ -1505,9 +1569,11 @@ function initCampaignSession(){
 
 function hideVictoryOverlay(){
   try{ window.removeEventListener('keydown', forestHomeMushStoryOnKeydown, true); }catch(e){}
+  try{ window.removeEventListener('keydown', forestMushToMoleStoryOnKeydown, true); }catch(e){}
   const ov=gel('victory-overlay');
   if(!ov||ov===_stub) return;
   try{ ov.removeEventListener('pointerdown', forestHomeMushStoryOnPointer, true); }catch(e){}
+  try{ ov.removeEventListener('pointerdown', forestMushToMoleStoryOnPointer, true); }catch(e){}
   ov.classList.remove('victory-open');
   ov.innerHTML='';
   ov.style.display='none';
