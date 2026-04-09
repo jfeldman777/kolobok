@@ -611,6 +611,8 @@ function npcP4Pairs(){
 }
 /** Максимальная цифра уровня в наборах (герой на этапе 8). */
 const MAX_DIGIT=8;
+/** Период смены цифры в «пенале» на фишке (мс): по одной крупной цифре, по кругу. */
+const PENALTY_DIGIT_FLASH_MS=420;
 function useTorus(){ return stage===7||stage===8; }
 /** Финиш: этапы 1–8 — правый нижний угол; этап 9 — центр поля (превью доски). */
 function finishGX(){ return stage===9?(N-1)>>1:N-1; }
@@ -1301,6 +1303,18 @@ function penaltyUIFullText(mob){
   if(base) return base;
   if(tail) return tail;
   return String(mob.lvl!=null?mob.lvl:1);
+}
+
+/** Цифры пенала по порядку (база по убыванию, затем хвосты через «·») — для мигания по одной. */
+function digitsFromPenaltyUIText(t){
+  if(t==null||t==='') return [];
+  const list=[];
+  for(const seg of String(t).split(/\s*·\s*/)){
+    for(const w of seg.trim().split(/\s+/)){
+      if(/^[1-9]$/.test(w)) list.push(w);
+    }
+  }
+  return list;
 }
 
 /** У NPC снять самую большую цифру из набора (lvl+dots); остальное — новый пенал. Пусто → собрана. */
@@ -2573,18 +2587,26 @@ function drawSquareBall(ctx, gx, gy, lvl, dots, frameOffset, rawText){
 
     const ownC=safeCLR(lvl);
     let text;
+    let shrinkMulti=false;
+    const t0=performance.now()+((frameOffset|0)*67);
+
     if(rawText!=null&&String(rawText).length){
-      text=String(rawText);
+      const seq=digitsFromPenaltyUIText(String(rawText));
+      if(seq.length>1) text=seq[Math.floor(t0/PENALTY_DIGIT_FLASH_MS)%seq.length];
+      else if(seq.length===1) text=seq[0];
+      else { text=String(rawText); shrinkMulti=text.length>1; }
     } else {
       let dd=Array.isArray(dots)&&dots.length?[...dots].filter(d=>d>=1&&d<=9):getDigitSeq(lvl,dots||[]);
       if(!dd.length) dd=[Math.min(Math.max(1,lvl),9)];
-      text=dd.map(String).join(' ');
+      const seq=dd.map(String);
+      if(seq.length>1) text=seq[Math.floor(t0/PENALTY_DIGIT_FLASH_MS)%seq.length];
+      else text=seq[0];
     }
     ctx.strokeStyle=ownC.fdk;
     ctx.lineWidth=2.5;
     ctx.strokeRect(x+1.25,y+1.25,s-2.5,s-2.5);
     let fs=Math.max(10, 0|s*0.82);
-    if(text.length>1){
+    if(shrinkMulti||text.length>1){
       const approx=Math.max(1, text.replace(/\s/g,'').length+Math.max(0,text.split(' ').length-1)*0.35);
       fs=Math.max(6, Math.min(0|s*0.82, (s*0.88)/(approx*0.52)));
     }
@@ -2632,11 +2654,18 @@ function drawHero(ctx,dk){
   if(stage>=1&&stage<=8&&hero){
     const cap=penaltyUIFullText(hero);
     if(cap){
-      const fs=Math.max(5,Math.min(0|CELL*0.16,112/Math.max(cap.length,3)));
+      const seq=digitsFromPenaltyUIText(cap);
+      const tHero=performance.now()+(hero.x||0)*41+(hero.y||0)*19;
+      const show=seq.length>1
+        ? seq[Math.floor(tHero/PENALTY_DIGIT_FLASH_MS)%seq.length]
+        :(seq.length===1?seq[0]:cap);
+      const fs=show.length>1
+        ? Math.max(5,Math.min(0|CELL*0.16,112/Math.max(show.length,3)))
+        : Math.max(8,Math.min(0|CELL*0.22,52));
       ctx.fillStyle=dk?'rgba(255,255,255,0.92)':'rgba(30,30,30,0.95)';
       ctx.font=`700 ${0|fs}px system-ui,sans-serif`;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
-      ctx.fillText(cap,x+s/2,y+s-2);
+      ctx.fillText(show,x+s/2,y+s-2);
     }
   }
 }
