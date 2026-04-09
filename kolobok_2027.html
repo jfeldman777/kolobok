@@ -382,6 +382,8 @@ canvas { display: block; }
         <button type="button" id="forest-phase-1" onclick="forestSwitchPhase('home')">1</button>
         <button type="button" id="forest-phase-2" onclick="forestSwitchPhase('mush')">2</button>
         <button type="button" id="forest-phase-3" onclick="forestSwitchPhase('mole')">3</button>
+        <button type="button" id="forest-phase-4" onclick="forestSwitchPhase('boar')">4</button>
+        <button type="button" id="forest-phase-5" onclick="forestSwitchPhase('horse')">5</button>
       </span>
       <span id="sb">Игра <span id="stage-num">1</span>/<span id="stage-tMax">15</span> <span id="sb-code" style="opacity:0.85;font-weight:600"></span></span>
       <span id="hero-panel"></span>
@@ -559,7 +561,7 @@ let col1=0,col2=0,col3=0,col4=0,col5=0,col6=0,col7=0;
 let tickT=null, resetT=null, heroMoved=false;
 let k2Territory={}; // key="x,y" → index of M2 owner
 let tickCount=0;    // for k2 slow movement (every 2 ticks)
-let graveyard=[];   // maxOfSet of each absorbed NPC
+let graveyard=[];   // entries like "4(21)" => погиб 4, убит пеналом 21
 /** Запись / просмотр партии (экспорт JSON) */
 let replayRecording=false;
 let replayMode=false;
@@ -698,14 +700,17 @@ const PENALTY_DIGIT_FLASH_MS=420;
 /** Режим 2027: кампания «лес — домой», размеры поля 6…15 (финиш при 15), без этапа 9 и без тора. */
 const FOREST_CAMPAIGN_2027=true;
 const FOREST_START_N=6;
+const FOREST_HORSE_START_N=8;
 const FOREST_TOTAL_MINI=15; // финальный размер поля (N=15)
 const LS_FOREST_CHAMPIONS='kolobok_2027_forest_champions';
 const LS_FOREST_MUSH_CHAMPIONS='kolobok_2027_forest_mush_champions';
 const LS_FOREST_MOLE_CHAMPIONS='kolobok_2027_forest_mole_champions';
+const LS_FOREST_BOAR_CHAMPIONS='kolobok_2027_forest_boar_champions';
+const LS_FOREST_HORSE_CHAMPIONS='kolobok_2027_forest_horse_champions';
 /** Код мини-игры: «N» — поле N×N. В этой версии фишек нет, растёт только размер поля. */
 let forestMiniGameIndex=FOREST_START_N;
 let forestCampaignSpec='';
-let forestPhase='home'; // 'home' | 'mush' | 'mole'
+let forestPhase='home'; // 'home' | 'mush' | 'mole' | 'boar' | 'horse'
 let forestMushrooms=new Set(); // keys "x,y" on floor cells (near trees)
 let forestMushroomsTotal=0;
 let forestMushroomsCollected=0;
@@ -714,7 +719,18 @@ let forestRedFlashUntil=0;
 
 function forestIsMush(){ return forestPhase==='mush'; }
 function forestIsMole(){ return forestPhase==='mole'; }
-function forestUsesMushrooms(){ return forestIsMush()||forestIsMole(); }
+function forestIsBoar(){ return forestPhase==='boar'; }
+function forestIsHorse(){ return forestPhase==='horse'; }
+function forestUsesMushrooms(){ return forestIsMush()||forestIsMole()||forestIsBoar()||forestIsHorse(); }
+function forestHorseNeed(){
+  const horsesLeft=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0);
+  if(horsesLeft>0) return 'horse';
+  const boarLeft=M3.filter(m=>!m.collected).length;
+  if(boarLeft>0) return 'boar';
+  const moleLeft=M2.filter(m=>!m.collected).length;
+  if(moleLeft>0) return 'mole';
+  return 'mushroom';
+}
 
 function triggerForestRedFlash(ms){
   const dur=Math.max(200, ms|0);
@@ -746,18 +762,27 @@ function forestWallPctForIndex(_i){
 
 function applyForestMiniGameParams(idx){
   const n=(idx|0)||FOREST_START_N;
-  forestCampaignSpec=String(n);
+  forestCampaignSpec=String(forestIsHorse()?Math.max(FOREST_HORSE_START_N,n):n);
   const {n:nn}=parseForestSpec(String(n));
-  N=nn;
+  N=forestIsHorse()?Math.max(FOREST_HORSE_START_N,nn):nn;
   wallPct=forestWallPctForIndex(n);
   npcCounts={n1:0,n2:0,n3:0,p4:0,n5:0,n6:0,n7:0};
-  // Серия 3: кроты (к‑2), число растёт с размером поля.
+  // Серия 3: только кроты и грибы.
   if(forestIsMole()){
-    const round=Math.max(1, (forestMiniGameIndex-FOREST_START_N+1)|0);
     npcCounts.n2=Math.max(1, Math.min(4, Math.floor((N-4)/3)));
-    // С 4-го этапа серии появляется дикий кабан (к‑3).
-    npcCounts.n3=(round>=4)?1:0;
-    stage=(round>=4)?4:3; // до 4-го этапа герой=3, кроты=2; с 4-го добавляется кабан (3)
+    npcCounts.n3=0;
+    stage=3; // без кабана
+  } else if(forestIsBoar()){
+    // Серия 4: всегда гриб(1) + крот(2) + кабан(3), колобок уровня 4.
+    npcCounts.n2=Math.max(1, Math.min(4, Math.floor((N-4)/3)));
+    npcCounts.n3=1;
+    stage=4;
+  } else if(forestIsHorse()){
+    // Серия 5: две лошадки (пара к-4), затем кабан, затем крот, потом гриб.
+    npcCounts.p4=1; // ровно одна пара => две лошадки
+    npcCounts.n3=1; // кабан
+    npcCounts.n2=1; // крот
+    stage=5; // колобок выше всех (до 9-го этапа)
   } else {
     stage=1; // серии 1 и 2 — без NPC
   }
@@ -771,21 +796,24 @@ function updateForestHud(){
   const sc=gel('sb-code');
   if(sc&&sc!==_stub){
     const tail=forestCampaignSpec?(' · '+forestCampaignSpec):'';
-    sc.textContent=(forestIsMush()?' · грибы':forestIsMole()?' · кроты+грибы':'')+tail;
+    sc.textContent=(forestIsMush()?' · грибы':forestIsMole()?' · кроты+грибы':forestIsBoar()?' · кроты+кабан+грибы':forestIsHorse()?' · лошади+кабан+крот+гриб':'')+tail;
   }
-  const b1=gel('forest-phase-1'), b2=gel('forest-phase-2'), b3=gel('forest-phase-3');
+  const b1=gel('forest-phase-1'), b2=gel('forest-phase-2'), b3=gel('forest-phase-3'), b4=gel('forest-phase-4'), b5=gel('forest-phase-5');
   if(b1&&b1!==_stub) b1.classList.toggle('active', forestPhase==='home');
   if(b2&&b2!==_stub) b2.classList.toggle('active', forestIsMush());
   if(b3&&b3!==_stub) b3.classList.toggle('active', forestIsMole());
+  if(b4&&b4!==_stub) b4.classList.toggle('active', forestIsBoar());
+  if(b5&&b5!==_stub) b5.classList.toggle('active', forestIsHorse());
 }
 
 function forestSwitchPhase(mode){
   if(!FOREST_CAMPAIGN_2027 || replayMode) return;
-  const next=(mode==='mush')?'mush':(mode==='mole'?'mole':'home');
+  const next=(mode==='mush')?'mush':(mode==='mole'?'mole':(mode==='boar'?'boar':(mode==='horse'?'horse':'home')));
   if(forestPhase===next && gameStarted) return;
   forestPhase=next;
-  forestMiniGameIndex=FOREST_START_N;
-  forestCampaignSpec=String(FOREST_START_N);
+  const startN=forestIsHorse()?FOREST_HORSE_START_N:FOREST_START_N;
+  forestMiniGameIndex=startN;
+  forestCampaignSpec=String(startN);
   forestMushrooms=new Set();
   forestMushroomsTotal=0;
   forestMushroomsCollected=0;
@@ -824,6 +852,18 @@ function loadForestMoleChampions(){
     return Array.isArray(a)?a:[];
   }catch(e){ return []; }
 }
+function loadForestBoarChampions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_BOAR_CHAMPIONS)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
+function loadForestHorseChampions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_HORSE_CHAMPIONS)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
 
 function saveForestChampion(name,moves){
   const scores=loadForestChampions();
@@ -847,6 +887,20 @@ function saveForestMoleChampion(name,moves){
   scores.push(entry);
   scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
   try{ localStorage.setItem(LS_FOREST_MOLE_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
+}
+function saveForestBoarChampion(name,moves){
+  const scores=loadForestBoarChampions();
+  const entry={name:String(name||'Игрок').slice(0,24), moves:moves|0, date:new Date().toLocaleString('ru-RU')};
+  scores.push(entry);
+  scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
+  try{ localStorage.setItem(LS_FOREST_BOAR_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
+}
+function saveForestHorseChampion(name,moves){
+  const scores=loadForestHorseChampions();
+  const entry={name:String(name||'Игрок').slice(0,24), moves:moves|0, date:new Date().toLocaleString('ru-RU')};
+  scores.push(entry);
+  scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
+  try{ localStorage.setItem(LS_FOREST_HORSE_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
 }
 
 function forestAfterMiniWin(){
@@ -900,17 +954,61 @@ function forestStartMoleCampaign(){
   setMsg('Кроты и грибы');
   loadStage();
 }
+function forestStartBoarCampaign(){
+  forestPhase='boar';
+  forestMiniGameIndex=FOREST_START_N;
+  forestCampaignSpec=String(FOREST_START_N);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  forestMoleTaken=false;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  won=false;
+  setMsg('Кроты, кабан и грибы');
+  loadStage();
+}
+function forestStartHorseCampaign(){
+  forestPhase='horse';
+  forestMiniGameIndex=FOREST_HORSE_START_N;
+  forestCampaignSpec=String(FOREST_HORSE_START_N);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  forestMoleTaken=false;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  won=false;
+  setMsg('Лошади, кабан, крот и гриб');
+  loadStage();
+}
 
 function forestFinishCampaign(){
   const name=(gel('player-name').value||'').trim()||'Игрок';
-  if(forestIsMole()){
-    saveForestMoleChampion(name, campaignMovesTotal);
+  if(forestIsBoar()){
+    saveForestBoarChampion(name, campaignMovesTotal);
+    setMsg('Следующая игра: лошади, кабан, крот и гриб…');
+    setTimeout(()=>{ forestStartHorseCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-boar-finished');
+    return;
+  }
+  if(forestIsHorse()){
+    saveForestHorseChampion(name, campaignMovesTotal);
     won=true;
     clrT();
-    setMsg('Все 15 игр «Кроты и грибы» пройдены!');
+    setMsg('Все 15 игр «Лошади, кабан, крот и гриб» пройдены!');
     draw();
-    showForestMoleFinalOverlay();
-    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-mole-win');
+    showForestHorseFinalOverlay();
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-horse-win');
+    return;
+  }
+  if(forestIsMole()){
+    saveForestMoleChampion(name, campaignMovesTotal);
+    setMsg('Следующая игра: кроты, кабан и грибы…');
+    setTimeout(()=>{ forestStartBoarCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-mole-finished');
     return;
   }
   if(forestIsMush()){
@@ -988,6 +1086,31 @@ function showForestMoleFinalOverlay(){
   ov.classList.add('victory-open');
   ov.innerHTML='<div id="victory-box" style="max-width:540px">'+
     '<h2>Кроты и грибы пройдены!</h2>'+
+    '<p class="vic-lead">Суммарно ходов: <strong style="color:#E8A020">'+campaignMovesTotal+'</strong>. Игрок: '+String((gel('player-name').value||'').trim()||'Игрок').replace(/</g,'&lt;')+'.</p>'+
+    '<h3 style="margin-top:14px">Таблица чемпионов</h3>'+
+    '<p style="font-size:12px;color:#888;margin:0 0 8px">Меньше ходов — выше в списке.</p>'+
+    '<div style="overflow-x:auto;max-height:min(48vh,320px)"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#9aab9e"><th>#</th><th>Имя</th><th>Ходы</th><th>Дата</th></tr></thead><tbody>'+
+    (rows||'<tr><td colspan="4" style="padding:12px;color:#666">Пока нет записей</td></tr>')+
+    '</tbody></table></div>'+
+    '<div id="victory-actions" style="margin-top:16px">'+
+    '<a class="vic-btn-home" href="index.html">Ко всем играм</a>'+
+    '<button type="button" class="vic-btn-setup" onclick="goToSetup();hideVictoryOverlay();">В меню</button>'+
+    '</div></div>';
+}
+
+function showForestHorseFinalOverlay(){
+  const top=loadForestHorseChampions().slice(0, 15);
+  const rows=top.map((e,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    return '<tr style="border-bottom:1px solid #2a3a2d"><td style="padding:8px 6px">'+medal+'</td><td style="padding:8px 6px;font-weight:600">'+String(e.name).replace(/</g,'&lt;')+'</td><td style="padding:8px 6px;text-align:right"><b>'+(e.moves|0)+'</b></td><td style="padding:8px 6px;font-size:11px;color:#888">'+String(e.date||'')+'</td></tr>';
+  }).join('');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.innerHTML='<div id="victory-box" style="max-width:540px">'+
+    '<h2>Лошадиная серия пройдена!</h2>'+
     '<p class="vic-lead">Суммарно ходов: <strong style="color:#E8A020">'+campaignMovesTotal+'</strong>. Игрок: '+String((gel('player-name').value||'').trim()||'Игрок').replace(/</g,'&lt;')+'.</p>'+
     '<h3 style="margin-top:14px">Таблица чемпионов</h3>'+
     '<p style="font-size:12px;color:#888;margin:0 0 8px">Меньше ходов — выше в списке.</p>'+
@@ -1097,8 +1220,37 @@ function drawMole(ctx,cx,cy,sz){
   ctx.beginPath(); ctx.arc(cx+s*0.55, cy+s*0.44, s*0.015, 0, Math.PI*2); ctx.fill();
 }
 
-function drawBoar(ctx,cx,cy,sz){
+function drawBoar(ctx,cx,cy,sz,dx,dy){
   const s=sz;
+  const vx=(typeof dx==='number'?dx:0);
+  const vy=(typeof dy==='number'?dy:0);
+  // Базовый спрайт нарисован "мордой влево", поэтому добавляем PI,
+  // чтобы по вектору движения кабан смотрел мордой вперёд.
+  const ang=(vx===0&&vy===0)?0:(Math.atan2(vy,vx)+Math.PI);
+  const ox=cx+s*0.5, oy=cy+s*0.5;
+  ctx.save();
+  ctx.translate(ox,oy);
+  ctx.rotate(ang);
+  ctx.translate(-ox,-oy);
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.54, cy+s*0.78, s*0.26, s*0.08, 0, 0, Math.PI*2);
+  ctx.fill();
+  // legs
+  ctx.fillStyle='#4e342e';
+  ctx.fillRect(cx+s*0.38, cy+s*0.68, s*0.05, s*0.16);
+  ctx.fillRect(cx+s*0.5,  cy+s*0.69, s*0.05, s*0.15);
+  ctx.fillRect(cx+s*0.62, cy+s*0.68, s*0.05, s*0.16);
+  // curled tail (ring)
+  ctx.strokeStyle='#5d4037';
+  ctx.lineWidth=Math.max(1.4, s*0.024);
+  ctx.beginPath();
+  ctx.arc(cx+s*0.76, cy+s*0.58, s*0.05, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx+s*0.76, cy+s*0.58, s*0.022, 0, Math.PI*2);
+  ctx.stroke();
   // body
   ctx.fillStyle='#6d4c41';
   ctx.beginPath();
@@ -1114,18 +1266,84 @@ function drawBoar(ctx,cx,cy,sz){
   ctx.beginPath();
   ctx.ellipse(cx+s*0.23, cy+s*0.62, s*0.07, s*0.05, 0, 0, Math.PI*2);
   ctx.fill();
-  // tusk
+  // tusks (two)
   ctx.strokeStyle='#f5f5dc';
-  ctx.lineWidth=Math.max(1, s*0.02);
+  ctx.lineWidth=Math.max(1, s*0.024);
   ctx.beginPath();
-  ctx.moveTo(cx+s*0.2, cy+s*0.62);
-  ctx.lineTo(cx+s*0.14, cy+s*0.6);
+  ctx.moveTo(cx+s*0.21, cy+s*0.62);
+  ctx.quadraticCurveTo(cx+s*0.16, cy+s*0.59, cx+s*0.135, cy+s*0.555);
+  ctx.moveTo(cx+s*0.235, cy+s*0.655);
+  ctx.quadraticCurveTo(cx+s*0.175, cy+s*0.64, cx+s*0.145, cy+s*0.615);
   ctx.stroke();
   // eye
   ctx.fillStyle='#111';
   ctx.beginPath();
   ctx.arc(cx+s*0.35, cy+s*0.56, s*0.015, 0, Math.PI*2);
   ctx.fill();
+  ctx.restore();
+}
+
+function drawHorse(ctx,cx,cy,sz,dx,dy){
+  const s=sz;
+  const vx=(typeof dx==='number'?dx:1);
+  const vy=(typeof dy==='number'?dy:0);
+  const ox=cx+s*0.5, oy=cy+s*0.5;
+  ctx.save();
+  ctx.translate(ox,oy);
+  // Лошадь не переворачиваем "ногами вверх":
+  // по горизонтали — только зеркалим (мордой по ходу),
+  // по вертикали — поворачиваем на 90°.
+  if(Math.abs(vx)>=Math.abs(vy)){
+    if(vx>0) ctx.scale(-1,1); // базовый спрайт смотрит влево
+  } else {
+    ctx.rotate(vy<0?-Math.PI/2:Math.PI/2);
+  }
+  ctx.translate(-ox,-oy);
+  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.52, cy+s*0.8, s*0.24, s*0.07, 0, 0, Math.PI*2);
+  ctx.fill();
+  // legs
+  ctx.fillStyle='#5d4037';
+  ctx.fillRect(cx+s*0.37, cy+s*0.64, s*0.05, s*0.2);
+  ctx.fillRect(cx+s*0.47, cy+s*0.66, s*0.05, s*0.18);
+  ctx.fillRect(cx+s*0.58, cy+s*0.66, s*0.05, s*0.18);
+  ctx.fillRect(cx+s*0.67, cy+s*0.64, s*0.05, s*0.2);
+  // body
+  ctx.fillStyle='#8d6e63';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.54, cy+s*0.54, s*0.25, s*0.14, 0, 0, Math.PI*2);
+  ctx.fill();
+  // neck and head (towards +X)
+  ctx.fillStyle='#6d4c41';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.32, cy+s*0.48, s*0.1, s*0.08, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#795548';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.22, cy+s*0.48, s*0.08, s*0.065, 0, 0, Math.PI*2);
+  ctx.fill();
+  // ear
+  ctx.fillStyle='#4e342e';
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.22, cy+s*0.41);
+  ctx.lineTo(cx+s*0.25, cy+s*0.35);
+  ctx.lineTo(cx+s*0.28, cy+s*0.42);
+  ctx.closePath();
+  ctx.fill();
+  // eye
+  ctx.fillStyle='#111';
+  ctx.beginPath();
+  ctx.arc(cx+s*0.2, cy+s*0.47, s*0.012, 0, Math.PI*2);
+  ctx.fill();
+  // tail
+  ctx.strokeStyle='#4e342e';
+  ctx.lineWidth=Math.max(1.2, s*0.02);
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.76, cy+s*0.49);
+  ctx.quadraticCurveTo(cx+s*0.84, cy+s*0.43, cx+s*0.85, cy+s*0.56);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function useTorus(){
@@ -1859,6 +2077,15 @@ function getDigitSeq(lvl, dots){
 }
 
 function maxOfSet(s){ let m=0; s.forEach(v=>{if(v>m)m=v;}); return m; }
+function setCode(s){
+  return [...new Set([...(s||[])])].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a).join('')||'0';
+}
+function pushGrave(victimSet,killerSet){
+  const v=setCode(victimSet), k=setCode(killerSet);
+  graveyard.push(v+'('+k+')');
+  if(graveyard.length>40) graveyard=graveyard.slice(-40);
+  killedCount=graveyard.length;
+}
 
 /** Одна цифра уровня героя для панели и клетки (без «пенала» из нескольких цифр). */
 function heroDisplayLvl(){
@@ -1908,7 +2135,7 @@ function npcPenaltyMinusOne(npc){
 function registerNpcCollectedByHero(npc){
   if(!npc) return;
   const n=npc.lvl|0;
-  if(FOREST_CAMPAIGN_2027 && forestIsMole() && n===2){
+  if(FOREST_CAMPAIGN_2027 && (forestIsMole()||forestIsBoar()||forestIsHorse()) && n===2){
     forestMoleTaken=true;
     setMsg('Крот с вами. Теперь можно собирать грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
   }
@@ -1989,6 +2216,16 @@ function meet(A,B){
   const maxA=maxOfSet(setA), maxB=maxOfSet(setB);
 
   if(maxA===maxB){
+    // Серия 3: колобок (ур.3) может кооптировать дикого кабана (ур.3) при встрече.
+    if(FOREST_CAMPAIGN_2027 && forestIsBoar() && (A.isHero||B.isHero)){
+      const npc=A.isHero?B:A;
+      const hr=A.isHero?A:B;
+      if(hr.isHero && !npc.isHero && (npc.lvl|0)===3){
+        npc.collected=true;
+        registerNpcCollectedByHero(npc);
+        return null;
+      }
+    }
     if(stage===9 && (A.isHero||B.isHero)){
       const npc=A.isHero?B:A;
       const hr=A.isHero?A:B;
@@ -2053,10 +2290,112 @@ function meet(A,B){
       heroWasSenior:senior.isHero
     };
     // Count killed (senior died — not absorbed)
-    if(!senior.isHero) killedCount++;
+    if(!senior.isHero) pushGrave(sSets, jSets);
     if(senior.isHero) senior.alive=false; else senior.collected=true;
     return info;
   }
+}
+
+function mushroomUnitAt(x,y){
+  return {
+    x,y,lvl:1,dots:[1],displayDots:[1],absorbed:[],
+    isHero:false,collected:false,isMushroom:true
+  };
+}
+function forestMushroomUnits(){
+  if(!FOREST_CAMPAIGN_2027||!forestUsesMushrooms()||!forestMushrooms) return [];
+  const res=[];
+  for(const k of forestMushrooms){
+    const p=String(k).split(',');
+    const x=p[0]|0, y=p[1]|0;
+    res.push(mushroomUnitAt(x,y));
+  }
+  return res;
+}
+function absorbSetIntoSenior(senior, addSet){
+  const toAdd=[...new Set([...(addSet||[])])].filter(d=>d>=1&&d<=MAX_DIGIT);
+  for(const d of toAdd){ if(!senior.dots.includes(d)) senior.dots.push(d); }
+  if(!senior.absorbed) senior.absorbed=[];
+  if(stage!==9) senior.absorbed.push([...toAdd].sort((a,b)=>b-a));
+  if(senior.isHero){
+    const mx=maxOfSet(fullSet(senior));
+    const dLv=Math.min(mx,9);
+    senior.lvl=mx;
+    senior.peakLvl=dLv;
+    senior.navDigit=(mx<=MAX_DIGIT)?mx:(mx===9?9:0);
+    if(stage===9){
+      senior.displayDots=[dLv];
+      if(senior.navDigit!==2){
+        clearHeroK2Paint();
+        senior._k2Pulse=0;
+      }
+      senior._k5LastWasJump=false;
+      const nd=senior.navDigit|0;
+      if(nd!==3&&nd!==4){
+        senior._bdx=senior._bdy=0;
+        senior._satL=senior._satR=null;
+      } else if(nd===3){
+        senior._satL=senior._satR=null;
+      } else if(nd===4){
+        initHeroMode4Satellites(true);
+      }
+    } else {
+      const sorted=[...fullSet(senior)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a);
+      senior.displayDots=sorted.length?sorted:[dLv];
+    }
+  } else {
+    const sorted=[...fullSet(senior)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a);
+    senior.displayDots=sorted.length?sorted:[senior.lvl];
+  }
+}
+function penaltyDigitsSet(obj){
+  const s=new Set(fullSet(obj));
+  if(obj&&Array.isArray(obj.absorbed)){
+    for(const ch of obj.absorbed){
+      if(!Array.isArray(ch)) continue;
+      for(const d of ch){
+        const n=d|0;
+        if(n>=1&&n<=MAX_DIGIT) s.add(n);
+      }
+    }
+  }
+  return s;
+}
+/** Универсальное правило "конкуренция/кооперация/война" для встречи с грибом (пенал [1]). */
+function resolveMushroomMeet(actor,mushKey){
+  if(!actor||actor.collected||!forestMushrooms||!forestMushrooms.has(mushKey)) return 'none';
+  const mush=mushroomUnitAt(actor.x,actor.y);
+  const actorSet=penaltyDigitsSet(actor);
+  // Гарантия правила: если в пенале есть 2, с грибом 1 всегда кооперация.
+  if(actorSet.has(2)){
+    absorbSetIntoSenior(actor, fullSet(mush));
+    forestMushrooms.delete(mushKey);
+    if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
+    return 'cooperation';
+  }
+  const maxA=maxOfSet(actorSet), maxM=1;
+  if(maxA===maxM) return 'competition';
+  const senior=maxA>maxM?actor:mush;
+  const junior=maxA>maxM?mush:actor;
+  const seniorSet=(senior===actor)?actorSet:fullSet(mush);
+  const juniorSet=(junior===actor)?actorSet:fullSet(mush);
+  let canC=false;
+  for(const a of seniorSet){ for(const b of juniorSet){ if(Math.abs(a-b)===1){ canC=true; break; } } if(canC) break; }
+  if(canC){
+    if(senior===actor) absorbSetIntoSenior(actor, fullSet(mush));
+    forestMushrooms.delete(mushKey);
+    if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
+    return 'cooperation';
+  }
+  // Война: погибает старший.
+  if(senior===actor){
+    actor.collected=true;
+    pushGrave(actorSet, fullSet(mush));
+    return 'war_actor_died';
+  }
+  forestMushrooms.delete(mushKey);
+  if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
+  return 'war_mush_died';
 }
 
 function checkMeetings(mover){
@@ -2069,7 +2408,16 @@ function checkMeetings(mover){
       if(!adj.length) break;
       const order=sortPartnersForMeet(hero,adj);
       const target=order[0];
-      if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(target))) break;
+      if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(target))){
+        // Конкуренция: равные максимумы проходят "насквозь".
+        const nonEq=order.find(n=>maxOfSet(fullSet(hero))!==maxOfSet(fullSet(n)));
+        if(!nonEq) break;
+        const info=meet(hero,nonEq);
+        if(nonEq.collected) registerNpcCollectedByHero(nonEq);
+        updateHeroLvl(); refreshCounters();
+        if(!hero.alive){ handleHeroDeath(info); return; }
+        continue;
+      }
       const info=meet(hero,target);
       if(target.collected) registerNpcCollectedByHero(target);
       updateHeroLvl(); refreshCounters();
@@ -2098,36 +2446,14 @@ function handleHeroDeath(info){
   campaignHistory.push(deathLine);
   maybeRecordSnapshot('death');
   clrT(); // stop tick and animation timers
+  setMsg('');
   draw();
-  // Gray overlay on entire canvas
+  // Новый сценарий: мгновенный красный экран и авто-перезапуск текущего этапа.
   const cv=gel('c');
   const ctx=cv.getContext('2d');
-  ctx.fillStyle='rgba(80,80,80,0.62)';
+  ctx.fillStyle='rgba(200,0,0,0.52)';
   ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.fillStyle='rgba(255,255,255,0.92)';
-  ctx.font=`bold ${0|CELL*0.6}px system-ui,sans-serif`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('ГЕРОЙ ПОГИБ', cv.width/2, cv.height/2-CELL*0.5);
-  ctx.font=`${0|CELL*0.38}px system-ui,sans-serif`;
-  ctx.fillStyle='rgba(255,255,255,0.75)';
-  if(info){
-    ctx.fillText('['+info.seniorSets.join(',')+'] vs ['+info.juniorSets.join(',')+']', cv.width/2, cv.height/2+CELL*0.3);
-  }
-  ctx.font=`${0|CELL*0.32}px system-ui,sans-serif`;
-  ctx.fillStyle='rgba(255,255,255,0.6)';
-  ctx.fillText('нажми любую клавишу', cv.width/2, cv.height/2+CELL*1.0);
-  setMsg('');
-
-  // Wait for any key to restart stage — minimum 1 second
-  function onAnyKey(e){
-    document.removeEventListener('keydown', onAnyKey);
-    document.removeEventListener('click', onAnyKey);
-    resetStage();
-  }
-  setTimeout(()=>{
-    document.addEventListener('keydown', onAnyKey);
-    document.addEventListener('click', onAnyKey);
-  }, 1000);
+  resetT=setTimeout(()=>{ loadStage(); }, 1000);
 }
 
 function getAllNPC(){
@@ -2167,6 +2493,7 @@ function aliveNpcKindDigits(){
   if(M5.some(m=>!m.collected)) kinds.push(5);
   if(M6.some(m=>!m.collected)) kinds.push(6);
   if(M7.some(m=>!m.collected)) kinds.push(7);
+  if(FOREST_CAMPAIGN_2027 && forestUsesMushrooms() && forestMushrooms && forestMushrooms.size && !kinds.includes(1)) kinds.push(1);
   return kinds;
 }
 
@@ -2213,7 +2540,7 @@ function drawPanels(){
       const g=document.createElement('span');
       g.className='panel-dead';
       g.style.marginLeft='6px';
-      g.textContent='⚰ '+killedCount;
+      g.textContent='⚰ '+graveyard.join(' ');
       bar.appendChild(g);
     }
     return;
@@ -2232,6 +2559,9 @@ function drawPanels(){
   if(stage>=4) for(const m of M3) if(!m.collected) allNPC.push(m);
   if(stage>=3) for(const m of M2) if(!m.collected) allNPC.push(m);
   if(stage>=2) for(const m of M1) if(!m.collected) allNPC.push(m);
+  if(FOREST_CAMPAIGN_2027 && forestUsesMushrooms()){
+    for(const mm of forestMushroomUnits()) allNPC.push(mm);
+  }
   allNPC.sort((a,b)=>maxOfSet(fullSet(b))-maxOfSet(fullSet(a)));
 
   // Каждый NPC — панель с полным пеналом и хвостом кооптаций (этапы 1–8)
@@ -2253,7 +2583,7 @@ function drawPanels(){
   if(killedCount>0){
     const g=document.createElement('span');
     g.className='panel-dead';
-    g.textContent='⚰ '+killedCount;
+    g.textContent='⚰ '+graveyard.join(' ');
     bar.appendChild(g);
   }
 }
@@ -2282,11 +2612,8 @@ function loadStage(){
     layoutCellSize();
     if(stage>=1&&stage<=8) movesPerStage[stage-1]=0;
   }
-  // Герой: обычно уровень = номер этапа.
-  // Для серии 3 («Кроты и грибы») фиксируем уровень героя = 3 по просьбе пользователя.
-  const lvl=(FOREST_CAMPAIGN_2027 && forestIsMole())
-    ? 3
-    : ((!FOREST_CAMPAIGN_2027&&stage===9)?9:Math.min(8,Math.max(1,stage)));
+  // Герой: уровень = номер этапа (кроме этапа 9 в классическом режиме).
+  const lvl=(!FOREST_CAMPAIGN_2027&&stage===9)?9:Math.min(8,Math.max(1,stage));
   const dots=[lvl];
   hero={x:0,y:0,lvl,peakLvl:lvl,dots,displayDots:[lvl],absorbed:[],alive:true,isHero:true,navDigit:0};
   killedCount=0;
@@ -2349,10 +2676,12 @@ function loadStage(){
     if(forestUsesMushrooms()){
       // Грибы: размещаем на клетках пола рядом с ёлками.
       const cand=[];
+      const anyFloor=[];
       const fx=finishGX(), fy=finishGY();
       for(let y=0;y<N;y++) for(let x=0;x<N;x++){
         if(grid[y][x]!==0) continue;
         if((x===0&&y===0)||(x===fx&&y===fy)) continue;
+        anyFloor.push({x,y});
         let nearTree=false;
         for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
           const nx=x+dx, ny=y+dy;
@@ -2361,17 +2690,23 @@ function loadStage(){
         }
         if(nearTree) cand.push({x,y});
       }
-      shuffle(cand);
+      // Если у ёлок нет подходящих мест, берём любые клетки пола.
+      const pool=(cand.length?cand:anyFloor);
+      shuffle(pool);
       // В серии 3 «Кроты и грибы» грибов столько же, сколько кротов.
-      const need=forestIsMole()
-        ? Math.max(1, Math.min((npcCounts.n2|0)||0, cand.length))
-        : Math.max(1, Math.min(N, cand.length));
+      const maxAvail=pool.length;
+      const need=forestIsHorse()
+        ? Math.min(maxAvail, 1)
+        : (forestIsMole()||forestIsBoar())
+        ? Math.min(maxAvail, Math.max(1, (npcCounts.n2|0)||1))
+        : Math.min(maxAvail, Math.max(1, N));
       forestMushroomsTotal=need;
       for(let i=0;i<need;i++){
-        const p=cand[i];
+        const p=pool[i];
         forestMushrooms.add(p.x+','+p.y);
       }
-      if(forestIsMole()) setMsg('Возьми крота, затем грибы: 0/'+forestMushroomsTotal);
+      if(forestIsHorse()) setMsg('Сначала лошади → кабан → крот → гриб');
+      else if(forestIsMole()||forestIsBoar()) setMsg('Возьми крота, затем грибы: 0/'+forestMushroomsTotal);
       else setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
     } else {
       setMsg('Помоги колобку вернуться домой');
@@ -2951,7 +3286,7 @@ function stepK2PaintMob(m,ownerId){
   }
   // Серия 3: крот старается закрасить побольше — выбираем ход, который
   // оставляет больше соседних клеток, доступных к закраске этим же кротом.
-  if(FOREST_CAMPAIGN_2027 && forestIsMole()){
+  if(FOREST_CAMPAIGN_2027 && (forestIsMole()||forestIsBoar()||forestIsHorse())){
     let best=-1;
     const rated=[];
     for(const [nx,ny] of pickPool){
@@ -2977,9 +3312,11 @@ function stepK2PaintMob(m,ownerId){
   if(FOREST_CAMPAIGN_2027 && forestUsesMushrooms()){
     const k=nx+','+ny;
     if(forestMushrooms.has(k)){
-      forestMushrooms.delete(k);
-      if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
-      if(forestIsMole()){
+      const mushRes=resolveMushroomMeet(m,k);
+      if(mushRes==='war_actor_died') return;
+      if(forestIsHorse()){
+        setMsg('Сначала лошади → кабан → крот → гриб');
+      } else if(forestIsMole()||forestIsBoar()){
         const prefix=forestMoleTaken?'Собери грибы':'Возьми крота, затем грибы';
         setMsg(prefix+': '+forestMushroomsCollected+'/'+forestMushroomsTotal);
       } else {
@@ -3091,6 +3428,12 @@ function tick(){
       }
       checkMeetings(m);
       if(!hero.alive) return;
+      // В лесных сериях гриб участвует в общем правиле встреч.
+      // Важно: сначала проводим встречи с фишками, затем — с грибом.
+      if(!m.collected && FOREST_CAMPAIGN_2027 && (forestIsBoar()||forestIsHorse()) && forestMushrooms.has(m.x+','+m.y)){
+        const mushRes=resolveMushroomMeet(m,m.x+','+m.y);
+        if(mushRes==='war_actor_died') continue;
+      }
     }
   }
   if(stage>=5){ for(const p of P4){stepP4(p); if(!hero.alive)return;} }
@@ -3309,7 +3652,7 @@ function drawSquareBall(ctx, gx, gy, lvl, dots, frameOffset, rawText){
 
 function drawBall(ctx,m,r,dk){
   if(!m||m.collected) return;
-  if(FOREST_CAMPAIGN_2027 && forestIsMole()){
+  if(FOREST_CAMPAIGN_2027 && (forestIsMole()||forestIsBoar()||forestIsHorse())){
     const pad=2;
     const x=m.x*CELL+pad, y=m.y*CELL+pad;
     const s=CELL-pad*2;
@@ -3322,7 +3665,19 @@ function drawBall(ctx,m,r,dk){
       return;
     }
     if((m.lvl|0)===3){
-      drawBoar(ctx,x,y,s);
+      drawBoar(ctx,x,y,s,m.dx,m.dy);
+      return;
+    }
+    if((m.lvl|0)===4 && forestIsHorse()){
+      let dx=1, dy=0;
+      for(const p of P4){
+        if(p.a===m || p.b===m){
+          if(p.horiz){ dx=(p.dir||1); dy=0; }
+          else { dx=0; dy=(p.dir||1); }
+          break;
+        }
+      }
+      drawHorse(ctx,x,y,s,dx,dy);
       return;
     }
   }
@@ -3565,10 +3920,14 @@ function heroResolveCellAfterMove(){
     campaignMovesTotal++;
   }
   if(FOREST_CAMPAIGN_2027 && forestUsesMushrooms()){
+    // Если "2" уже есть в пенале героя, считаем крота взятым для лесных серий.
+    if((forestIsMole()||forestIsBoar()||forestIsHorse()) && penaltyDigitsSet(hero).has(2)){
+      forestMoleTaken=true;
+    }
     const k=hero.x+','+hero.y;
     if(forestMushrooms.has(k)){
       const standingNpc=getAllNPC().some(n=>!n.collected&&n.x===hero.x&&n.y===hero.y);
-      if(forestIsMole() && !forestMoleTaken && !standingNpc){
+      if((forestIsMole()||forestIsBoar()||forestIsHorse()) && !forestMoleTaken && !standingNpc){
         setMsg('');
         triggerForestRedFlash(1000);
         draw();
@@ -3576,9 +3935,28 @@ function heroResolveCellAfterMove(){
         resetT=setTimeout(()=>{ loadStage(); }, 1000);
         return false;
       }
-      forestMushrooms.delete(k);
-      forestMushroomsCollected++;
-      if(forestIsMole()){
+      if(forestIsHorse() && forestHorseNeed()!=='mushroom'){
+        setMsg('');
+        triggerForestRedFlash(1000);
+        draw();
+        clrT();
+        resetT=setTimeout(()=>{ loadStage(); }, 1000);
+        return false;
+      }
+      const mushRes=resolveMushroomMeet(hero,k);
+      if(mushRes==='war_actor_died'){
+        // Глобальное правило смерти героя в лесных сериях.
+        handleHeroDeath({seniorSets:[...fullSet(hero)],juniorSets:[1],heroWasSenior:true});
+        return false;
+      }
+      // Жёсткая гарантия: если у героя есть "2", встреча с грибом "1" — кооперация,
+      // и в этом же тике не допускаем последующую "смерть после гриба".
+      if(mushRes==='cooperation' && penaltyDigitsSet(hero).has(2)){
+        refreshCounters(); updateHeroLvl();
+        gel('hset').textContent=String(heroDisplayLvl());
+        return true;
+      }
+      if(forestIsMole()||forestIsBoar()||forestIsHorse()){
         setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
       } else {
         setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal);
@@ -3591,7 +3969,27 @@ function heroResolveCellAfterMove(){
     if(!adj.length) break;
     const order=sortPartnersForMeet(hero,adj);
     const npc=order[0];
-    if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(npc))) break;
+    if(FOREST_CAMPAIGN_2027 && forestIsHorse()){
+      const need=forestHorseNeed();
+      const kind=(npc.lvl|0)===4?'horse':(npc.lvl|0)===3?'boar':(npc.lvl|0)===2?'mole':'other';
+      if(kind!==need){
+        setMsg('');
+        triggerForestRedFlash(1000);
+        draw();
+        clrT();
+        resetT=setTimeout(()=>{ loadStage(); }, 1000);
+        return false;
+      }
+    }
+    if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(npc))){
+      const nonEq=order.find(n=>maxOfSet(fullSet(hero))!==maxOfSet(fullSet(n)));
+      if(!nonEq) break;
+      const info=meet(hero,nonEq);
+      if(nonEq.collected) registerNpcCollectedByHero(nonEq);
+      if(!hero.alive){ refreshCounters(); draw(); handleHeroDeath(info); return false; }
+      updateHeroLvl(); refreshCounters();
+      continue;
+    }
     const info=meet(hero,npc);
     if(npc.collected) registerNpcCollectedByHero(npc);
     if(!hero.alive){ refreshCounters(); draw(); handleHeroDeath(info); return false; }
@@ -4132,7 +4530,7 @@ function checkWin(){
   if(FOREST_CAMPAIGN_2027){
     if(hero.x!==finishGX()||hero.y!==finishGY()) return;
     if(forestUsesMushrooms() && forestMushrooms.size) return;
-    if(forestIsMole() && !forestMoleTaken) return;
+    if((forestIsMole()||forestIsBoar()) && !forestMoleTaken) return;
     won=true;
     setMsg(forestUsesMushrooms()?'Игра пройдена!':'Вы дошли до домика!');
     scheduleNextStage(1,2);
@@ -4396,8 +4794,8 @@ function showLeaderboard(){
   const el=gel('lb-content');
   if(!el||el===_stub) return;
   if(FOREST_CAMPAIGN_2027){
-    const scores=forestIsMole()?loadForestMoleChampions():(forestIsMush()?loadForestMushChampions():loadForestChampions());
-    const modeTitle=forestIsMole()?'«Кроты и грибы»':(forestIsMush()?'«Собери грибы»':'«Домой»');
+    const scores=forestIsHorse()?loadForestHorseChampions():(forestIsBoar()?loadForestBoarChampions():(forestIsMole()?loadForestMoleChampions():(forestIsMush()?loadForestMushChampions():loadForestChampions())));
+    const modeTitle=forestIsHorse()?'«Лошади, кабан, крот и гриб»':(forestIsBoar()?'«Кроты, кабан и грибы»':(forestIsMole()?'«Кроты и грибы»':(forestIsMush()?'«Собери грибы»':'«Домой»')));
     if(!scores.length){
       el.innerHTML='<p style="color:#666;font-size:13px;">Пока нет результатов для режима '+modeTitle+'. Меньше суммарных ходов — выше в таблице.</p>';
     } else {
@@ -4447,6 +4845,8 @@ function clearLeaderboard(){
       localStorage.removeItem(LS_FOREST_CHAMPIONS);
       localStorage.removeItem(LS_FOREST_MUSH_CHAMPIONS);
       localStorage.removeItem(LS_FOREST_MOLE_CHAMPIONS);
+      localStorage.removeItem(LS_FOREST_BOAR_CHAMPIONS);
+      localStorage.removeItem(LS_FOREST_HORSE_CHAMPIONS);
     }
   }catch(e){}
   showLeaderboard();
