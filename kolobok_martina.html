@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Колобок Мартина</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      min-height: 100dvh;
+      background: #1a2e1a;
+      color: #e8f5e9;
+      font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: max(12px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom));
+      gap: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.25rem, 4.5vw, 1.75rem);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+    .game-row {
+      width: 100%;
+      max-width: min(96vw, 920px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+    }
+    @media (min-width: 720px) {
+      .game-row {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: clamp(16px, 3vw, 28px);
+      }
+    }
+    .task-panel {
+      display: none;
+      width: min(280px, 34vw);
+      flex-shrink: 0;
+      padding: 16px 18px;
+      border-radius: 12px;
+      background: linear-gradient(165deg, rgba(45, 80, 45, 0.95) 0%, rgba(26, 46, 26, 0.98) 100%);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+    @media (min-width: 720px) {
+      .task-panel { display: block; }
+    }
+    .task-panel h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #c8e6c9;
+      letter-spacing: 0.03em;
+    }
+    .task-panel p {
+      margin: 0;
+      color: #e8f5e9;
+    }
+    .task-mobile-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1a2e1a;
+      background: linear-gradient(180deg, #aed581 0%, #8bc34a 100%);
+      box-shadow: 0 4px 0 #558b2f, 0 6px 14px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .task-mobile-toggle:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #558b2f, 0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+    @media (min-width: 720px) {
+      .task-mobile-toggle { display: none; }
+    }
+    .task-backdrop[hidden] {
+      display: none !important;
+    }
+    .task-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: max(12px, env(safe-area-inset-bottom));
+      background: rgba(0, 0, 0, 0);
+      transition: background 0.28s ease;
+    }
+    .task-backdrop.is-open {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .task-sheet {
+      width: 100%;
+      max-width: 520px;
+      max-height: min(72dvh, 420px);
+      padding: 12px 18px 22px;
+      border-radius: 16px 16px 0 0;
+      background: linear-gradient(180deg, #2e4d2e 0%, #1a2e1a 100%);
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      outline: none;
+    }
+    .task-backdrop.is-open .task-sheet {
+      transform: translateY(0);
+    }
+    .task-sheet-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .task-sheet-bar {
+      width: 40px;
+      height: 4px;
+      margin: 4px auto 12px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .task-sheet h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #c8e6c9;
+    }
+    .task-sheet p {
+      margin: 0;
+      line-height: 1.55;
+      color: #e8f5e9;
+      font-size: 0.95rem;
+    }
+    .task-sheet-close {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: #c8e6c9;
+      background: rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+    }
+    .board-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: min(96vw, 520px);
+    }
+    #field {
+      display: block;
+      width: min(92vw, 480px);
+      height: min(92vw, 480px);
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(255,255,255,0.06);
+    }
+    /* Стрелки только на типичном телефоне (узкий экран) */
+    .mobile-arrows {
+      display: none;
+      width: 100%;
+      max-width: 280px;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 4px;
+    }
+    @media (max-width: 600px) {
+      .mobile-arrows { display: flex; }
+    }
+    .arrow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .arrow-btn {
+      width: 56px;
+      height: 56px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #3d5c3d 0%, #2d442d 100%);
+      color: #c8e6c9;
+      box-shadow: 0 4px 0 #1e301e, 0 6px 12px rgba(0,0,0,0.35);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .arrow-btn svg {
+      width: 28px;
+      height: 28px;
+      fill: currentColor;
+      opacity: 0.95;
+    }
+    .arrow-spacer {
+      width: 56px;
+      height: 56px;
+    }
+    .game-hint {
+      margin: 0;
+      max-width: 36rem;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      text-align: center;
+      color: rgba(232, 245, 233, 0.88);
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Колобок Мартина</h1>
+    <p class="game-hint" id="game-hint" aria-live="polite"></p>
+    <button type="button" class="task-mobile-toggle" id="task-open" aria-expanded="false" aria-controls="task-backdrop">
+      Описание задачи
+    </button>
+    <div class="game-row">
+      <aside class="task-panel" aria-labelledby="task-heading-desktop">
+        <h2 id="task-heading-desktop">Задание</h2>
+        <p>Колобок вышел из дома. Он решил привести своих друзей к себе домой и собрать в подарок лесные грибы.</p>
+        <p style="margin-top:12px">На компьютере двигайте колобка стрелками на клавиатуре (↑ ↓ ← →). Стрелками подведите колобка к зайцу на соседнюю клетку. Потом идите по следам: вместе находите грибы — первый гриб оказывается у зайца, второй и третий несут ворона и белка, четвёртый — сам колобок. Ведите колобка домой: заяц, ворона и белка следуют хвостом. Когда колобок заходит в клетку с домом — салют!</p>
+      </aside>
+      <div class="board-wrap">
+        <canvas id="field" width="440" height="440" aria-label="Поле 11 на 11"></canvas>
+      </div>
+    </div>
+    <div class="mobile-arrows" aria-hidden="true">
+      <div class="arrow-row">
+        <span class="arrow-spacer"></span>
+        <button type="button" class="arrow-btn" id="arr-up" aria-label="Вверх">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5L20 15h-5v6H9v-6H4L12 5z"/></svg>
+        </button>
+        <span class="arrow-spacer"></span>
+      </div>
+      <div class="arrow-row">
+        <button type="button" class="arrow-btn" id="arr-left" aria-label="Влево">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12l8-7v3h5v8h-5v3L6 12z"/></svg>
+        </button>
+        <span class="arrow-spacer" style="width:10px"></span>
+        <button type="button" class="arrow-btn" id="arr-right" aria-label="Вправо">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 12l-8-7v3H5v8h5v3l8-7z"/></svg>
+        </button>
+      </div>
+      <div class="arrow-row">
+        <span class="arrow-spacer"></span>
+        <button type="button" class="arrow-btn" id="arr-down" aria-label="Вниз">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19L4 9h5V3h6v6h5l-8 10z"/></svg>
+        </button>
+        <span class="arrow-spacer"></span>
+      </div>
+    </div>
+  </div>
+  <div class="task-backdrop" id="task-backdrop" hidden aria-hidden="true">
+    <div
+      class="task-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="task-heading-sheet"
+      tabindex="-1"
+    >
+      <div class="task-sheet-bar" aria-hidden="true"></div>
+      <div class="task-sheet-top">
+        <h2 id="task-heading-sheet">Задание</h2>
+        <button type="button" class="task-sheet-close" id="task-close" aria-label="Закрыть описание">×</button>
+      </div>
+      <p>Колобок вышел из дома. Он решил привести своих друзей к себе домой и собрать в подарок лесные грибы.</p>
+      <p style="margin-top:12px">На компьютере двигайте колобка стрелками на клавиатуре (↑ ↓ ← →). Стрелками подведите колобка к зайцу на соседнюю клетку. Потом идите по следам: вместе находите грибы — первый гриб оказывается у зайца, второй и третий несут ворона и белка, четвёртый — сам колобок. Ведите колобка домой: заяц, ворона и белка следуют хвостом. Когда колобок заходит в клетку с домом — салют!</p>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const canvas = document.getElementById('field');
+      if (!canvas || !canvas.getContext) return;
+      const ctx = canvas.getContext('2d');
+      const N = 11;
+
+      /** Ёлки и домик — те же примитивы, что в kolobok_2027 (лес). */
+      const FOREST_TREE_CELLS = [
+        [3, 2], [6, 1], [9, 3], [4, 7], [7, 9], [2, 8], [10, 2], [8, 6], [5, 10], [1, 5],
+      ];
+
+      function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = (Math.random() * (i + 1)) | 0;
+          const t = arr[i];
+          arr[i] = arr[j];
+          arr[j] = t;
+        }
+        return arr;
+      }
+
+      /** Порядок слоёв в клетке: снизу → наверх (меньше — ниже на экране). */
+      function stackLayerRank(kind) {
+        if (kind === 'mushroom') return 0;
+        if (kind === 'house') return 0;
+        if (kind === 'kolobok') return 1;
+        if (kind === 'squirrel') return 2;
+        if (kind === 'crow') return 3;
+        if (kind === 'hare') return 4;
+        return 1;
+      }
+
+      function isTreeCell(x, y, trees) {
+        return trees.some(([tx, ty]) => tx === x && ty === y);
+      }
+
+      /**
+       * Домик + колобок в одной клетке (наложение).
+       * Ворона и белка — на двух разных ёлках; заяц отдельно на траве (своя клетка, не ёлка).
+       * Сначала дом и заяц резервируются в taken — грибы не попадают на эти клетки.
+       * 4 гриба — в клетках прямо под ёлками (сосед снизу, та же колонка).
+       */
+      function makePlacements() {
+        const validTrees = FOREST_TREE_CELLS.filter(([x, y]) => x >= 0 && x < N && y >= 0 && y < N);
+        const tshuf = shuffle(validTrees.slice());
+        const crowTree = tshuf[0];
+        const squirrelTree = tshuf.find(t => t[0] !== crowTree[0] || t[1] !== crowTree[1]) || tshuf[0];
+
+        const taken = new Set();
+        taken.add(crowTree[0] + ',' + crowTree[1]);
+        taken.add(squirrelTree[0] + ',' + squirrelTree[1]);
+
+        const pool = [];
+        for (let y = 0; y < N; y++) {
+          for (let x = 0; x < N; x++) {
+            const k = x + ',' + y;
+            if (!taken.has(k)) pool.push({ x, y });
+          }
+        }
+        shuffle(pool);
+        const hx = pool[0].x;
+        const hy = pool[0].y;
+        taken.add(hx + ',' + hy);
+
+        const grassForHare = [];
+        for (let yy = 0; yy < N; yy++) {
+          for (let xx = 0; xx < N; xx++) {
+            const k = xx + ',' + yy;
+            if (taken.has(k)) continue;
+            if (isTreeCell(xx, yy, validTrees)) continue;
+            grassForHare.push({ x: xx, y: yy });
+          }
+        }
+        shuffle(grassForHare);
+        const zx = grassForHare[0].x;
+        const zy = grassForHare[0].y;
+        taken.add(zx + ',' + zy);
+
+        const underTree = [];
+        const seenUnder = new Set();
+        for (const [tx, ty] of validTrees) {
+          const nx = tx;
+          const ny = ty + 1;
+          if (ny >= N) continue;
+          if (isTreeCell(nx, ny, validTrees)) continue;
+          const k = nx + ',' + ny;
+          if (seenUnder.has(k)) continue;
+          seenUnder.add(k);
+          underTree.push({ x: nx, y: ny });
+        }
+        shuffle(underTree);
+        const mushCells = underTree.filter(p => !taken.has(p.x + ',' + p.y)).slice(0, 4);
+        if (mushCells.length < 4) {
+          const have = new Set(mushCells.map(p => p.x + ',' + p.y));
+          const ortho = [];
+          const seenO = new Set();
+          for (const [tx, ty] of validTrees) {
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const nx = tx + dx;
+              const ny = ty + dy;
+              if (nx < 0 || nx >= N || ny < 0 || ny >= N) continue;
+              if (isTreeCell(nx, ny, validTrees)) continue;
+              const k = nx + ',' + ny;
+              if (seenO.has(k) || have.has(k) || taken.has(k)) continue;
+              seenO.add(k);
+              ortho.push({ x: nx, y: ny });
+            }
+          }
+          shuffle(ortho);
+          for (const p of ortho) {
+            if (mushCells.length >= 4) break;
+            mushCells.push(p);
+            have.add(p.x + ',' + p.y);
+          }
+        }
+        for (const p of mushCells) {
+          taken.add(p.x + ',' + p.y);
+        }
+
+        const placements = [
+          { kind: 'house', gx: hx, gy: hy },
+          { kind: 'kolobok', gx: hx, gy: hy },
+        ];
+        for (const p of mushCells) {
+          placements.push({ kind: 'mushroom', gx: p.x, gy: p.y });
+        }
+        placements.push({ kind: 'hare', gx: zx, gy: zy });
+
+        return {
+          placements,
+          crowTree,
+          squirrelTree,
+          homeX: hx,
+          homeY: hy,
+          hareX0: zx,
+          hareY0: zy,
+          mushCells: mushCells.slice(),
+        };
+      }
+
+      const level = makePlacements();
+      const { placements, crowTree, squirrelTree, homeX, homeY, hareX0, hareY0, mushCells } = level;
+      const validTrees = FOREST_TREE_CELLS.filter(([x, y]) => x >= 0 && x < N && y >= 0 && y < N);
+
+      /** Первая клетка у порога: колобок уже сделал шаг из дома, на домике его нет. */
+      function pickFirstStepFromDoor(hx, hy) {
+        const opts = shuffle([
+          [0, -1],
+          [0, 1],
+          [-1, 0],
+          [1, 0],
+        ]);
+        for (const [dx, dy] of opts) {
+          const nx = hx + dx;
+          const ny = hy + dy;
+          if (nx < 0 || nx >= N || ny < 0 || ny >= N) continue;
+          if (isTreeCell(nx, ny, validTrees)) continue;
+          return { x: nx, y: ny };
+        }
+        return { x: hx, y: hy };
+      }
+
+      const staticPlacements = placements.filter(p => p.kind !== 'kolobok' && p.kind !== 'hare');
+      /** Задания на отрисовку клетки: одиночная фигура, колобок+домик, гриб+…, два в ряд. */
+      function buildCellJobs(allPlacements) {
+        const byKey = new Map();
+        for (const p of allPlacements) {
+          const key = p.gx + ',' + p.gy;
+          if (!byKey.has(key)) byKey.set(key, []);
+          byKey.get(key).push(p.kind);
+        }
+        const jobs = [];
+        for (const [key, kinds] of byKey) {
+          const [gx, gy] = key.split(',').map(Number);
+          if (kinds.length === 1) {
+            jobs.push({ gx, gy, mode: 'single', a: kinds[0] });
+            continue;
+          }
+          const set = new Set(kinds);
+          const hasM = set.has('mushroom');
+          const hasK = set.has('kolobok');
+          const hasHouse = set.has('house');
+          const hasCrow = set.has('crow');
+          const hasSq = set.has('squirrel');
+          if (hasK && hasHouse && kinds.length === 2) {
+            jobs.push({ gx, gy, mode: 'kolobokHouse' });
+          } else if (hasM && (hasK || hasHouse) && kinds.length === 2) {
+            jobs.push({ gx, gy, mode: 'overlap', useHouse: hasHouse });
+          } else if (hasCrow && hasM) {
+            jobs.push({ gx, gy, mode: 'lr', left: 'crow', right: 'mushroom' });
+          } else if (hasM && hasSq) {
+            jobs.push({ gx, gy, mode: 'lr', left: 'mushroom', right: 'squirrel' });
+          } else {
+            const sorted = [...set].sort((a, b) => stackLayerRank(a) - stackLayerRank(b));
+            jobs.push({ gx, gy, mode: 'lr', left: sorted[0], right: sorted[1] });
+          }
+        }
+        return jobs;
+      }
+
+      const cellJobs = buildCellJobs(staticPlacements);
+
+      const MUSH_TOTAL = mushCells.length;
+      const mushroomOnBoard = new Set(mushCells.map(p => p.x + ',' + p.y));
+
+      const door = pickFirstStepFromDoor(homeX, homeY);
+      let kGx = door.x;
+      let kGy = door.y;
+      let hareGx = hareX0;
+      let hareGy = hareY0;
+      let crowGx = crowTree[0];
+      let crowGy = crowTree[1];
+      let squirrelGx = squirrelTree[0];
+      let squirrelGy = squirrelTree[1];
+
+      let phase = 'goto_hare';
+      let hareFollowing = false;
+      let crowFollowing = false;
+      let squirrelFollowing = false;
+      let mushroomsCollected = 0;
+      let won = false;
+      const trail = [{ x: homeX, y: homeY }, { x: kGx, y: kGy }];
+
+      let saluteParticles = [];
+      let saluteUntil = 0;
+      let saluteStartTime = 0;
+      let saluteRaf = 0;
+
+      function adjacent(ax, ay, bx, by) {
+        return Math.abs(ax - bx) + Math.abs(ay - by) === 1;
+      }
+
+      function occupiedByFollower(nx, ny) {
+        if (hareFollowing && nx === hareGx && ny === hareGy) return true;
+        if (crowFollowing && nx === crowGx && ny === crowGy) return true;
+        if (squirrelFollowing && nx === squirrelGx && ny === squirrelGy) return true;
+        return false;
+      }
+
+      function tryMove(dx, dy) {
+        if (won) return;
+        const nx = kGx + dx;
+        const ny = kGy + dy;
+        if (nx < 0 || nx >= N || ny < 0 || ny >= N) return;
+        if (isTreeCell(nx, ny, validTrees)) return;
+        if (nx === homeX && ny === homeY && phase !== 'go_home') return;
+        if (occupiedByFollower(nx, ny)) return;
+
+        const prevK = { x: kGx, y: kGy };
+        const prevH = hareFollowing ? { x: hareGx, y: hareGy } : null;
+        const prevC = crowFollowing ? { x: crowGx, y: crowGy } : null;
+
+        kGx = nx;
+        kGy = ny;
+
+        const last = trail[trail.length - 1];
+        if (!last || last.x !== kGx || last.y !== kGy) trail.push({ x: kGx, y: kGy });
+
+        if (phase === 'goto_hare' && adjacent(kGx, kGy, hareGx, hareGy)) {
+          phase = 'collect_mush';
+          hareFollowing = true;
+        }
+
+        if (hareFollowing) {
+          hareGx = prevK.x;
+          hareGy = prevK.y;
+        }
+        if (crowFollowing && prevH) {
+          crowGx = prevH.x;
+          crowGy = prevH.y;
+        }
+        if (squirrelFollowing && prevC) {
+          squirrelGx = prevC.x;
+          squirrelGy = prevC.y;
+        }
+
+        const key = kGx + ',' + kGy;
+        if ((phase === 'collect_mush' || phase === 'go_home') && mushroomOnBoard.has(key)) {
+          mushroomOnBoard.delete(key);
+          mushroomsCollected++;
+          if (mushroomsCollected >= MUSH_TOTAL) {
+            phase = 'go_home';
+            crowFollowing = true;
+            squirrelFollowing = true;
+          }
+        }
+
+        if (phase === 'go_home' && kGx === homeX && kGy === homeY) {
+          won = true;
+          startSalute();
+        }
+
+        updateHint();
+        draw();
+      }
+
+      function startSalute() {
+        const now = performance.now();
+        saluteStartTime = now;
+        saluteUntil = now + 2800;
+        saluteParticles = [];
+        for (let i = 0; i < 56; i++) {
+          const a = (Math.PI * 2 * i) / 56 + Math.random() * 0.4;
+          const sp = 1.8 + Math.random() * 2.8;
+          saluteParticles.push({
+            x: 0,
+            y: 0,
+            vx: Math.cos(a) * sp,
+            vy: Math.sin(a) * sp - 1.2,
+            life: 0.85 + Math.random() * 0.5,
+            hue: 35 + (Math.random() * 80) | 0,
+          });
+        }
+        if (!saluteRaf) saluteLoop();
+      }
+
+      function saluteLoop() {
+        draw();
+        if (performance.now() < saluteUntil) {
+          saluteRaf = requestAnimationFrame(saluteLoop);
+        } else {
+          saluteRaf = 0;
+        }
+      }
+
+      function updateHint() {
+        const el = document.getElementById('game-hint');
+        if (!el) return;
+        if (won) {
+          el.textContent = 'Ура! Все дома. Салют!';
+          return;
+        }
+        if (phase === 'goto_hare')
+          el.textContent =
+            'Подведите колобка к зайцу на соседнюю клетку: стрелки на клавиатуре (↑↓←→) или кнопки на телефоне.';
+        else if (phase === 'collect_mush')
+          el.textContent =
+            'Собирайте грибы по следам: 1-й — у зайца, 2-й — ворона, 3-й — белка, 4-й — колобок. Осталось: ' +
+            (MUSH_TOTAL - mushroomsCollected);
+        else el.textContent = 'Все грибы разложены по друзьям. Ведите колобка домой — хвостом за ним заяц, ворона и белка.';
+      }
+
+      function bindArrows() {
+        const u = document.getElementById('arr-up');
+        const d = document.getElementById('arr-down');
+        const l = document.getElementById('arr-left');
+        const r = document.getElementById('arr-right');
+        if (u) u.addEventListener('click', () => tryMove(0, -1));
+        if (d) d.addEventListener('click', () => tryMove(0, 1));
+        if (l) l.addEventListener('click', () => tryMove(-1, 0));
+        if (r) r.addEventListener('click', () => tryMove(1, 0));
+        document.addEventListener('keydown', e => {
+          const t = e.target;
+          if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable))
+            return;
+          const sheetOpen = document.getElementById('task-backdrop')?.classList?.contains('is-open');
+          if (sheetOpen) return;
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            tryMove(0, -1);
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            tryMove(0, 1);
+          } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            tryMove(-1, 0);
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            tryMove(1, 0);
+          }
+        });
+      }
+
+      function drawCellJob(c, job, cellSz) {
+        const x0 = job.gx * cellSz;
+        const y0 = job.gy * cellSz;
+        const midY = y0 + cellSz / 2;
+        c.save();
+        c.beginPath();
+        c.rect(x0 + 0.5, y0 + 0.5, cellSz - 1, cellSz - 1);
+        c.clip();
+
+        if (job.mode === 'single') {
+          if (job.a === 'house') {
+            drawPiece(c, 'house', x0 + cellSz / 2, midY + cellSz * 0.14, cellSz, 0.74);
+          } else if (job.a === 'hare') {
+            drawPiece(c, 'hare', x0 + cellSz / 2, midY + cellSz * 0.07, cellSz, 1.05);
+          } else {
+            drawPiece(c, job.a, x0 + cellSz / 2, midY, cellSz, 1);
+          }
+        } else if (job.mode === 'kolobokHouse') {
+          drawPiece(c, 'house', x0 + cellSz / 2, midY + cellSz * 0.14, cellSz, 0.74);
+          drawPiece(c, 'kolobok', x0 + cellSz / 2, midY - cellSz * 0.11, cellSz, 0.58);
+        } else if (job.mode === 'overlap') {
+          drawPiece(c, 'mushroom', x0 + cellSz / 2, midY + cellSz * 0.03, cellSz, 0.86);
+          if (job.useHouse) {
+            drawPiece(c, 'house', x0 + cellSz / 2, midY - cellSz * 0.05, cellSz, 0.92);
+          } else {
+            drawPiece(c, 'kolobok', x0 + cellSz / 2, midY - cellSz * 0.05, cellSz, 0.92);
+          }
+        } else if (job.mode === 'lr') {
+          const w2 = cellSz / 2;
+          const sc = 0.6;
+          c.save();
+          c.beginPath();
+          c.rect(x0 + 0.5, y0 + 0.5, w2 - 0.75, cellSz - 1);
+          c.clip();
+          drawPiece(c, job.left, x0 + w2 * 0.5, midY, cellSz, sc);
+          c.restore();
+          c.save();
+          c.beginPath();
+          c.rect(x0 + w2 + 0.25, y0 + 0.5, w2 - 0.75, cellSz - 1);
+          c.clip();
+          drawPiece(c, job.right, x0 + w2 + w2 * 0.5, midY, cellSz, sc);
+          c.restore();
+        }
+
+        c.restore();
+      }
+
+      /** Ёлка в клетке, поверх — зверь; ворона чуть крупнее белки. */
+      function drawBeastOnTree(c, gx, gy, cellSz, kind) {
+        const x0 = gx * cellSz;
+        const y0 = gy * cellSz;
+        const scale = kind === 'crow' ? 0.88 : 0.72;
+        c.save();
+        c.beginPath();
+        c.rect(x0 + 0.5, y0 + 0.5, cellSz - 1, cellSz - 1);
+        c.clip();
+        drawForestTree(c, x0, y0, cellSz);
+        drawPiece(c, kind, x0 + cellSz / 2, y0 + cellSz / 2, cellSz, scale);
+        c.restore();
+      }
+
+      function drawForestTree(ctx, cx, cy, sz) {
+        const s = sz;
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(cx + s * 0.44, cy + s * 0.58, s * 0.12, s * 0.34);
+        ctx.fillStyle = '#1b5e20';
+        ctx.beginPath();
+        ctx.moveTo(cx + s * 0.5, cy + s * 0.1);
+        ctx.lineTo(cx + s * 0.85, cy + s * 0.62);
+        ctx.lineTo(cx + s * 0.15, cy + s * 0.62);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#2e7d32';
+        ctx.beginPath();
+        ctx.moveTo(cx + s * 0.5, cy + s * 0.22);
+        ctx.lineTo(cx + s * 0.78, cy + s * 0.52);
+        ctx.lineTo(cx + s * 0.22, cy + s * 0.52);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#43a047';
+        ctx.beginPath();
+        ctx.moveTo(cx + s * 0.5, cy + s * 0.3);
+        ctx.lineTo(cx + s * 0.68, cy + s * 0.46);
+        ctx.lineTo(cx + s * 0.32, cy + s * 0.46);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function drawForestHouse(ctx, cx, cy, sz) {
+        const pad = sz * 0.1;
+        ctx.fillStyle = '#6d4c41';
+        ctx.fillRect(cx + pad, cy + sz * 0.45, sz - 2 * pad, sz * 0.42);
+        ctx.fillStyle = '#ffb74d';
+        ctx.fillRect(cx + sz * 0.38, cy + sz * 0.58, sz * 0.24, sz * 0.22);
+        ctx.fillStyle = '#8d6e63';
+        ctx.beginPath();
+        ctx.moveTo(cx + sz * 0.5, cy + pad * 0.9);
+        ctx.lineTo(cx + sz * 0.9, cy + sz * 0.48);
+        ctx.lineTo(cx + sz * 0.1, cy + sz * 0.48);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fff8e1';
+        ctx.fillRect(cx + sz * 0.42, cy + sz * 0.52, sz * 0.16, sz * 0.12);
+      }
+
+      function drawKolobok(c, cx, cy, u) {
+        const r = u * 0.34;
+        const g = c.createRadialGradient(cx - r * 0.35, cy - r * 0.35, 0, cx, cy, r);
+        g.addColorStop(0, '#fff8e7');
+        g.addColorStop(0.55, '#e8c86a');
+        g.addColorStop(1, '#b8860b');
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(cx, cy, r, 0, Math.PI * 2);
+        c.fill();
+        c.strokeStyle = 'rgba(100, 70, 20, 0.45)';
+        c.lineWidth = Math.max(1, u * 0.04);
+        c.stroke();
+        c.fillStyle = 'rgba(80, 50, 10, 0.35)';
+        c.beginPath();
+        c.arc(cx - r * 0.25, cy - r * 0.12, u * 0.045, 0, Math.PI * 2);
+        c.arc(cx + r * 0.18, cy - r * 0.1, u * 0.04, 0, Math.PI * 2);
+        c.fill();
+      }
+
+      /** Дикий заяц: пёстрая шерсть, высокие уши с тёмным кантом, белая морда, зимняя «круглая» посадка. */
+      function drawHare(c, cx, cy, u) {
+        c.save();
+        c.translate(cx, cy);
+        c.rotate(-0.11);
+        const s = u * 0.34;
+        c.lineWidth = Math.max(0.75, u * 0.02);
+        c.strokeStyle = 'rgba(45, 38, 32, 0.5)';
+
+        const fur = (x, y, rx, ry, rot, col) => {
+          c.save();
+          c.translate(x, y);
+          c.rotate(rot || 0);
+          c.fillStyle = col;
+          c.beginPath();
+          c.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+          c.restore();
+        };
+
+        // Туловище (толстое, сидит)
+        const bg = c.createRadialGradient(-s * 0.15, s * 0.1, 0, 0, s * 0.35, s * 0.95);
+        bg.addColorStop(0, '#b8a898');
+        bg.addColorStop(0.5, '#8f7f6c');
+        bg.addColorStop(1, '#6a5c4e');
+        c.fillStyle = bg;
+        c.beginPath();
+        c.ellipse(0, s * 0.42, s * 0.62, s * 0.48, 0.08, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+        // Пятна (пёстрость)
+        fur(-s * 0.35, s * 0.35, s * 0.12, s * 0.08, 0.2, '#5c4d42');
+        fur(s * 0.38, s * 0.4, s * 0.1, s * 0.07, -0.15, '#4a4038');
+        fur(s * 0.05, s * 0.55, s * 0.14, s * 0.09, 0, '#7a6a58');
+        fur(-s * 0.15, s * 0.52, s * 0.09, s * 0.06, 0.4, '#d4c4b0');
+
+        // Задняя лапа (намёк)
+        c.fillStyle = '#7d6e5f';
+        c.beginPath();
+        c.ellipse(-s * 0.52, s * 0.55, s * 0.18, s * 0.12, -0.4, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        // Голова
+        const hg = c.createRadialGradient(-s * 0.08, -s * 0.35, 0, 0, -s * 0.15, s * 0.5);
+        hg.addColorStop(0, '#c9bba8');
+        hg.addColorStop(0.55, '#958575');
+        hg.addColorStop(1, '#6e6054');
+        c.fillStyle = hg;
+        c.beginPath();
+        c.ellipse(0, -s * 0.08, s * 0.44, s * 0.4, -0.05, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        // Уши: высокие, с тёмной каймой
+        function ear(ex, tilt) {
+          c.save();
+          c.translate(ex, -s * 0.55);
+          c.rotate(tilt);
+          c.fillStyle = '#a09082';
+          c.strokeStyle = '#2a221c';
+          c.lineWidth = Math.max(1, u * 0.028);
+          c.beginPath();
+          c.ellipse(0, -s * 0.35, s * 0.14, s * 0.42, 0, 0, Math.PI * 2);
+          c.fill();
+          c.stroke();
+          c.fillStyle = 'rgba(60, 48, 42, 0.35)';
+          c.beginPath();
+          c.ellipse(0, -s * 0.38, s * 0.08, s * 0.32, 0, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = 'rgba(232, 210, 200, 0.55)';
+          c.beginPath();
+          c.ellipse(0, -s * 0.32, s * 0.04, s * 0.22, 0, 0, Math.PI * 2);
+          c.fill();
+          c.restore();
+        }
+        ear(-s * 0.28, -0.12);
+        ear(s * 0.26, 0.1);
+
+        // Белое вокруг морды
+        c.fillStyle = '#f2ebe4';
+        c.strokeStyle = 'rgba(100, 90, 82, 0.25)';
+        c.lineWidth = Math.max(0.5, u * 0.018);
+        c.beginPath();
+        c.ellipse(-s * 0.06, s * 0.06, s * 0.28, s * 0.22, -0.15, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        // Глаза тёмные
+        c.fillStyle = '#1c1814';
+        c.beginPath();
+        c.ellipse(-s * 0.18, -s * 0.12, s * 0.09, s * 0.1, 0.1, 0, Math.PI * 2);
+        c.ellipse(s * 0.14, -s * 0.1, s * 0.085, s * 0.095, -0.05, 0, Math.PI * 2);
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.4)';
+        c.beginPath();
+        c.arc(-s * 0.2, -s * 0.14, s * 0.028, 0, Math.PI * 2);
+        c.arc(s * 0.1, -s * 0.12, s * 0.025, 0, Math.PI * 2);
+        c.fill();
+
+        // Нос + «иней» на носу
+        c.fillStyle = '#4a3a38';
+        c.beginPath();
+        c.ellipse(-s * 0.02, s * 0.1, s * 0.055, s * 0.045, 0, 0, Math.PI * 2);
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.85)';
+        c.beginPath();
+        c.arc(-s * 0.06, s * 0.06, s * 0.04, 0, Math.PI * 2);
+        c.fill();
+
+        // Передние лапки
+        c.fillStyle = '#8a7a6c';
+        c.strokeStyle = 'rgba(45, 38, 32, 0.45)';
+        c.lineWidth = Math.max(0.6, u * 0.018);
+        c.beginPath();
+        c.ellipse(-s * 0.22, s * 0.48, s * 0.1, s * 0.07, 0.3, 0, Math.PI * 2);
+        c.ellipse(s * 0.2, s * 0.5, s * 0.1, s * 0.07, -0.25, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        c.restore();
+      }
+
+      /** Рыжая белка, фронтально: белая грудь, пушистый хвост дугой, кисточки на ушах. */
+      function drawSquirrel(c, cx, cy, u) {
+        c.save();
+        c.translate(cx, cy);
+        const s = u * 0.38;
+        const orange = '#d4652a';
+        const orangeDeep = '#b84e1c';
+        const orangeHi = '#e8884a';
+        c.lineWidth = Math.max(0.8, u * 0.022);
+        c.strokeStyle = 'rgba(90, 40, 15, 0.45)';
+
+        // Хвост: большая пушистая дуга (U) позади
+        const tg = c.createLinearGradient(0, -s * 1.2, 0, s * 0.5);
+        tg.addColorStop(0, orangeHi);
+        tg.addColorStop(0.45, orange);
+        tg.addColorStop(1, orangeDeep);
+        c.fillStyle = tg;
+        c.beginPath();
+        c.moveTo(-s * 0.35, s * 0.25);
+        c.bezierCurveTo(-s * 1.15, -s * 0.85, -s * 0.95, -s * 1.35, 0, -s * 1.28);
+        c.bezierCurveTo(s * 0.95, -s * 1.35, s * 1.15, -s * 0.85, s * 0.35, s * 0.25);
+        c.bezierCurveTo(s * 0.2, -s * 0.15, -s * 0.2, -s * 0.15, -s * 0.35, s * 0.25);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        // Туловище + лапы (компактно спереди)
+        c.fillStyle = orange;
+        c.beginPath();
+        c.ellipse(0, s * 0.32, s * 0.52, s * 0.4, 0, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+        c.fillStyle = orangeDeep;
+        c.beginPath();
+        c.ellipse(-s * 0.38, s * 0.48, s * 0.14, s * 0.1, 0.3, 0, Math.PI * 2);
+        c.ellipse(s * 0.38, s * 0.48, s * 0.14, s * 0.1, -0.3, 0, Math.PI * 2);
+        c.fill();
+
+        // Белая грудь / горло
+        c.fillStyle = '#f5f0ea';
+        c.beginPath();
+        c.ellipse(0, s * 0.08, s * 0.32, s * 0.38, 0, 0, Math.PI * 2);
+        c.fill();
+        c.strokeStyle = 'rgba(120, 90, 70, 0.2)';
+        c.stroke();
+
+        // Голова
+        c.strokeStyle = 'rgba(90, 40, 15, 0.45)';
+        const hg = c.createRadialGradient(-s * 0.12, -s * 0.35, 0, 0, -s * 0.2, s * 0.55);
+        hg.addColorStop(0, orangeHi);
+        hg.addColorStop(0.55, orange);
+        hg.addColorStop(1, orangeDeep);
+        c.fillStyle = hg;
+        c.beginPath();
+        c.ellipse(0, -s * 0.22, s * 0.42, s * 0.4, 0, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        // Уши с кисточками
+        function ear(ex, flip) {
+          c.save();
+          c.translate(ex, -s * 0.52);
+          c.scale(flip, 1);
+          c.fillStyle = orangeDeep;
+          c.beginPath();
+          c.moveTo(0, 0);
+          c.quadraticCurveTo(s * 0.22, -s * 0.55, s * 0.08, s * 0.12);
+          c.quadraticCurveTo(s * 0.02, s * 0.08, 0, 0);
+          c.closePath();
+          c.fill();
+          c.stroke();
+          c.strokeStyle = '#5c3010';
+          c.lineWidth = Math.max(0.5, u * 0.018);
+          c.beginPath();
+          c.moveTo(s * 0.06, -s * 0.42);
+          c.lineTo(s * 0.02, -s * 0.62);
+          c.lineTo(s * 0.1, -s * 0.48);
+          c.stroke();
+          c.beginPath();
+          c.moveTo(s * 0.12, -s * 0.38);
+          c.lineTo(s * 0.14, -s * 0.58);
+          c.stroke();
+          c.restore();
+        }
+        ear(-s * 0.32, 1);
+        ear(s * 0.32, -1);
+
+        // Глаза
+        c.fillStyle = '#1a1208';
+        c.beginPath();
+        c.ellipse(-s * 0.16, -s * 0.22, s * 0.1, s * 0.12, 0, 0, Math.PI * 2);
+        c.ellipse(s * 0.16, -s * 0.22, s * 0.1, s * 0.12, 0, 0, Math.PI * 2);
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.55)';
+        c.beginPath();
+        c.arc(-s * 0.19, -s * 0.26, s * 0.035, 0, Math.PI * 2);
+        c.arc(s * 0.13, -s * 0.26, s * 0.035, 0, Math.PI * 2);
+        c.fill();
+
+        // Нос и усы
+        c.fillStyle = '#e8a090';
+        c.beginPath();
+        c.moveTo(0, -s * 0.08);
+        c.lineTo(-s * 0.05, s * 0.02);
+        c.lineTo(s * 0.05, s * 0.02);
+        c.closePath();
+        c.fill();
+        c.strokeStyle = 'rgba(80, 40, 30, 0.35)';
+        c.lineWidth = Math.max(0.5, u * 0.015);
+        c.stroke();
+        c.strokeStyle = 'rgba(40, 30, 25, 0.5)';
+        for (let i = -2; i <= 2; i++) {
+          if (i === 0) continue;
+          const y0 = s * 0.04 + Math.abs(i) * s * 0.02;
+          c.beginPath();
+          c.moveTo(i * s * 0.06, s * 0.02);
+          c.lineTo(i * s * 0.42, y0);
+          c.stroke();
+        }
+
+        c.restore();
+      }
+
+      /** Серая ворона (Corvus cornix): профиль вправо — серая грудь/спина, чёрная голова, крылья, хвост, клюв. */
+      function drawCrow(c, cx, cy, u) {
+        c.save();
+        c.translate(cx, cy);
+        const k = u * 0.34;
+        const grey = '#8f959c';
+        const greyHi = '#aeb4ba';
+        const greyLo = '#6d7379';
+        const black = '#121212';
+        c.lineWidth = Math.max(0.75, u * 0.02);
+        c.strokeStyle = 'rgba(0,0,0,0.35)';
+
+        // Хвост и задняя часть крыла (чёрные)
+        c.fillStyle = black;
+        c.beginPath();
+        c.moveTo(-k * 0.75, k * 0.08);
+        c.lineTo(-k * 1.05, k * 0.22);
+        c.lineTo(-k * 0.55, k * 0.28);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        // Серо туловище (брюхо и спина в зоне «серой»)
+        const bg = c.createLinearGradient(-k * 0.4, -k * 0.15, k * 0.15, k * 0.35);
+        bg.addColorStop(0, greyHi);
+        bg.addColorStop(0.45, grey);
+        bg.addColorStop(1, greyLo);
+        c.fillStyle = bg;
+        c.beginPath();
+        c.ellipse(-k * 0.08, k * 0.12, k * 0.58, k * 0.38, 0.12, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        // Чёрное крыло / плечо поверх
+        c.fillStyle = black;
+        c.beginPath();
+        c.moveTo(-k * 0.15, -k * 0.18);
+        c.bezierCurveTo(-k * 0.55, -k * 0.35, -k * 0.65, k * 0.05, -k * 0.35, k * 0.18);
+        c.lineTo(k * 0.12, k * 0.08);
+        c.bezierCurveTo(k * 0.08, -k * 0.12, k * 0.02, -k * 0.22, -k * 0.15, -k * 0.18);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        // Голова и горло (чёрные)
+        c.fillStyle = black;
+        c.beginPath();
+        c.arc(k * 0.42, -k * 0.06, k * 0.28, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        // Клюв — толстый, чёрный, слегка загнутый
+        c.beginPath();
+        c.moveTo(k * 0.62, k * 0.02);
+        c.quadraticCurveTo(k * 1.05, k * 0.06, k * 0.98, k * 0.14);
+        c.lineTo(k * 0.55, k * 0.1);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        // Глаз
+        c.fillStyle = '#2a2a2a';
+        c.beginPath();
+        c.arc(k * 0.38, -k * 0.1, k * 0.055, 0, Math.PI * 2);
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.25)';
+        c.beginPath();
+        c.arc(k * 0.36, -k * 0.12, k * 0.018, 0, Math.PI * 2);
+        c.fill();
+
+        // Лапы на «столбике»
+        c.strokeStyle = black;
+        c.lineWidth = Math.max(1.2, u * 0.035);
+        c.lineCap = 'round';
+        c.beginPath();
+        c.moveTo(-k * 0.02, k * 0.42);
+        c.lineTo(-k * 0.06, k * 0.58);
+        c.moveTo(k * 0.12, k * 0.42);
+        c.lineTo(k * 0.1, k * 0.58);
+        c.stroke();
+        c.fillStyle = '#4a3d2e';
+        c.fillRect(-k * 0.35, k * 0.56, k * 0.55, k * 0.08);
+        c.strokeStyle = 'rgba(30,25,20,0.6)';
+        c.lineWidth = Math.max(0.5, u * 0.015);
+        c.strokeRect(-k * 0.35, k * 0.56, k * 0.55, k * 0.08);
+        c.strokeStyle = 'rgba(40,55,35,0.35)';
+        c.beginPath();
+        c.moveTo(-k * 0.32, k * 0.58);
+        c.lineTo(k * 0.15, k * 0.59);
+        c.stroke();
+
+        c.restore();
+      }
+
+      /** Мухомор отдельной картинкой: ножка с объёмом, шляпка с градиентом и пятнами. */
+      function drawMushroom(c, cx, cy, u) {
+        c.save();
+        c.translate(cx, cy);
+        const sw = u * 0.22;
+        const sh = u * 0.36;
+        const capW = u * 0.44;
+        const capH = u * 0.26;
+        const yStemTop = u * 0.06;
+        const yStemBot = yStemTop + sh;
+        c.lineWidth = Math.max(0.8, u * 0.022);
+        c.strokeStyle = 'rgba(70, 55, 40, 0.4)';
+
+        // Тень под шляпкой на ножке
+        c.fillStyle = 'rgba(40, 30, 25, 0.18)';
+        c.beginPath();
+        c.ellipse(0, yStemTop + u * 0.04, sw * 0.55, u * 0.035, 0, 0, Math.PI * 2);
+        c.fill();
+
+        // Ножка: скруглённый столб + чуть шире книзу
+        const sg = c.createLinearGradient(-sw * 0.5, yStemTop, sw * 0.5, yStemBot);
+        sg.addColorStop(0, '#f5ebe0');
+        sg.addColorStop(0.45, '#e8dcc8');
+        sg.addColorStop(1, '#d4c4b0');
+        c.fillStyle = sg;
+        c.beginPath();
+        c.moveTo(-sw * 0.42, yStemTop);
+        c.lineTo(-sw * 0.48, yStemBot - u * 0.04);
+        c.quadraticCurveTo(-sw * 0.52, yStemBot, 0, yStemBot);
+        c.quadraticCurveTo(sw * 0.52, yStemBot, sw * 0.48, yStemBot - u * 0.04);
+        c.lineTo(sw * 0.42, yStemTop);
+        c.quadraticCurveTo(0, yStemTop - u * 0.02, -sw * 0.42, yStemTop);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        // Кольцо-юбка под шляпкой
+        c.fillStyle = 'rgba(200, 185, 165, 0.95)';
+        c.beginPath();
+        c.ellipse(0, yStemTop + u * 0.02, sw * 0.62, u * 0.045, 0, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        // Шляпка: выпуклый полукруг + широкие поля
+        const cyCap = yStemTop - capH * 0.35;
+        const cg = c.createRadialGradient(-capW * 0.2, cyCap - capH * 0.5, 0, 0, cyCap, capW * 0.9);
+        cg.addColorStop(0, '#ff5252');
+        cg.addColorStop(0.35, '#e53935');
+        cg.addColorStop(0.75, '#b71c1c');
+        cg.addColorStop(1, '#8b1515');
+        c.fillStyle = cg;
+        c.beginPath();
+        c.moveTo(-capW * 0.95, yStemTop + u * 0.03);
+        c.bezierCurveTo(-capW * 0.95, cyCap - capH * 0.2, -capW * 0.35, cyCap - capH * 1.05, 0, cyCap - capH * 1.02);
+        c.bezierCurveTo(capW * 0.35, cyCap - capH * 1.05, capW * 0.95, cyCap - capH * 0.2, capW * 0.95, yStemTop + u * 0.03);
+        c.quadraticCurveTo(0, yStemTop + u * 0.1, -capW * 0.95, yStemTop + u * 0.03);
+        c.closePath();
+        c.fill();
+        c.stroke();
+
+        // Белые «чешуйки» — пятна разного размера
+        const spots = [
+          [-0.28, -0.52, 0.09],
+          [0.18, -0.62, 0.07],
+          [0.32, -0.38, 0.055],
+          [-0.08, -0.42, 0.065],
+          [-0.38, -0.35, 0.045],
+          [0.05, -0.72, 0.05],
+        ];
+        for (const [dx, dy, rr] of spots) {
+          const px = dx * u;
+          const py = cyCap + dy * u;
+          const g = c.createRadialGradient(px - rr * u * 0.2, py - rr * u * 0.2, 0, px, py, rr * u);
+          g.addColorStop(0, 'rgba(255,255,255,0.98)');
+          g.addColorStop(0.7, 'rgba(255,250,248,0.88)');
+          g.addColorStop(1, 'rgba(240,230,225,0.35)');
+          c.fillStyle = g;
+          c.beginPath();
+          c.arc(px, py, rr * u, 0, Math.PI * 2);
+          c.fill();
+        }
+
+        // Лёгкий блик на шляпке
+        c.fillStyle = 'rgba(255,255,255,0.2)';
+        c.beginPath();
+        c.ellipse(-capW * 0.35, cyCap - capH * 0.75, capW * 0.2, capH * 0.25, -0.4, 0, Math.PI * 2);
+        c.fill();
+
+        c.restore();
+      }
+
+      function drawPiece(c, kind, cx, cy, cell, scaleMul) {
+        const sc = scaleMul == null ? 1 : scaleMul;
+        if (kind === 'house') {
+          const sz = cell * sc;
+          const lx = cx - sz / 2;
+          const ly = cy - sz / 2;
+          c.fillStyle = '#1a2e18';
+          c.fillRect(lx, ly, sz + 0.5, sz + 0.5);
+          c.strokeStyle = '#558b2f';
+          c.lineWidth = Math.max(1, sz * 0.06);
+          c.strokeRect(lx + 1, ly + 1, sz - 2, sz - 2);
+          drawForestHouse(c, lx, ly, sz);
+          return;
+        }
+        const u = cell * 0.88 * sc;
+        switch (kind) {
+          case 'kolobok': drawKolobok(c, cx, cy, u); break;
+          case 'hare': drawHare(c, cx, cy, u); break;
+          case 'squirrel': drawSquirrel(c, cx, cy, u); break;
+          case 'crow': drawCrow(c, cx, cy, u); break;
+          case 'mushroom': drawMushroom(c, cx, cy, u); break;
+          default: break;
+        }
+      }
+
+      function draw() {
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const css = Math.min(canvas.parentElement.clientWidth || 440, 480, window.innerWidth * 0.92);
+        const size = Math.max(220, css);
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        canvas.width = Math.round(size * dpr);
+        canvas.height = Math.round(size * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const w = size;
+        const h = size;
+        const cell = w / N;
+
+        function cellCenter(gx, gy) {
+          return { cx: (gx + 0.5) * cell, cy: (gy + 0.5) * cell };
+        }
+
+        for (let y = 0; y < N; y++) {
+          for (let x = 0; x < N; x++) {
+            const light = (x + y) % 2 === 0;
+            ctx.fillStyle = light ? '#4a8f4a' : '#3d7d3d';
+            ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
+          }
+        }
+        ctx.strokeStyle = 'rgba(20, 50, 20, 0.35)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= N; i++) {
+          const p = i * cell;
+          ctx.beginPath();
+          ctx.moveTo(p, 0);
+          ctx.lineTo(p, h);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, p);
+          ctx.lineTo(w, p);
+          ctx.stroke();
+        }
+
+        for (const [tx, ty] of FOREST_TREE_CELLS) {
+          if (tx < 0 || tx >= N || ty < 0 || ty >= N) continue;
+          if (crowTree && tx === crowTree[0] && ty === crowTree[1]) {
+            if (crowFollowing) drawForestTree(ctx, tx * cell, ty * cell, cell);
+            else drawBeastOnTree(ctx, tx, ty, cell, 'crow');
+          } else if (squirrelTree && tx === squirrelTree[0] && ty === squirrelTree[1]) {
+            if (squirrelFollowing) drawForestTree(ctx, tx * cell, ty * cell, cell);
+            else drawBeastOnTree(ctx, tx, ty, cell, 'squirrel');
+          } else {
+            drawForestTree(ctx, tx * cell, ty * cell, cell);
+          }
+        }
+
+        for (const step of trail) {
+          const tcx = (step.x + 0.5) * cell;
+          const tcy = (step.y + 0.5) * cell;
+          ctx.fillStyle = 'rgba(35, 65, 35, 0.38)';
+          ctx.beginPath();
+          ctx.arc(tcx, tcy, cell * 0.11, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        for (const job of cellJobs) {
+          if (job.mode === 'single' && job.a === 'mushroom') {
+            if (!mushroomOnBoard.has(job.gx + ',' + job.gy)) continue;
+          }
+          drawCellJob(ctx, job, cell);
+        }
+
+        if (mushroomsCollected >= 2 && !crowFollowing) {
+          const p = cellCenter(crowTree[0], crowTree[1]);
+          drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.2, cell, 0.22);
+        }
+        if (mushroomsCollected >= 3 && !squirrelFollowing) {
+          const p = cellCenter(squirrelTree[0], squirrelTree[1]);
+          drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.2, cell, 0.22);
+        }
+
+        if (squirrelFollowing) {
+          const p = cellCenter(squirrelGx, squirrelGy);
+          drawPiece(ctx, 'squirrel', p.cx, p.cy, cell, 0.78);
+          if (mushroomsCollected >= 3) {
+            drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.26, cell, 0.22);
+          }
+        }
+        if (crowFollowing) {
+          const p = cellCenter(crowGx, crowGy);
+          drawPiece(ctx, 'crow', p.cx, p.cy, cell, 0.82);
+          if (mushroomsCollected >= 2) {
+            drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.24, cell, 0.22);
+          }
+        }
+        const hCent = cellCenter(hareGx, hareGy);
+        drawPiece(ctx, 'hare', hCent.cx, hCent.cy + cell * 0.07, cell, 1.05);
+        if (mushroomsCollected >= 1) {
+          drawPiece(ctx, 'mushroom', hCent.cx, hCent.cy - cell * 0.22, cell, 0.24);
+        }
+        const kCent = cellCenter(kGx, kGy);
+        drawPiece(ctx, 'kolobok', kCent.cx, kCent.cy, cell, 0.88);
+        if (mushroomsCollected >= 4) {
+          drawPiece(ctx, 'mushroom', kCent.cx, kCent.cy - cell * 0.26, cell, 0.22);
+        }
+
+        if (won && saluteParticles.length && performance.now() < saluteUntil) {
+          const ox = (homeX + 0.5) * cell;
+          const oy = (homeY + 0.5) * cell;
+          const t = (performance.now() - saluteStartTime) / 340;
+          for (const p of saluteParticles) {
+            const px = ox + p.vx * t * cell * 0.45;
+            const py = oy + p.vy * t * cell * 0.45 + t * t * cell * 0.24;
+            const al = Math.max(0, 1 - t / p.life);
+            ctx.fillStyle = `hsla(${p.hue}, 82%, 56%, ${al})`;
+            ctx.beginPath();
+            ctx.arc(px, py, Math.max(2, cell * 0.065 * (1 - t * 0.12)), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      updateHint();
+      bindArrows();
+      draw();
+      window.addEventListener('resize', draw);
+    })();
+
+    (function taskSheetUi() {
+      const backdrop = document.getElementById('task-backdrop');
+      const openBtn = document.getElementById('task-open');
+      const closeBtn = document.getElementById('task-close');
+      const sheet = backdrop && backdrop.querySelector('.task-sheet');
+      if (!backdrop || !openBtn || !closeBtn || !sheet) return;
+
+      const DURATION_MS = 320;
+
+      function open() {
+        backdrop.removeAttribute('hidden');
+        backdrop.setAttribute('aria-hidden', 'false');
+        openBtn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+          backdrop.classList.add('is-open');
+          sheet.focus();
+        });
+      }
+
+      function close() {
+        backdrop.classList.remove('is-open');
+        openBtn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+        window.setTimeout(() => {
+          if (!backdrop.classList.contains('is-open')) {
+            backdrop.setAttribute('hidden', '');
+            backdrop.setAttribute('aria-hidden', 'true');
+          }
+        }, DURATION_MS);
+      }
+
+      openBtn.addEventListener('click', open);
+      closeBtn.addEventListener('click', close);
+      backdrop.addEventListener('click', e => {
+        if (e.target === backdrop) close();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && backdrop.classList.contains('is-open')) close();
+      });
+      window.addEventListener('resize', () => {
+        if (window.matchMedia('(min-width: 720px)').matches && backdrop.classList.contains('is-open')) close();
+      });
+    })();
+  </script>
+</body>
+</html>
