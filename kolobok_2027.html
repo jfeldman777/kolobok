@@ -57,9 +57,9 @@ label { font-size: 13px; color: #aaa; min-width: 100px; }
 input[type=range] { flex: 1; accent-color: #E8A020; }
 #start-btn { padding: 12px; font-size: 16px; cursor: pointer; border-radius: 10px; border: 1px solid #555; background: #222; color: #fff; font-weight: 600; }
 #start-btn:active { background: #333; }
-.stage-sel { padding: 8px 14px; font-size: 14px; cursor: pointer; border-radius: 8px; border: 1px solid #444; background: #222; color: #aaa; }
-.stage-sel:active { background: #333; }
-.stage-sel.active { background: #E8A020; border-color: #E8A020; color: #000; font-weight: 700; }
+.stage-sel, .forest-series-sel { padding: 8px 14px; font-size: 14px; cursor: pointer; border-radius: 8px; border: 1px solid #444; background: #222; color: #aaa; }
+.stage-sel:active, .forest-series-sel:active { background: #333; }
+.stage-sel.active, .forest-series-sel.active { background: #E8A020; border-color: #E8A020; color: #000; font-weight: 700; }
 
 /* Game — fixed full screen */
 #game {
@@ -331,14 +331,48 @@ canvas { display: block; }
       <input type="text" id="player-name" placeholder="Введи имя" maxlength="20"
         style="flex:1;padding:8px 10px;font-size:14px;border-radius:8px;border:1px solid #444;background:#222;color:#fff;outline:none;">
     </div>
-    <div class="row" style="display:none" aria-hidden="true">
-      <label>Размер доски</label>
-      <input type="range" id="n-slider" min="9" max="16" value="15" step="1">
-      <span id="n-out" class="val">15×15</span>
+    <div class="row" style="align-items:flex-start;">
+      <label style="padding-top:4px;">Сериал</label>
+      <div id="forest-setup-series-btns" style="flex:1;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+        <button type="button" class="forest-series-sel active" onclick="forestSelectSetupSeriesAndIntro(1)" title="Домой">1</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(2)" title="Грибы">2</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(3)" title="Кроты">3</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(4)" title="Кабан">4</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(5)" title="Лошади">5</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(6)" title="Заяц">6</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(7)" title="Змеи по ёлкам">7</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(8)" title="Вороны (в разработке)">8</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(9)" title="Совы (в разработке)">9</button>
+        <button type="button" class="forest-series-sel" onclick="forestSelectSetupSeriesAndIntro(10)" title="Управление цифрами (в разработке)">10</button>
+      </div>
+    </div>
+    <div class="row" style="align-items:flex-start;">
+      <label style="padding-top:4px;">Заставки серий</label>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;">
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(1)" title="Входная заставка серии 1">1</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(2)" title="Входная заставка серии 2">2</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(3)" title="Входная заставка серии 3">3</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(4)" title="Входная заставка серии 4">4</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(5)" title="Входная заставка серии 5">5</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(6)" title="Входная заставка серии 6">6</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(7)" title="Входная заставка серии 7 (змеи)">7</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(8)" title="Входная заставка серии 8 (вороны)">8</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(9)" title="Входная заставка серии 9 (совы)">9</button>
+          <button type="button" class="forest-series-sel" style="min-width:2.1rem;padding:6px 10px;font-size:13px" onclick="forestOpenSerialIntroFromSetup(10)" title="Заставка: управление цифрами">10</button>
+        </div>
+        <button type="button" onclick="forestShowNeedMoleHintFromSetup()" style="font-size:12px;padding:6px 10px;cursor:pointer;border-radius:8px;border:1px solid #3d5c40;background:#152018;color:#9ec3a8;">Подсказка: гриб без крота</button>
+        <button type="button" onclick="forestBeginAllSerialIntrosTour()" style="width:100%;max-width:420px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">Посмотреть все заставки по сценарию (1→10)</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>Поле</label>
+      <input type="hidden" id="n-slider" value="10">
+      <span id="n-out" class="val">10×10</span>
     </div>
     <div class="row" style="display:none" aria-hidden="true">
       <label>Стен</label>
-      <input type="range" id="wall-slider" min="5" max="28" value="14" step="1">
+      <input type="hidden" id="wall-slider" value="14">
       <span id="wall-out" class="val">14%</span>
     </div>
     <div class="row" style="display:none" aria-hidden="true">
@@ -355,7 +389,7 @@ canvas { display: block; }
         <button type="button" class="stage-sel" onclick="selectStage(9)">9</button>
       </div>
     </div>
-    <button type="button" id="setup-extras-btn" onclick="showExtras()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #6a5a28;background:#2a2410;color:#E8A020;">+ Дополнительно — число NPC</button>
+    <button type="button" id="setup-extras-btn" style="display:none" aria-hidden="true">+ Дополнительно — число NPC</button>
     <button type="button" id="setup-gamepad-btn" onclick="openGamepadSetup()" style="padding:12px;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid #3d6b50;background:#142218;color:#a8e0b8;">🎮 Геймпад — настройка и проверка</button>
     <div class="row" style="align-items:flex-start;">
       <label style="padding-top:4px;">Запись</label>
@@ -379,13 +413,15 @@ canvas { display: block; }
     <div id="forest-tagline">Помоги колобку вернуться домой</div>
     <div id="top-bar">
       <span id="forest-phase-switch" aria-label="Выбор режима кампании">
-        <button type="button" id="forest-phase-1" onclick="forestSwitchPhase('home')">1</button>
-        <button type="button" id="forest-phase-2" onclick="forestSwitchPhase('mush')">2</button>
-        <button type="button" id="forest-phase-3" onclick="forestSwitchPhase('mole')">3</button>
-        <button type="button" id="forest-phase-4" onclick="forestSwitchPhase('boar')">4</button>
-        <button type="button" id="forest-phase-5" onclick="forestSwitchPhase('horse')">5</button>
+        <button type="button" id="forest-phase-1" onclick="forestSwitchPhaseAndIntro('home')">1</button>
+        <button type="button" id="forest-phase-2" onclick="forestSwitchPhaseAndIntro('mush')">2</button>
+        <button type="button" id="forest-phase-3" onclick="forestSwitchPhaseAndIntro('mole')">3</button>
+        <button type="button" id="forest-phase-4" onclick="forestSwitchPhaseAndIntro('boar')">4</button>
+        <button type="button" id="forest-phase-5" onclick="forestSwitchPhaseAndIntro('horse')">5</button>
+        <button type="button" id="forest-phase-6" onclick="forestSwitchPhaseAndIntro('hare')">6</button>
+        <button type="button" id="forest-phase-7" onclick="forestSwitchPhaseAndIntro('snake')">7</button>
       </span>
-      <span id="sb">Игра <span id="stage-num">1</span>/<span id="stage-tMax">15</span> <span id="sb-code" style="opacity:0.85;font-weight:600"></span></span>
+      <span id="sb">Игра <span id="stage-num" style="display:none">1</span><span id="stage-tMax" style="display:none">15</span></span>
       <span id="hero-panel"></span>
       <span id="msg"></span>
       <button type="button" id="desktop-menu-btn" onclick="openMenu()">☰ Меню</button>
@@ -429,9 +465,9 @@ canvas { display: block; }
         </div>
       </div>
     </div>
-    <div id="victory-overlay"></div>
-    <canvas id="confetti-canvas"></canvas>
   </div>
+  <div id="victory-overlay"></div>
+  <canvas id="confetti-canvas"></canvas>
 </div>
 
 <!-- Menu overlay -->
@@ -443,7 +479,7 @@ canvas { display: block; }
     <button onclick="showHelp();closeMenu()">? Правила</button>
     <button onclick="fullReset();closeMenu()">⏮ В начало</button>
     <button onclick="goToSetup();closeMenu()">⚙ Настройки</button>
-    <button type="button" onclick="showExtras();closeMenu()">+ Дополнительно — число NPC</button>
+    <button type="button" style="display:none" aria-hidden="true">+ Дополнительно — число NPC</button>
     <button type="button" onclick="openGamepadSetup();closeMenu()">🎮 Геймпад — настройка</button>
     <button type="button" id="menu-save-replay" onclick="exportReplayRecording();closeMenu();" style="display:none">💾 Сохранить запись для отправки (.json)</button>
     <button id="menu-close" onclick="closeMenu()">Закрыть</button>
@@ -545,7 +581,7 @@ canvas { display: block; }
 </div>
 
 <script>
-let N=15, wallPct=14, grid=[], won=false, stage=1, paused=false, startStage=1;
+let N=10, wallPct=14, grid=[], won=false, stage=1, paused=false, startStage=1;
 let playerName='Игрок';
 /** Ходы героя по этапам 1–8 (индекс 0 = этап 1) */
 let movesPerStage=[0,0,0,0,0,0,0,0];
@@ -568,7 +604,7 @@ let replayMode=false;
 let replayFrames=[];
 let replayIndex=0;
 let _replayLastJson='';
-let replayMeta={startStage:1,N:15,wallPct:14,npcCounts:{}};
+let replayMeta={startStage:1,N:10,wallPct:14,npcCounts:{n1:2,n2:2,n3:2,p4:1,n5:2,n6:2,n7:2}};
 let _replayUiMsg='';
 let _replayUiMsgWarn=false;
 let replayAutoTimer=null;
@@ -587,9 +623,10 @@ let gamepadS9HeldNav=null;
 let gamepadS9LastNavAt=0;
 // CELL: fill screen width with the board (N tiles)
 // Use screen width divided by N, capped for desktop
-const _N_default = 15;
+const _N_default = 10;
 // CELL recalculated in startGame() based on actual N and screen width
 let CELL = Math.max(20, Math.min(44, Math.floor((window.innerWidth - 4) / _N_default)));
+const FIXED_BOARD_N=10;
 
 const CLR={
   1:{f:'#7F77DD',fdk:'#AFA9EC',s:'#3C3489',sdk:'#534AB7',p:'#26215C'},
@@ -604,22 +641,13 @@ const CLR={
 const KING_DIRS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
 /** Сколько стараться поставить юнитов каждого вида (меню «Дополнительно»). */
 const NPC_COUNT_KEYS=['n1','n2','n3','p4','n5','n6','n7'];
-const DEFAULT_NPC_COUNTS={n1:3,n2:3,n3:3,p4:2,n5:3,n6:3,n7:3};
+const DEFAULT_NPC_COUNTS={n1:2,n2:2,n3:2,p4:1,n5:2,n6:2,n7:2};
 let npcCounts={...DEFAULT_NPC_COUNTS};
 function loadNpcCounts(){
-  try{
-    const o=JSON.parse(localStorage.getItem('kolobok_2027_npc_counts')||'null');
-    if(o&&typeof o==='object'){
-      for(const k of NPC_COUNT_KEYS){
-        const v=parseInt(o[k],10);
-        const max=k==='p4'?8:12;
-        if(!isNaN(v)&&v>=1&&v<=max) npcCounts[k]=v;
-      }
-    }
-  }catch(e){}
+  npcCounts={...DEFAULT_NPC_COUNTS};
 }
 function saveNpcCounts(){
-  try{ localStorage.setItem('kolobok_2027_npc_counts',JSON.stringify(npcCounts)); }catch(e){}
+  npcCounts={...DEFAULT_NPC_COUNTS};
 }
 const EXTRAS_SLIDER_IDS={n1:'extras-n1',n2:'extras-n2',n3:'extras-n3',p4:'extras-p4',n5:'extras-n5',n6:'extras-n6',n7:'extras-n7'};
 function onExtrasInput(k,raw){
@@ -651,6 +679,7 @@ function bindExtrasSliders(){
   }
 }
 function showExtras(){
+  npcCounts={...DEFAULT_NPC_COUNTS};
   syncExtrasUI();
   gel('extras-modal').classList.add('open');
 }
@@ -677,20 +706,31 @@ function applyNpcCountsToBoard(){
   loadStage();
 }
 function npcCap(lvl){
-  const v=npcCounts['n'+lvl];
-  if(FOREST_CAMPAIGN_2027){
-    const n=parseInt(v,10);
-    return isNaN(n)||n<0?0:n;
-  }
-  return typeof v==='number'&&v>=1?v:3;
+  const k='n'+(lvl|0);
+  if(Object.prototype.hasOwnProperty.call(DEFAULT_NPC_COUNTS,k)) return DEFAULT_NPC_COUNTS[k]|0;
+  return 2;
 }
 function npcP4Pairs(){
-  const v=npcCounts.p4;
-  if(FOREST_CAMPAIGN_2027){
-    const n=parseInt(v,10);
-    return isNaN(n)||n<0?0:n;
-  }
-  return typeof v==='number'&&v>=1?v:2;
+  return DEFAULT_NPC_COUNTS.p4|0;
+}
+function forestRequiredNpcMin(lvl){
+  if(!FOREST_CAMPAIGN_2027) return 1;
+  if(forestIsMole()) return lvl===2?1:0;
+  if(forestIsBoar()) return (lvl===2||lvl===3)?1:0;
+  if(forestIsHorse()) return (lvl===2||lvl===3)?1:0;
+  if(forestIsHare()) return lvl===5?1:0;
+  if(forestIsSnake()) return lvl===6?1:0;
+  return 0;
+}
+function forestRequiredP4PairsMin(){
+  if(!FOREST_CAMPAIGN_2027) return 1;
+  return forestIsHorse()?1:0;
+}
+function requiredNpcCount(lvl){
+  return Math.max(npcCap(lvl), forestRequiredNpcMin(lvl));
+}
+function requiredP4PairsCount(){
+  return Math.max(npcP4Pairs(), forestRequiredP4PairsMin());
 }
 /** Максимальная цифра уровня в наборах (герой на этапе 8). */
 const MAX_DIGIT=8;
@@ -701,27 +741,114 @@ const PENALTY_DIGIT_FLASH_MS=420;
 const FOREST_CAMPAIGN_2027=true;
 const FOREST_START_N=6;
 const FOREST_HORSE_START_N=8;
+const FOREST_HARE_START_N=6;
 const FOREST_TOTAL_MINI=15; // финальный размер поля (N=15)
 const LS_FOREST_CHAMPIONS='kolobok_2027_forest_champions';
 const LS_FOREST_MUSH_CHAMPIONS='kolobok_2027_forest_mush_champions';
 const LS_FOREST_MOLE_CHAMPIONS='kolobok_2027_forest_mole_champions';
 const LS_FOREST_BOAR_CHAMPIONS='kolobok_2027_forest_boar_champions';
 const LS_FOREST_HORSE_CHAMPIONS='kolobok_2027_forest_horse_champions';
+const LS_FOREST_HARE_CHAMPIONS='kolobok_2027_forest_hare_champions';
+const LS_FOREST_SNAKE_CHAMPIONS='kolobok_2027_forest_snake_champions';
+const LS_FOREST_S7_CHAMPIONS='kolobok_2027_forest_s7_champions';
+/** После 15/15 серии «Домой» открывается кнопка серии 7 (этап 7). */
+const LS_FOREST_UNLOCK_S7='kolobok_2027_forest_unlock_s7';
+/** Координаты полей 0…10 на сетке 6×6 (масштабируются на N>6). */
+const FOREST_HARE_FIELDS_BASE=[
+  {x:3,y:2},{x:3,y:3},{x:3,y:4},{x:4,y:3},{x:5,y:4},{x:4,y:2},{x:5,y:2},{x:4,y:1},{x:3,y:1},{x:2,y:3},{x:1,y:4},
+];
 /** Код мини-игры: «N» — поле N×N. В этой версии фишек нет, растёт только размер поля. */
 let forestMiniGameIndex=FOREST_START_N;
 let forestCampaignSpec='';
-let forestPhase='home'; // 'home' | 'mush' | 'mole' | 'boar' | 'horse'
+let forestPhase='home'; // 'home' | 'mush' | 'mole' | 'boar' | 'horse' | 'hare' | 'snake' | 's7'
+/** Выбранный на экране настроек стартовый сериал (1…7), кнопками. */
+let forestSetupStartSeries=1;
+/** Просмотр заставки из настроек: по закрытию не запускать кампанию и не сбрасывать серию. */
+let forestIntroPreviewMode=false;
+/** Просмотр всех заставок подряд: [1…6] и текущий индекс. */
+let forestIntroSlideshowList=null;
+let forestIntroSlideshowIndex=0;
+/** Подпись внизу экрана при показе слайдшоу заставок. */
+let forestIntroSlideshowHintOverride=null;
+/** После закрытия заставки между мини-играми кампании — перейти к следующей игре. */
+let forestAfterMiniGameIntroCallback=null;
 let forestMushrooms=new Set(); // keys "x,y" on floor cells (near trees)
 let forestMushroomsTotal=0;
 let forestMushroomsCollected=0;
 let forestMoleTaken=false;
-let forestRedFlashUntil=0;
 
 function forestIsMush(){ return forestPhase==='mush'; }
 function forestIsMole(){ return forestPhase==='mole'; }
 function forestIsBoar(){ return forestPhase==='boar'; }
 function forestIsHorse(){ return forestPhase==='horse'; }
+function forestIsHare(){ return forestPhase==='hare'; }
+function forestIsSnake(){ return forestPhase==='snake'; }
+function forestIsS7(){ return forestPhase==='s7'; }
 function forestUsesMushrooms(){ return forestIsMush()||forestIsMole()||forestIsBoar()||forestIsHorse(); }
+function forestSeriesToPhase(series){
+  const s=series|0;
+  if(s===2) return 'mush';
+  if(s===3) return 'mole';
+  if(s===4) return 'boar';
+  if(s===5) return 'horse';
+  if(s===6) return 'hare';
+  if(s===7) return 'snake';
+  return 'home';
+}
+function forestPhaseToSeries(phase){
+  if(phase==='mush') return 2;
+  if(phase==='mole') return 3;
+  if(phase==='boar') return 4;
+  if(phase==='horse') return 5;
+  if(phase==='hare') return 6;
+  if(phase==='snake') return 7;
+  return 1;
+}
+function forestSeriesLabel(series){
+  const s=series|0;
+  if(s===2) return 'грибы';
+  if(s===3) return 'кроты';
+  if(s===4) return 'кабан';
+  if(s===5) return 'лошади';
+  if(s===6) return 'заяц';
+  if(s===7) return 'змеи';
+  return 'домой';
+}
+function forestSeriesStartN(series){
+  const s=series|0;
+  if(s===5) return FOREST_HORSE_START_N;
+  if(s===6||s===7) return FOREST_HARE_START_N;
+  return FOREST_START_N;
+}
+function getForestStartSeriesFromSetup(){
+  // Серии 8+ в UI могут быть выбраны для просмотра/навигации,
+  // но запуск кампании пока доступен только для 1..7.
+  return Math.max(1, Math.min(7, forestSetupStartSeries|0||1));
+}
+function forestSelectSetupSeries(s){
+  forestSetupStartSeries=Math.max(1,Math.min(10,s|0));
+  const wrap=gel('forest-setup-series-btns');
+  if(wrap&&wrap!==_stub){
+    wrap.querySelectorAll('.forest-series-sel').forEach((b,i)=>{
+      b.classList.toggle('active', (i+1)===forestSetupStartSeries);
+    });
+  }
+  gel('n-slider').value=String(FIXED_BOARD_N);
+  gel('n-out').textContent=FIXED_BOARD_N+'×'+FIXED_BOARD_N;
+}
+function forestSelectSetupSeriesAndIntro(s){
+  forestSelectSetupSeries(s);
+  forestOpenSerialIntroFromSetup(s|0);
+}
+
+function forestS7Unlocked(){
+  try{
+    if(localStorage.getItem(LS_FOREST_UNLOCK_S7)==='1') return true;
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_CHAMPIONS)||'[]');
+    if(Array.isArray(a)&&a.length>0) return true;
+  }catch(e){}
+  return false;
+}
 function forestHorseNeed(){
   const horsesLeft=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0);
   if(horsesLeft>0) return 'horse';
@@ -730,11 +857,6 @@ function forestHorseNeed(){
   const moleLeft=M2.filter(m=>!m.collected).length;
   if(moleLeft>0) return 'mole';
   return 'mushroom';
-}
-
-function triggerForestRedFlash(ms){
-  const dur=Math.max(200, ms|0);
-  forestRedFlashUntil=Date.now()+dur;
 }
 
 function parseForestSpec(raw){
@@ -760,29 +882,233 @@ function forestWallPctForIndex(_i){
   return 15;
 }
 
+function forestHareFieldXY(i){
+  if(i<0||i>=FOREST_HARE_FIELDS_BASE.length) return null;
+  const b=FOREST_HARE_FIELDS_BASE[i];
+  const sc=(N>1)?(N-1)/5:0;
+  const x=Math.min(N-1,Math.max(0,Math.round(b.x*sc)));
+  const y=Math.min(N-1,Math.max(0,Math.round(b.y*sc)));
+  return {x,y};
+}
+
+/** Первый шаг кратчайшего пути для зайца: как у шахматного короля (8 направлений), можно заходить на ёлки (grid===1). */
+function forestHareFirstStepToward(sx,sy,tx,ty){
+  if(sx===tx&&sy===ty) return null;
+  const key=(x,y)=>x+','+y;
+  const parent=new Map();
+  parent.set(key(sx,sy), null);
+  const q=[[sx,sy]];
+  let qi=0;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+  while(qi<q.length){
+    const[x,y]=q[qi++];
+    for(const[dx,dy] of dirs){
+      const nx=x+dx, ny=y+dy;
+      if(nx<0||nx>=N||ny<0||ny>=N) continue;
+      const g=grid[ny][nx];
+      if(g!==0&&g!==1) continue;
+      const k=key(nx,ny);
+      if(parent.has(k)) continue;
+      parent.set(k,[x,y]);
+      if(nx===tx&&ny===ty){
+        let cx=nx, cy=ny;
+        while(true){
+          const p=parent.get(key(cx,cy));
+          if(!p) return null;
+          if(p[0]===sx&&p[1]===sy) return [cx,cy];
+          cx=p[0]; cy=p[1];
+        }
+      }
+      q.push([nx,ny]);
+    }
+  }
+  return null;
+}
+
+function forestTryPlaceHareLayout(){
+  const cells=[];
+  for(let fi=0;fi<=10;fi++){
+    const p=forestHareFieldXY(fi);
+    if(!p) return false;
+    const g=grid[p.y][p.x];
+    if(g!==0&&g!==1) return false;
+    cells.push(p);
+  }
+  const uniq=new Set(cells.map(c=>c.x+','+c.y));
+  if(uniq.size!==cells.length) return false;
+  const hx=finishGX(), hy=finishGY();
+  if(grid[0][0]!==0||grid[hy][hx]!==0) return false;
+  if(!pOK(0,0,hx,hy)) return false;
+  const h0=forestHareFieldXY(0);
+  let reachable=0;
+  for(let t=1;t<=10;t++){
+    const tp=forestHareFieldXY(t);
+    if(forestHareFirstStepToward(h0.x,h0.y,tp.x,tp.y)) reachable++;
+  }
+  if(reachable<1) return false;
+  const m=mkNPC(h0.x,h0.y,5);
+  m.isForestHare=true;
+  m._hareTargetIndex=null;
+  m.dx=1;
+  m.dy=0;
+  M5=[m];
+  return true;
+}
+
+function stepForestHare(m){
+  if(m.collected||!hero.alive) return;
+  const reachable=[];
+  for(let t=1;t<=10;t++){
+    const tp=forestHareFieldXY(t);
+    if(!tp) continue;
+    if(forestHareFirstStepToward(m.x,m.y,tp.x,tp.y)) reachable.push(t);
+  }
+  if(!reachable.length) return;
+  const cur=m._hareTargetIndex|0;
+  if(cur<1||cur>10||reachable.indexOf(cur)<0) m._hareTargetIndex=null;
+  if(m._hareTargetIndex==null) m._hareTargetIndex=reachable[0|Math.random()*reachable.length];
+  const tp=forestHareFieldXY(m._hareTargetIndex);
+  if(!tp){ m._hareTargetIndex=null; return; }
+  if(m.x===tp.x&&m.y===tp.y){ m._hareTargetIndex=null; return; }
+  const step=forestHareFirstStepToward(m.x,m.y,tp.x,tp.y);
+  if(step){
+    m.dx=step[0]-m.x;
+    m.dy=step[1]-m.y;
+    m.x=step[0];
+    m.y=step[1];
+  }
+}
+
+/** Все ёлки на поле, фиксированный порядок обхода (сверху вниз, слева направо). */
+function forestCollectTreesSorted(){
+  const t=[];
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(grid[y][x]===1) t.push({x,y});
+  t.sort((a,b)=>a.y-b.y||a.x-b.x);
+  return t;
+}
+/** Ёлки связаны ходом короля только по клеткам-ёлкам. */
+function forestSnakeTreesKingConnected(trees){
+  if(trees.length<=1) return true;
+  const set=new Set(trees.map(p=>p.x+','+p.y));
+  const seen=new Set();
+  const q=[trees[0]];
+  seen.add(trees[0].x+','+trees[0].y);
+  let qi=0;
+  while(qi<q.length){
+    const {x,y}=q[qi++];
+    for(const[dx,dy] of KING_DIRS){
+      const nx=x+dx, ny=y+dy, k=nx+','+ny;
+      if(!set.has(k)||seen.has(k)) continue;
+      seen.add(k);
+      q.push({x:nx,y:ny});
+    }
+  }
+  return seen.size===trees.length;
+}
+/** Первый шаг по ёлкам (как король) к целевой ёлке. */
+function forestSnakeFirstStepOnTrees(sx,sy,tx,ty){
+  if(sx===tx&&sy===ty) return null;
+  const key=(x,y)=>x+','+y;
+  const parent=new Map();
+  parent.set(key(sx,sy), null);
+  const q=[[sx,sy]];
+  let qi=0;
+  while(qi<q.length){
+    const[x,y]=q[qi++];
+    for(const[dx,dy] of KING_DIRS){
+      const nx=x+dx, ny=y+dy;
+      if(nx<0||nx>=N||ny<0||ny>=N) continue;
+      if(grid[ny][nx]!==1) continue;
+      const k=key(nx,ny);
+      if(parent.has(k)) continue;
+      parent.set(k,[x,y]);
+      if(nx===tx&&ny===ty){
+        let cx=nx, cy=ny;
+        while(true){
+          const p=parent.get(key(cx,cy));
+          if(!p) return null;
+          if(p[0]===sx&&p[1]===sy) return [cx,cy];
+          cx=p[0]; cy=p[1];
+        }
+      }
+      q.push([nx,ny]);
+    }
+  }
+  return null;
+}
+function forestTryPlaceSnakeLayout(){
+  const trees=forestCollectTreesSorted();
+  if(trees.length<2) return false;
+  if(!forestSnakeTreesKingConnected(trees)) return false;
+  const hx=finishGX(), hy=finishGY();
+  if(grid[0][0]!==0||grid[hy][hx]!==0) return false;
+  if(!pOK(0,0,hx,hy)) return false;
+  const numSnakes=Math.min(3, trees.length);
+  const occ=new Set();
+  M6=[];
+  for(let j=0;j<numSnakes;j++){
+    const st=trees[j];
+    const k=st.x+','+st.y;
+    if(occ.has(k)) return false;
+    occ.add(k);
+    const m=mkNPC(st.x,st.y,6);
+    m.isForestSnake=true;
+    m._snakeTrees=trees.map(p=>({x:p.x,y:p.y}));
+    m._snakePhase='rest';
+    m._snakeTx=null;
+    m._snakeTy=null;
+    m.dx=1;
+    m.dy=0;
+    M6.push(m);
+  }
+  return true;
+}
+function stepForestSnake(m){
+  if(m.collected||!hero.alive) return;
+  const trees=m._snakeTrees;
+  if(!trees||!trees.length) return;
+  let idx=-1;
+  for(let i=0;i<trees.length;i++) if(trees[i].x===m.x&&trees[i].y===m.y){ idx=i; break; }
+  if(idx<0) return;
+  if(m._snakePhase==='rest'){
+    const nxt=(idx+1)%trees.length;
+    m._snakeTx=trees[nxt].x;
+    m._snakeTy=trees[nxt].y;
+    m._snakePhase='move';
+    return;
+  }
+  if(m._snakeTx!=null&&m.x===m._snakeTx&&m.y===m._snakeTy){
+    m._snakePhase='rest';
+    m._snakeTx=m._snakeTy=null;
+    return;
+  }
+  if(m._snakeTx==null||m._snakeTy==null){ m._snakePhase='rest'; return; }
+  const step=forestSnakeFirstStepOnTrees(m.x,m.y,m._snakeTx,m._snakeTy);
+  if(step){
+    m.dx=step[0]-m.x;
+    m.dy=step[1]-m.y;
+    m.x=step[0];
+    m.y=step[1];
+  }
+}
+
 function applyForestMiniGameParams(idx){
   const n=(idx|0)||FOREST_START_N;
-  forestCampaignSpec=String(forestIsHorse()?Math.max(FOREST_HORSE_START_N,n):n);
-  const {n:nn}=parseForestSpec(String(n));
-  N=forestIsHorse()?Math.max(FOREST_HORSE_START_N,nn):nn;
+  forestCampaignSpec=String(FIXED_BOARD_N);
+  N=FIXED_BOARD_N;
   wallPct=forestWallPctForIndex(n);
-  npcCounts={n1:0,n2:0,n3:0,p4:0,n5:0,n6:0,n7:0};
+  npcCounts={...DEFAULT_NPC_COUNTS};
   // Серия 3: только кроты и грибы.
   if(forestIsMole()){
-    npcCounts.n2=Math.max(1, Math.min(4, Math.floor((N-4)/3)));
-    npcCounts.n3=0;
     stage=3; // без кабана
   } else if(forestIsBoar()){
-    // Серия 4: всегда гриб(1) + крот(2) + кабан(3), колобок уровня 4.
-    npcCounts.n2=Math.max(1, Math.min(4, Math.floor((N-4)/3)));
-    npcCounts.n3=1;
     stage=4;
   } else if(forestIsHorse()){
-    // Серия 5: две лошадки (пара к-4), затем кабан, затем крот, потом гриб.
-    npcCounts.p4=1; // ровно одна пара => две лошадки
-    npcCounts.n3=1; // кабан
-    npcCounts.n2=1; // крот
     stage=5; // колобок выше всех (до 9-го этапа)
+  } else if(forestIsHare()){
+    stage=6; // к‑5 заяц (королевский ход, можно на ёлки), герой уровня 6
+  } else if(forestIsSnake()){
+    stage=7; // к‑6 змеи по ёлкам, герой уровня 7
   } else {
     stage=1; // серии 1 и 2 — без NPC
   }
@@ -795,23 +1121,25 @@ function updateForestHud(){
   if(tm&&tm!==_stub) tm.textContent=String(FOREST_TOTAL_MINI);
   const sc=gel('sb-code');
   if(sc&&sc!==_stub){
-    const tail=forestCampaignSpec?(' · '+forestCampaignSpec):'';
-    sc.textContent=(forestIsMush()?' · грибы':forestIsMole()?' · кроты+грибы':forestIsBoar()?' · кроты+кабан+грибы':forestIsHorse()?' · лошади+кабан+крот+гриб':'')+tail;
+    sc.textContent='';
+    sc.style.display='none';
   }
-  const b1=gel('forest-phase-1'), b2=gel('forest-phase-2'), b3=gel('forest-phase-3'), b4=gel('forest-phase-4'), b5=gel('forest-phase-5');
+  const b1=gel('forest-phase-1'), b2=gel('forest-phase-2'), b3=gel('forest-phase-3'), b4=gel('forest-phase-4'), b5=gel('forest-phase-5'), b6=gel('forest-phase-6'), b7=gel('forest-phase-7');
   if(b1&&b1!==_stub) b1.classList.toggle('active', forestPhase==='home');
   if(b2&&b2!==_stub) b2.classList.toggle('active', forestIsMush());
   if(b3&&b3!==_stub) b3.classList.toggle('active', forestIsMole());
   if(b4&&b4!==_stub) b4.classList.toggle('active', forestIsBoar());
   if(b5&&b5!==_stub) b5.classList.toggle('active', forestIsHorse());
+  if(b6&&b6!==_stub) b6.classList.toggle('active', forestIsHare());
+  if(b7&&b7!==_stub) b7.classList.toggle('active', forestIsSnake());
 }
 
 function forestSwitchPhase(mode){
   if(!FOREST_CAMPAIGN_2027 || replayMode) return;
-  const next=(mode==='mush')?'mush':(mode==='mole'?'mole':(mode==='boar'?'boar':(mode==='horse'?'horse':'home')));
+  const next=(mode==='mush')?'mush':(mode==='mole'?'mole':(mode==='boar'?'boar':(mode==='horse'?'horse':(mode==='hare'?'hare':(mode==='snake'?'snake':'home')))));
   if(forestPhase===next && gameStarted) return;
   forestPhase=next;
-  const startN=forestIsHorse()?FOREST_HORSE_START_N:FOREST_START_N;
+  const startN=forestIsHorse()?FOREST_HORSE_START_N:((forestIsHare()||forestIsSnake())?FOREST_HARE_START_N:FOREST_START_N);
   forestMiniGameIndex=startN;
   forestCampaignSpec=String(startN);
   forestMushrooms=new Set();
@@ -830,6 +1158,12 @@ function forestSwitchPhase(mode){
   } else {
     updateForestHud();
   }
+}
+function forestSwitchPhaseAndIntro(mode){
+  if(!FOREST_CAMPAIGN_2027 || replayMode) return;
+  const next=(mode==='mush')?'mush':(mode==='mole'?'mole':(mode==='boar'?'boar':(mode==='horse'?'horse':(mode==='hare'?'hare':(mode==='snake'?'snake':'home')))));
+  forestSwitchPhase(next);
+  forestOpenSerialIntroFromSetup(forestPhaseToSeries(next));
 }
 
 function loadForestChampions(){
@@ -861,6 +1195,12 @@ function loadForestBoarChampions(){
 function loadForestHorseChampions(){
   try{
     const a=JSON.parse(localStorage.getItem(LS_FOREST_HORSE_CHAMPIONS)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
+function loadForestHareChampions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_HARE_CHAMPIONS)||'[]');
     return Array.isArray(a)?a:[];
   }catch(e){ return []; }
 }
@@ -902,15 +1242,36 @@ function saveForestHorseChampion(name,moves){
   scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
   try{ localStorage.setItem(LS_FOREST_HORSE_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
 }
+function saveForestHareChampion(name,moves){
+  const scores=loadForestHareChampions();
+  const entry={name:String(name||'Игрок').slice(0,24), moves:moves|0, date:new Date().toLocaleString('ru-RU')};
+  scores.push(entry);
+  scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
+  try{ localStorage.setItem(LS_FOREST_HARE_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
+}
+function loadForestSnakeChampions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(LS_FOREST_SNAKE_CHAMPIONS)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){ return []; }
+}
+function saveForestSnakeChampion(name,moves){
+  const scores=loadForestSnakeChampions();
+  const entry={name:String(name||'Игрок').slice(0,24), moves:moves|0, date:new Date().toLocaleString('ru-RU')};
+  scores.push(entry);
+  scores.sort((a,b)=>(a.moves|0)-(b.moves|0));
+  try{ localStorage.setItem(LS_FOREST_SNAKE_CHAMPIONS, JSON.stringify(scores.slice(0,50))); }catch(e){}
+}
 
 function forestAfterMiniWin(){
   clrT();
   launchStageFireworks(stage);
-  const si=Math.max(0,Math.min(7,stage-1));
-  campaignHistory.push('Игра '+forestMiniGameIndex+'/'+FOREST_TOTAL_MINI+' · код '+forestCampaignSpec+' (ходов: '+(movesPerStage[si]|0)+')');
   if(forestMiniGameIndex<FOREST_TOTAL_MINI){
-    setTimeout(()=>{
+    const proceedToNextMini=(nextSi)=>{
       try{
+        const ns=nextSi|0;
+        // После сюжетной заставки переводим кампанию в соответствующий этап.
+        if(ns>=2&&ns<=7) forestPhase=forestSeriesToPhase(ns);
         forestMiniGameIndex++;
         won=false;
         loadStage();
@@ -918,6 +1279,22 @@ function forestAfterMiniWin(){
         console.error(err);
         setMsg('Ошибка перехода к следующей игре.', true);
       }
+    };
+    setTimeout(()=>{
+      won=false;
+      if(replayMode){
+        proceedToNextMini();
+        return;
+      }
+      // Переходы по этапам кампании: после этапа 1 -> заставка 2, после 2 -> 3, после 3 -> 4 и т.д.
+      const nextIntroSi=(forestPhaseToSeries(forestPhase)|0)+1;
+      if(nextIntroSi>=2&&nextIntroSi<=10){
+        forestIntroSlideshowList=null;
+        forestIntroSlideshowHintOverride='Нажми любую клавишу или коснись экрана, чтобы начать следующую игру.';
+        forestAfterMiniGameIntroCallback=()=>proceedToNextMini(nextIntroSi);
+        forestIntroPreviewMode=true;
+        forestShowSerialIntroByNumber(nextIntroSi,true);
+      } else proceedToNextMini();
     }, STAGE_SALUTE_MS);
   } else {
     setTimeout(()=>{ forestFinishCampaign(); }, STAGE_SALUTE_MS);
@@ -984,9 +1361,49 @@ function forestStartHorseCampaign(){
   setMsg('Лошади, кабан, крот и гриб');
   loadStage();
 }
+function forestStartHareCampaign(){
+  forestPhase='hare';
+  forestMiniGameIndex=FOREST_HARE_START_N;
+  forestCampaignSpec=String(FOREST_HARE_START_N);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  forestMoleTaken=false;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  won=false;
+  setMsg('Заяц (к‑5): ходит как король, может на ёлки, цели — поля 1–10');
+  loadStage();
+}
+function forestStartSnakeCampaign(){
+  forestPhase='snake';
+  forestMiniGameIndex=FOREST_HARE_START_N;
+  forestCampaignSpec=String(FOREST_HARE_START_N);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  forestMoleTaken=false;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  won=false;
+  setMsg('Змеи ползут только по ёлкам: под ёлкой отдыхают и выбирают следующую, к ней — по одному ходу короля за раз.');
+  loadStage();
+}
 
 function forestFinishCampaign(){
   const name=(gel('player-name').value||'').trim()||'Игрок';
+  if(forestIsSnake()){
+    saveForestSnakeChampion(name, campaignMovesTotal);
+    won=true;
+    clrT();
+    setMsg('Все 15 игр серии «Змеи» пройдены!');
+    draw();
+    showForestSnakeFinalOverlay();
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-snake-win');
+    return;
+  }
   if(forestIsBoar()){
     saveForestBoarChampion(name, campaignMovesTotal);
     setMsg('Следующая игра: лошади, кабан, крот и гриб…');
@@ -996,12 +1413,16 @@ function forestFinishCampaign(){
   }
   if(forestIsHorse()){
     saveForestHorseChampion(name, campaignMovesTotal);
-    won=true;
-    clrT();
-    setMsg('Все 15 игр «Лошади, кабан, крот и гриб» пройдены!');
-    draw();
-    showForestHorseFinalOverlay();
-    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-horse-win');
+    setMsg('Следующая серия: заяц (королевский ход, ёлки)…');
+    setTimeout(()=>{ forestStartHareCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-horse-finished');
+    return;
+  }
+  if(forestIsHare()){
+    saveForestHareChampion(name, campaignMovesTotal);
+    setMsg('Следующая серия: змеи по ёлкам…');
+    setTimeout(()=>{ forestStartSnakeCampaign(); }, Math.max(250, STAGE_SALUTE_MS-500));
+    if(replayRecording && !replayMode) maybeRecordSnapshot('forest-hare-finished');
     return;
   }
   if(forestIsMole()){
@@ -1029,6 +1450,223 @@ function forestFinishCampaign(){
   }, Math.max(250, STAGE_SALUTE_MS-500));
 }
 
+function forestApplySlideshowFooterHint(){
+  if(!forestIntroSlideshowList||!forestIntroSlideshowList.length){
+    forestIntroSlideshowHintOverride=null;
+    return;
+  }
+  const tot=forestIntroSlideshowList.length;
+  const cur=forestIntroSlideshowIndex+1;
+  forestIntroSlideshowHintOverride=(cur>=tot)
+    ? ('Заставка '+cur+' из '+tot+' — последняя. Нажми любую клавишу или коснись экрана, чтобы вернуться в настройки.')
+    : ('Заставка '+cur+' из '+tot+'. Нажми любую клавишу или коснись экрана — следующая.');
+}
+function forestTryAdvanceIntroSlideshow(){
+  if(!forestIntroSlideshowList) return false;
+  forestIntroSlideshowIndex++;
+  if(forestIntroSlideshowIndex>=forestIntroSlideshowList.length){
+    forestIntroSlideshowList=null;
+    forestIntroSlideshowIndex=0;
+    forestIntroPreviewMode=false;
+    forestIntroSlideshowHintOverride=null;
+    return true;
+  }
+  forestIntroPreviewMode=true;
+  queueMicrotask(()=>{ forestShowSerialIntroByNumber(forestIntroSlideshowList[forestIntroSlideshowIndex]); });
+  return true;
+}
+function forestBeginAllSerialIntrosTour(){
+  if(!FOREST_CAMPAIGN_2027||replayMode) return;
+  forestIntroSlideshowList=[1,2,3,4,5,6,7,8,9,10];
+  forestIntroSlideshowIndex=0;
+  forestIntroPreviewMode=true;
+  forestShowSerialIntroByNumber(forestIntroSlideshowList[0]);
+}
+function forestShowSerialIntroByNumber(si, gameContinue){
+  const s=si|0;
+  if(s<1||s>10) return;
+  const gc=!!gameContinue;
+  if(forestIntroSlideshowList) forestApplySlideshowFooterHint();
+  else if(!gc) forestIntroSlideshowHintOverride=null;
+  if(s===1){
+    showForestSerialIntroFromSetupScreen('Серия 1','Помоги колобку добраться из леса домой.','','','s1');
+  } else if(s===2){
+    showForestHomeToMushStory(gc);
+  } else if(s===3){
+    showForestMushToMoleStory(gc);
+  } else if(s===4){
+    showForestSerialIntroFromSetupScreen('Серия 4',
+      'С соседней горы в лес спустились дикие кабаны.',
+      'Колобок решил и их забрать с собой.',
+      'Сначала возьми с собой хотя бы одного кабана, а потом как в прошлый раз — собери всех и приведи колобка домой.',
+      'boar');
+  } else if(s===5){
+    showForestSerialIntroFromSetupScreen('Серия 5',
+      'В лесу лошадки гуляют парами.',
+      'Теперь, прежде чем взять с собой кабана, возьми с собой хотя бы одну лошадку. А потом как в прошлый раз.',
+      '',
+      'horses');
+  } else if(s===6){
+    showForestSerialIntroFromSetupScreen('Серия 6',
+      'В лесу появились зайцы, они далеко прыгают.',
+      'Сначала возьми с собой хотя бы одного зайца — а потом как в прошлый раз.',
+      '',
+      'hare');
+  } else if(s===7){
+    showForestSerialIntroFromSetupScreen('Серия 7',
+      'Змеи ползают только по ёлкам: под ёлкой один ход отдыхают и выбирают следующую по порядку, потом каждый ход — шаг короля по ёлкам к цели.',
+      'Сначала возьми с собой хотя бы одну змею.',
+      '',
+      'snake');
+  } else if(s===8){
+    showForestSerialIntroFromSetupScreen('Серия 8',
+      'В лесу появились вороны.',
+      'Они могут садиться на деревья.',
+      '',
+      'crow');
+  } else if(s===9){
+    showForestSerialIntroFromSetupScreen('Серия 9',
+      'Теперь в лесу появились совы.',
+      'Они ловят змей.',
+      '',
+      'owl');
+  } else if(s===10){
+    showForestSerialIntroFromSetupScreen('Управление цифрами',
+      'Теперь ты не управляешь колобком, но можешь задать цифрой, чьё движение он может скопировать:',
+      '1 — гриб, 2 — крот, 3 — кабан, 4 — лошадка, 5 — заяц, 6 — змея, 7 — ворона, 8 — совы.',
+      '9 — случайный выбор из перечисленных типов.',
+      '');
+  }
+}
+function forestGenericIntroDismiss(){
+  try{ window.removeEventListener('keydown', forestGenericIntroOnKeydown, true); }catch(e){}
+  const ov=gel('victory-overlay');
+  if(ov&&ov!==_stub){
+    try{ ov.removeEventListener('pointerdown', forestGenericIntroOnPointer, true); }catch(e){}
+  }
+  hideVictoryOverlay();
+  if(forestTryAdvanceIntroSlideshow()) return;
+  if(forestAfterMiniGameIntroCallback){
+    const cb=forestAfterMiniGameIntroCallback;
+    forestAfterMiniGameIntroCallback=null;
+    forestIntroPreviewMode=false;
+    forestIntroSlideshowHintOverride=null;
+    try{ cb(); }catch(e){ console.error(e); }
+    return;
+  }
+  forestIntroPreviewMode=false;
+  forestIntroSlideshowHintOverride=null;
+}
+function forestGenericIntroOnKeydown(ev){
+  try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+  forestGenericIntroDismiss();
+}
+function forestGenericIntroOnPointer(ev){
+  if(ev.button!=null&&ev.button!==0) return;
+  try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+  forestGenericIntroDismiss();
+}
+function paintForestSerialIntroCanvas(kind, css){
+  const c=document.getElementById('forest-serial-intro-canvas');
+  if(!c||!kind) return;
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  c.width=Math.round(css*dpr);
+  c.height=Math.round(css*dpr);
+  c.style.width=css+'px';
+  c.style.height=css+'px';
+  const ctx=c.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,css,css);
+  const g=ctx.createLinearGradient(0,0,0,css);
+  g.addColorStop(0,'#87a878');
+  g.addColorStop(1,'#2d4a22');
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,css,css);
+  const u=css/260;
+  if(kind==='s1'){
+    drawForestTree(ctx, 10*u, 36*u, 86*u);
+    drawForestHouse(ctx, css-96*u, 44*u, 70*u);
+    drawForestIntroKolobok(ctx, css*0.5-48*u, css*0.52, 96*u);
+  } else if(kind==='boar'){
+    const sz=Math.round(css*0.62);
+    const ox=Math.round((css-sz)/2), oy=Math.round((css-sz)*0.28);
+    drawForestIntroBoar(ctx, ox, oy, sz);
+  } else if(kind==='horses'){
+    drawForestIntroHorsePair(ctx, 0, 0, css);
+  } else if(kind==='hare'){
+    const sz=Math.round(css*0.62);
+    const ox=Math.round((css-sz)/2), oy=Math.round((css-sz)*0.28);
+    drawForestIntroHare(ctx, ox, oy, sz);
+  } else if(kind==='snake'){
+    const sz=Math.round(css*0.68);
+    const ox=Math.round((css-sz)/2), oy=Math.round((css-sz)*0.26);
+    drawForestIntroSnake(ctx, ox, oy, sz);
+  } else if(kind==='crow'){
+    const sz=Math.round(css*0.68);
+    const ox=Math.round((css-sz)/2), oy=Math.round((css-sz)*0.22);
+    drawForestIntroCrow(ctx, ox, oy, sz);
+  } else if(kind==='owl'){
+    const sz=Math.round(css*0.68);
+    const ox=Math.round((css-sz)/2), oy=Math.round((css-sz)*0.24);
+    drawForestIntroOwl(ctx, ox, oy, sz);
+  }
+}
+
+/** Текстовая заставка серий из настроек; paintKind: s1|boar|horses|hare|snake|crow|owl или ''. */
+function showForestSerialIntroFromSetupScreen(title, line1, line2, line3, paintKind, line4){
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  forestIntroPreviewMode=true;
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.setAttribute('tabindex','-1');
+  const pStyle='margin:0;font-size:clamp(1.05rem,3.8vw,1.35rem);line-height:1.55;color:#dce8df;font-weight:600';
+  const l3=typeof line3==='string'?line3:'';
+  const l4=typeof line4==='string'?line4:'';
+  const paras=[];
+  if(line1) paras.push('<p class="vic-lead" style="'+pStyle+'">'+line1+'</p>');
+  if(line2) paras.push('<p class="vic-lead" style="'+pStyle+';margin-top:14px">'+line2+'</p>');
+  if(l3) paras.push('<p class="vic-lead" style="'+pStyle+';margin-top:14px">'+l3+'</p>');
+  if(l4) paras.push('<p class="vic-lead" style="'+pStyle+';margin-top:14px">'+l4+'</p>');
+  const canvasHtml=paintKind
+    ? '<canvas id="forest-serial-intro-canvas" width="260" height="260" role="img" aria-label="Иллюстрация к заставке" style="display:block;margin:0 auto 14px;width:min(260px,72vw);height:min(260px,72vw);image-rendering:auto"></canvas>'
+    : '';
+  ov.innerHTML='<div id="victory-box" style="max-width:540px;text-align:center">'+
+    '<h2 style="margin:0 0 14px;font-size:clamp(1.1rem,3.6vw,1.25rem);font-weight:800;color:#E8A020">'+title+'</h2>'+
+    canvasHtml+
+    paras.join('')+
+    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">'+(forestIntroSlideshowHintOverride||'Нажми любую клавишу или коснись экрана, чтобы вернуться в настройки.')+'</p>'+
+    '</div>';
+  window.addEventListener('keydown', forestGenericIntroOnKeydown, true);
+  ov.addEventListener('pointerdown', forestGenericIntroOnPointer, true);
+  try{ ov.focus({ preventScroll: true }); }catch(e){ try{ ov.focus(); }catch(e2){} }
+  if(paintKind){
+    queueMicrotask(()=>{
+      const css=Math.min(260, Math.max(200, Math.min(window.innerWidth*0.72, 300)));
+      paintForestSerialIntroCanvas(paintKind, css);
+    });
+  }
+}
+function forestShowNeedMoleHintFromSetup(){
+  forestIntroSlideshowList=null;
+  forestIntroSlideshowIndex=0;
+  forestIntroSlideshowHintOverride=null;
+  forestIntroPreviewMode=true;
+  showForestNeedMoleBeforeMushStory();
+}
+function forestOpenSerialIntroFromSetup(s){
+  if(!FOREST_CAMPAIGN_2027 || replayMode) return;
+  const si=s|0;
+  if(si<1||si>10) return;
+  forestIntroSlideshowList=null;
+  forestIntroSlideshowIndex=0;
+  forestIntroSlideshowHintOverride=null;
+  forestIntroPreviewMode=true;
+  forestShowSerialIntroByNumber(si);
+}
+
 function forestHomeMushStoryDismiss(){
   window.removeEventListener('keydown', forestHomeMushStoryOnKeydown, true);
   const ov=gel('victory-overlay');
@@ -1036,6 +1674,12 @@ function forestHomeMushStoryDismiss(){
     try{ ov.removeEventListener('pointerdown', forestHomeMushStoryOnPointer, true); }catch(e){}
   }
   hideVictoryOverlay();
+  if(forestTryAdvanceIntroSlideshow()) return;
+  if(forestIntroPreviewMode){
+    forestIntroPreviewMode=false;
+    forestIntroSlideshowHintOverride=null;
+    return;
+  }
   forestStartMushCampaign();
 }
 function forestHomeMushStoryOnKeydown(ev){
@@ -1051,27 +1695,42 @@ function forestHomeMushStoryOnPointer(ev){
   forestHomeMushStoryDismiss();
 }
 
-/** Между серией 1 («домой») и серией 2 («грибы»). */
-function showForestHomeToMushStory(){
+/** Между серией 1 («домой») и серией 2 («грибы»): картинка гриба и вступительный текст. */
+function showForestHomeToMushStory(gameContinue){
+  const gc=!!gameContinue;
   const ov=gel('victory-overlay');
-  if(!ov||ov===_stub){ forestStartMushCampaign(); return; }
+  if(!ov||ov===_stub){
+    if(!forestIntroPreviewMode) forestStartMushCampaign();
+    return;
+  }
   hideVictoryOverlay();
   ov.style.display='flex';
   ov.classList.add('victory-open');
   ov.setAttribute('tabindex','-1');
-  const story='Прошёл дождь и в лесу выросли грибы. Колобок решил по дороге собрать все грибы.';
-  ov.innerHTML='<div id="victory-box" style="max-width:520px;text-align:center">'+
-    '<canvas id="forest-mush-story-canvas" width="220" height="220" style="display:block;margin:0 auto 8px;width:min(220px,55vw);height:min(220px,55vw);image-rendering:auto"></canvas>'+
-    '<p class="vic-lead" style="margin:0;font-size:clamp(1.05rem,3.8vw,1.35rem);line-height:1.55;color:#dce8df;font-weight:600">'+story+'</p>'+
-    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">Дальше нажми любую клавишу или коснись экрана.</p>'+
+  const pStyle='margin:0;font-size:clamp(1.05rem,3.8vw,1.35rem);line-height:1.55;color:#dce8df;font-weight:600';
+  const hintMush=forestIntroSlideshowHintOverride||(gc
+    ? 'Нажми любую клавишу или коснись экрана, чтобы начать следующую игру.'
+    : (forestIntroPreviewMode
+    ? 'Нажми любую клавишу или коснись экрана, чтобы вернуться в настройки.'
+    : 'Дальше нажми любую клавишу или коснись экрана.'));
+  ov.innerHTML='<div id="victory-box" style="max-width:540px;text-align:center">'+
+    '<canvas id="forest-mush-story-canvas" width="260" height="260" role="img" aria-label="Гриб в лесу" style="display:block;margin:0 auto 14px;width:min(260px,72vw);height:min(260px,72vw);image-rendering:auto"></canvas>'+
+    '<p class="vic-lead" style="'+pStyle+'">После дождя выросли грибы.</p>'+
+    '<p class="vic-lead" style="'+pStyle+';margin-top:14px">Сначала собери грибы, а потом приведи колобка домой.</p>'+
+    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">'+hintMush+'</p>'+
     '</div>';
-  window.addEventListener('keydown', forestHomeMushStoryOnKeydown, true);
-  ov.addEventListener('pointerdown', forestHomeMushStoryOnPointer, true);
+  if(gc){
+    window.addEventListener('keydown', forestGenericIntroOnKeydown, true);
+    ov.addEventListener('pointerdown', forestGenericIntroOnPointer, true);
+  } else {
+    window.addEventListener('keydown', forestHomeMushStoryOnKeydown, true);
+    ov.addEventListener('pointerdown', forestHomeMushStoryOnPointer, true);
+  }
   try{ ov.focus({ preventScroll: true }); }catch(e){ try{ ov.focus(); }catch(e2){} }
   queueMicrotask(()=>{
     const c=document.getElementById('forest-mush-story-canvas');
     if(!c) return;
-    const css=Math.min(220, Math.max(160, Math.min(window.innerWidth*0.55, 240)));
+    const css=Math.min(260, Math.max(200, Math.min(window.innerWidth*0.72, 300)));
     const dpr=Math.min(2, window.devicePixelRatio||1);
     c.width=Math.round(css*dpr);
     c.height=Math.round(css*dpr);
@@ -1081,9 +1740,9 @@ function showForestHomeToMushStory(){
     ctx.setTransform(1,0,0,1,0,0);
     ctx.scale(dpr,dpr);
     ctx.clearRect(0,0,css,css);
-    const sz=Math.round(css*0.82);
+    const sz=Math.round(css*0.84);
     const ox=Math.round((css-sz)/2);
-    const oy=Math.round((css-sz)*0.42);
+    const oy=Math.round((css-sz)*0.38);
     drawMushroom(ctx, ox, oy, sz);
   });
 }
@@ -1095,6 +1754,12 @@ function forestMushToMoleStoryDismiss(){
     try{ ov.removeEventListener('pointerdown', forestMushToMoleStoryOnPointer, true); }catch(e){}
   }
   hideVictoryOverlay();
+  if(forestTryAdvanceIntroSlideshow()) return;
+  if(forestIntroPreviewMode){
+    forestIntroPreviewMode=false;
+    forestIntroSlideshowHintOverride=null;
+    return;
+  }
   forestStartMoleCampaign();
 }
 function forestMushToMoleStoryOnKeydown(ev){
@@ -1110,24 +1775,127 @@ function forestMushToMoleStoryOnPointer(ev){
   forestMushToMoleStoryDismiss();
 }
 
-/** Между серией 2 («грибы») и серией 3 («кроты и грибы»). */
-function showForestMushToMoleStory(){
+function forestRestartCurrentSeries(){
+  const s=forestPhaseToSeries(forestPhase);
+  forestMiniGameIndex=forestSeriesStartN(s);
+  forestCampaignSpec=String(forestMiniGameIndex);
+  forestMushrooms=new Set();
+  forestMushroomsTotal=0;
+  forestMushroomsCollected=0;
+  forestMoleTaken=false;
+  movesPerStage=[0,0,0,0,0,0,0,0];
+  movesStage9=0;
+  campaignMovesTotal=0;
+  campaignHistory=[];
+  won=false;
+  paused=false;
+  clrT();
+  loadStage();
+}
+function forestNeedMoleBeforeMushDismiss(){
+  try{ window.removeEventListener('keydown', forestNeedMoleBeforeMushOnKeydown, true); }catch(e){}
   const ov=gel('victory-overlay');
-  if(!ov||ov===_stub){ forestStartMoleCampaign(); return; }
+  if(ov&&ov!==_stub){
+    try{ ov.removeEventListener('pointerdown', forestNeedMoleBeforeMushOnPointer, true); }catch(e){}
+  }
+  hideVictoryOverlay();
+  if(forestTryAdvanceIntroSlideshow()) return;
+  if(forestIntroPreviewMode){
+    forestIntroPreviewMode=false;
+    forestIntroSlideshowHintOverride=null;
+    return;
+  }
+  forestRestartCurrentSeries();
+}
+function forestNeedMoleBeforeMushOnKeydown(ev){
+  try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+  forestNeedMoleBeforeMushDismiss();
+}
+function forestNeedMoleBeforeMushOnPointer(ev){
+  if(ev.button!=null&&ev.button!==0) return;
+  try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+  forestNeedMoleBeforeMushDismiss();
+}
+function showForestNeedMoleBeforeMushStory(){
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub){
+    if(!forestIntroPreviewMode) forestRestartCurrentSeries();
+    return;
+  }
   hideVictoryOverlay();
   ov.style.display='flex';
   ov.classList.add('victory-open');
   ov.setAttribute('tabindex','-1');
-  const p1='После дождя из нор вылезли кроты.';
-  const p2='Теперь, чтобы собрать хотя бы один гриб, надо сначала взять с собой хотя бы одного крота.';
+  const p1='После дождя из своих нор вылезли кроты.';
+  const p2='Теперь, чтобы взять первый гриб, надо сначала взять с собой хотя бы одного крота.';
+  const p3='Колобок решил собрать кротов и грибы, и только потом отправиться домой.';
+  const hintFoot=forestIntroSlideshowHintOverride||(forestIntroPreviewMode
+    ? 'Нажми любую клавишу или коснись экрана, чтобы вернуться в настройки.'
+    : 'Нажми любую клавишу или коснись экрана — начнём сериал сначала.');
+  ov.innerHTML='<div id="victory-box" style="max-width:560px;text-align:center">'+
+    '<canvas id="forest-need-mole-story-canvas" width="220" height="220" style="display:block;margin:0 auto 8px;width:min(220px,55vw);height:min(220px,55vw);image-rendering:auto"></canvas>'+
+    '<p class="vic-lead" style="margin:0;font-size:clamp(1.05rem,3.8vw,1.35rem);line-height:1.55;color:#dce8df;font-weight:600">'+p1+'</p>'+
+    '<p class="vic-lead" style="margin:14px 0 0;font-size:clamp(1.02rem,3.5vw,1.28rem);line-height:1.5;color:#c8d8ce;font-weight:600">'+p2+'</p>'+
+    '<p class="vic-lead" style="margin:14px 0 0;font-size:clamp(1rem,3.3vw,1.2rem);line-height:1.5;color:#c8d8ce;font-weight:600">'+p3+'</p>'+
+    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">'+hintFoot+'</p>'+
+    '</div>';
+  window.addEventListener('keydown', forestNeedMoleBeforeMushOnKeydown, true);
+  ov.addEventListener('pointerdown', forestNeedMoleBeforeMushOnPointer, true);
+  try{ ov.focus({ preventScroll: true }); }catch(e){ try{ ov.focus(); }catch(e2){} }
+  queueMicrotask(()=>{
+    const c=document.getElementById('forest-need-mole-story-canvas');
+    if(!c) return;
+    const css=Math.min(220, Math.max(160, Math.min(window.innerWidth*0.55, 240)));
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    c.width=Math.round(css*dpr);
+    c.height=Math.round(css*dpr);
+    c.style.width=css+'px';
+    c.style.height=css+'px';
+    const ctx=c.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,css,css);
+    const sz=Math.round(css*0.78);
+    const ox=Math.round((css-sz)/2);
+    const y=Math.round((css-sz)*0.42);
+    drawMole(ctx, ox, y, sz);
+  });
+}
+
+/** Между серией 2 («грибы») и серией 3 («кроты и грибы»). */
+function showForestMushToMoleStory(gameContinue){
+  const gc=!!gameContinue;
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub){
+    if(!forestIntroPreviewMode) forestStartMoleCampaign();
+    return;
+  }
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.setAttribute('tabindex','-1');
+  const p1='После дождя из своих нор вылезли кроты.';
+  const p2='Теперь, чтобы взять первый гриб, надо сначала взять с собой хотя бы одного крота.';
+  const p3='Колобок решил собрать кротов и грибы, и только потом отправиться домой.';
+  const hintMoleBridge=forestIntroSlideshowHintOverride||(gc
+    ? 'Нажми любую клавишу или коснись экрана, чтобы начать следующую игру.'
+    : (forestIntroPreviewMode
+    ? 'Нажми любую клавишу или коснись экрана, чтобы вернуться в настройки.'
+    : 'Дальше нажми любую клавишу или коснись экрана.'));
   ov.innerHTML='<div id="victory-box" style="max-width:520px;text-align:center">'+
     '<canvas id="forest-mole-bridge-canvas" width="220" height="220" style="display:block;margin:0 auto 8px;width:min(220px,55vw);height:min(220px,55vw);image-rendering:auto"></canvas>'+
     '<p class="vic-lead" style="margin:0;font-size:clamp(1.05rem,3.8vw,1.35rem);line-height:1.55;color:#dce8df;font-weight:600">'+p1+'</p>'+
     '<p class="vic-lead" style="margin:14px 0 0;font-size:clamp(1.02rem,3.5vw,1.28rem);line-height:1.5;color:#c8d8ce;font-weight:600">'+p2+'</p>'+
-    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">Дальше нажми любую клавишу или коснись экрана.</p>'+
+    '<p class="vic-lead" style="margin:14px 0 0;font-size:clamp(1rem,3.3vw,1.2rem);line-height:1.5;color:#c8d8ce;font-weight:600">'+p3+'</p>'+
+    '<p style="margin:22px 0 0;font-size:clamp(13px,3.2vw,15px);color:#8fa896;font-weight:600">'+hintMoleBridge+'</p>'+
     '</div>';
-  window.addEventListener('keydown', forestMushToMoleStoryOnKeydown, true);
-  ov.addEventListener('pointerdown', forestMushToMoleStoryOnPointer, true);
+  if(gc){
+    window.addEventListener('keydown', forestGenericIntroOnKeydown, true);
+    ov.addEventListener('pointerdown', forestGenericIntroOnPointer, true);
+  } else {
+    window.addEventListener('keydown', forestMushToMoleStoryOnKeydown, true);
+    ov.addEventListener('pointerdown', forestMushToMoleStoryOnPointer, true);
+  }
   try{ ov.focus({ preventScroll: true }); }catch(e){ try{ ov.focus(); }catch(e2){} }
   queueMicrotask(()=>{
     const c=document.getElementById('forest-mole-bridge-canvas');
@@ -1249,6 +2017,56 @@ function showForestHorseFinalOverlay(){
     '</div></div>';
 }
 
+function showForestHareFinalOverlay(){
+  const top=loadForestHareChampions().slice(0, 15);
+  const rows=top.map((e,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    return '<tr style="border-bottom:1px solid #2a3a2d"><td style="padding:8px 6px">'+medal+'</td><td style="padding:8px 6px;font-weight:600">'+String(e.name).replace(/</g,'&lt;')+'</td><td style="padding:8px 6px;text-align:right"><b>'+(e.moves|0)+'</b></td><td style="padding:8px 6px;font-size:11px;color:#888">'+String(e.date||'')+'</td></tr>';
+  }).join('');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.innerHTML='<div id="victory-box" style="max-width:540px">'+
+    '<h2>Серия «Заяц» пройдена!</h2>'+
+    '<p class="vic-lead">Суммарно ходов: <strong style="color:#E8A020">'+campaignMovesTotal+'</strong>. Игрок: '+String((gel('player-name').value||'').trim()||'Игрок').replace(/</g,'&lt;')+'.</p>'+
+    '<h3 style="margin-top:14px">Таблица чемпионов</h3>'+
+    '<p style="font-size:12px;color:#888;margin:0 0 8px">Меньше ходов — выше в списке.</p>'+
+    '<div style="overflow-x:auto;max-height:min(48vh,320px)"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#9aab9e"><th>#</th><th>Имя</th><th>Ходы</th><th>Дата</th></tr></thead><tbody>'+
+    (rows||'<tr><td colspan="4" style="padding:12px;color:#666">Пока нет записей</td></tr>')+
+    '</tbody></table></div>'+
+    '<div id="victory-actions" style="margin-top:16px">'+
+    '<a class="vic-btn-home" href="index.html">Ко всем играм</a>'+
+    '<button type="button" class="vic-btn-setup" onclick="goToSetup();hideVictoryOverlay();">В меню</button>'+
+    '</div></div>';
+}
+
+function showForestSnakeFinalOverlay(){
+  const top=loadForestSnakeChampions().slice(0, 15);
+  const rows=top.map((e,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    return '<tr style="border-bottom:1px solid #2a3a2d"><td style="padding:8px 6px">'+medal+'</td><td style="padding:8px 6px;font-weight:600">'+String(e.name).replace(/</g,'&lt;')+'</td><td style="padding:8px 6px;text-align:right"><b>'+(e.moves|0)+'</b></td><td style="padding:8px 6px;font-size:11px;color:#888">'+String(e.date||'')+'</td></tr>';
+  }).join('');
+  const ov=gel('victory-overlay');
+  if(!ov||ov===_stub) return;
+  hideVictoryOverlay();
+  ov.style.display='flex';
+  ov.classList.add('victory-open');
+  ov.innerHTML='<div id="victory-box" style="max-width:540px">'+
+    '<h2>Серия «Змеи» пройдена!</h2>'+
+    '<p class="vic-lead">Суммарно ходов: <strong style="color:#E8A020">'+campaignMovesTotal+'</strong>. Игрок: '+String((gel('player-name').value||'').trim()||'Игрок').replace(/</g,'&lt;')+'.</p>'+
+    '<h3 style="margin-top:14px">Таблица чемпионов</h3>'+
+    '<p style="font-size:12px;color:#888;margin:0 0 8px">Меньше ходов — выше в списке.</p>'+
+    '<div style="overflow-x:auto;max-height:min(48vh,320px)"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#9aab9e"><th>#</th><th>Имя</th><th>Ходы</th><th>Дата</th></tr></thead><tbody>'+
+    (rows||'<tr><td colspan="4" style="padding:12px;color:#666">Пока нет записей</td></tr>')+
+    '</tbody></table></div>'+
+    '<div id="victory-actions" style="margin-top:16px">'+
+    '<a class="vic-btn-home" href="index.html">Ко всем играм</a>'+
+    '<button type="button" class="vic-btn-setup" onclick="goToSetup();hideVictoryOverlay();">В меню</button>'+
+    '</div></div>';
+}
+
 function drawForestTree(ctx,cx,cy,sz){
   const s=sz;
   ctx.fillStyle='#3e2723';
@@ -1291,6 +2109,26 @@ function drawForestHouse(ctx,cx,cy,sz){
   ctx.fill();
   ctx.fillStyle='#fff8e1';
   ctx.fillRect(cx+sz*0.42,cy+sz*0.52,sz*0.16, sz*0.12);
+}
+
+/** Колобок для заставок (упрощённо, как герой в игре). */
+function drawForestIntroKolobok(ctx,cx,cy,sz){
+  const s=sz, cxm=cx+s*0.5, cym=cy+s*0.55, rr=s*0.22;
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(cxm, cy+s*0.85, s*0.2, s*0.06, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath(); ctx.arc(cxm,cym,rr,0,Math.PI*2);
+  ctx.fillStyle='#E8A020'; ctx.fill();
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=Math.max(1,s*0.03); ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(cxm-rr*0.32, cym-rr*0.12, rr*0.14, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cxm+rr*0.32, cym-rr*0.12, rr*0.14, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1a0a00';
+  ctx.beginPath(); ctx.arc(cxm-rr*0.32, cym-rr*0.1, rr*0.07, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cxm+rr*0.32, cym-rr*0.1, rr*0.07, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cxm, cym+rr*0.1, rr*0.32, 0.25, Math.PI-0.25);
+  ctx.strokeStyle='#1a0a00'; ctx.lineWidth=rr*0.11; ctx.stroke();
 }
 
 function drawMushroom(ctx,cx,cy,sz){
@@ -1348,15 +2186,19 @@ function drawMole(ctx,cx,cy,sz){
 
 function drawBoar(ctx,cx,cy,sz,dx,dy){
   const s=sz;
-  const vx=(typeof dx==='number'?dx:0);
+  const vx=(typeof dx==='number'?dx:-1);
   const vy=(typeof dy==='number'?dy:0);
-  // Базовый спрайт нарисован "мордой влево", поэтому добавляем PI,
-  // чтобы по вектору движения кабан смотрел мордой вперёд.
-  const ang=(vx===0&&vy===0)?0:(Math.atan2(vy,vx)+Math.PI);
+  // Спрайт: морда влево, ноги вниз. Без полного atan2 — иначе на части направлений оказывается вверх ногами.
   const ox=cx+s*0.5, oy=cy+s*0.5;
   ctx.save();
   ctx.translate(ox,oy);
-  ctx.rotate(ang);
+  if(vx!==0||vy!==0){
+    if(Math.abs(vx)>=Math.abs(vy)){
+      if(vx>0) ctx.scale(-1,1);
+    } else {
+      ctx.rotate(vy>0?Math.PI/2:-Math.PI/2);
+    }
+  }
   ctx.translate(-ox,-oy);
   // shadow
   ctx.fillStyle='rgba(0,0,0,0.2)';
@@ -1409,6 +2251,67 @@ function drawBoar(ctx,cx,cy,sz,dx,dy){
   ctx.restore();
 }
 
+/** Профиль зайца (как на заставке): морда вправо (+X). */
+function drawForestHareProfileSprite(ctx,cx,cy,sz){
+  const s=sz;
+  ctx.fillStyle='rgba(0,0,0,0.14)';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.48, cy+s*0.8, s*0.22, s*0.055, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#eceff1';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.4, cy+s*0.56, s*0.24, s*0.19, -0.18, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.58, cy+s*0.58, s*0.15, s*0.13, 0.18, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.72, cy+s*0.48, s*0.13, s*0.11, 0.12, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#cfd8dc';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.62, cy+s*0.34, s*0.055, s*0.2, -0.55, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.68, cy+s*0.32, s*0.055, s*0.2, -0.4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();
+  ctx.arc(cx+s*0.7, cy+s*0.46, s*0.02, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#ffab91';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.82, cy+s*0.5, s*0.045, s*0.034, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#cfd8dc';
+  ctx.fillRect(cx+s*0.34, cy+s*0.64, s*0.055, s*0.16);
+  ctx.fillRect(cx+s*0.46, cy+s*0.66, s*0.05, s*0.14);
+  ctx.fillRect(cx+s*0.56, cy+s*0.66, s*0.05, s*0.14);
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.22, cy+s*0.52, s*0.09, s*0.07, -0.45, 0, Math.PI*2);
+  ctx.fill();
+}
+
+/** Заяц на поле: профиль мордой вправо (+X), ноги вниз — только зеркало по X или ±90°, без «переворота» на 180°. */
+function drawHare(ctx,cx,cy,sz,dx,dy){
+  const s=sz;
+  const vx=(typeof dx==='number'?dx:1);
+  const vy=(typeof dy==='number'?dy:0);
+  const ox=cx+s*0.5, oy=cy+s*0.5;
+  ctx.save();
+  ctx.translate(ox,oy);
+  if(vx!==0||vy!==0){
+    if(Math.abs(vx)>=Math.abs(vy)){
+      if(vx<0) ctx.scale(-1,1);
+    } else {
+      ctx.rotate(vy>0?Math.PI/2:-Math.PI/2);
+    }
+  }
+  ctx.translate(-ox,-oy);
+  drawForestHareProfileSprite(ctx,cx,cy,sz);
+  ctx.restore();
+}
+
 function drawHorse(ctx,cx,cy,sz,dx,dy){
   const s=sz;
   const vx=(typeof dx==='number'?dx:1);
@@ -1416,13 +2319,13 @@ function drawHorse(ctx,cx,cy,sz,dx,dy){
   const ox=cx+s*0.5, oy=cy+s*0.5;
   ctx.save();
   ctx.translate(ox,oy);
-  // Лошадь не переворачиваем "ногами вверх":
-  // по горизонтали — только зеркалим (мордой по ходу),
-  // по вертикали — поворачиваем на 90°.
-  if(Math.abs(vx)>=Math.abs(vy)){
-    if(vx>0) ctx.scale(-1,1); // базовый спрайт смотрит влево
-  } else {
-    ctx.rotate(vy<0?-Math.PI/2:Math.PI/2);
+  // Базовый спрайт: морда влево, ноги вниз. Горизонталь — зеркало; вертикаль — ±90° (vy>0 вниз по экрану → +90°).
+  if(vx!==0||vy!==0){
+    if(Math.abs(vx)>=Math.abs(vy)){
+      if(vx>0) ctx.scale(-1,1);
+    } else {
+      ctx.rotate(vy>0?Math.PI/2:-Math.PI/2);
+    }
   }
   ctx.translate(-ox,-oy);
   ctx.fillStyle='rgba(0,0,0,0.2)';
@@ -1472,6 +2375,255 @@ function drawHorse(ctx,cx,cy,sz,dx,dy){
   ctx.restore();
 }
 
+/** Кабан для заставки: профиль, ноги вниз, без поворота игрового спрайта (избегаем «вверх ногами»). */
+function drawForestIntroBoar(ctx,cx,cy,sz){
+  const s=sz;
+  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.5, cy+s*0.84, s*0.36, s*0.075, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#3e2723';
+  ctx.fillRect(cx+s*0.3, cy+s*0.62, s*0.065, s*0.2);
+  ctx.fillRect(cx+s*0.42, cy+s*0.64, s*0.065, s*0.18);
+  ctx.fillRect(cx+s*0.56, cy+s*0.64, s*0.065, s*0.18);
+  ctx.fillRect(cx+s*0.66, cy+s*0.62, s*0.065, s*0.2);
+  ctx.fillStyle='#5d4037';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.46, cy+s*0.52, s*0.34, s*0.21, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#4e342e';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.4, cy+s*0.45, s*0.24, s*0.09, -0.12, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#6d4c41';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.74, cy+s*0.5, s*0.15, s*0.13, 0.15, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#5d4037';
+  ctx.beginPath();
+  ctx.ellipse(cx+s*0.88, cy+s*0.52, s*0.11, s*0.075, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#efebe9';
+  ctx.lineWidth=Math.max(1.2, s*0.028);
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.8, cy+s*0.56);
+  ctx.lineTo(cx+s*0.76, cy+s*0.64);
+  ctx.moveTo(cx+s*0.84, cy+s*0.58);
+  ctx.lineTo(cx+s*0.8, cy+s*0.66);
+  ctx.stroke();
+  ctx.fillStyle='#111';
+  ctx.beginPath();
+  ctx.arc(cx+s*0.69, cy+s*0.46, s*0.022, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#4e342e';
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.63, cy+s*0.4);
+  ctx.lineTo(cx+s*0.58, cy+s*0.28);
+  ctx.lineTo(cx+s*0.67, cy+s*0.38);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#3e2723';
+  ctx.lineWidth=Math.max(1, s*0.024);
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.2, cy+s*0.5);
+  ctx.quadraticCurveTo(cx+s*0.06, cy+s*0.44, cx+s*0.1, cy+s*0.6);
+  ctx.stroke();
+}
+
+/** Две лошади рядом для заставки (пара в профиль). */
+function drawForestIntroHorsePair(ctx,cx,cy,sz){
+  const s=sz;
+  function one(hx,hy,w,flip){
+    ctx.save();
+    if(flip){
+      ctx.translate(hx+w*0.5, hy+w*0.5);
+      ctx.scale(-1,1);
+      ctx.translate(-(hx+w*0.5), -(hy+w*0.5));
+    }
+    ctx.fillStyle='rgba(0,0,0,0.14)';
+    ctx.beginPath();
+    ctx.ellipse(hx+w*0.5, hy+w*0.76, w*0.22, w*0.048, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#4e342e';
+    ctx.fillRect(hx+w*0.36, hy+w*0.56, w*0.052, w*0.19);
+    ctx.fillRect(hx+w*0.45, hy+w*0.58, w*0.052, w*0.17);
+    ctx.fillRect(hx+w*0.56, hy+w*0.58, w*0.052, w*0.17);
+    ctx.fillRect(hx+w*0.64, hy+w*0.56, w*0.052, w*0.19);
+    ctx.fillStyle='#a1887f';
+    ctx.beginPath();
+    ctx.ellipse(hx+w*0.48, hy+w*0.46, w*0.28, w*0.14, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#8d6e63';
+    ctx.beginPath();
+    ctx.ellipse(hx+w*0.72, hy+w*0.42, w*0.1, w*0.12, 0.25, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#795548';
+    ctx.beginPath();
+    ctx.ellipse(hx+w*0.86, hy+w*0.44, w*0.1, w*0.072, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#4e342e';
+    ctx.beginPath();
+    ctx.moveTo(hx+w*0.82, hy+w*0.36);
+    ctx.lineTo(hx+w*0.79, hy+w*0.24);
+    ctx.lineTo(hx+w*0.88, hy+w*0.34);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle='#111';
+    ctx.beginPath();
+    ctx.arc(hx+w*0.84, hy+w*0.42, w*0.016, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle='#5d4037';
+    ctx.lineWidth=Math.max(1, w*0.026);
+    ctx.beginPath();
+    ctx.moveTo(hx+w*0.24, hy+w*0.42);
+    ctx.quadraticCurveTo(hx+w*0.1, hy+w*0.36, hx+w*0.14, hy+w*0.52);
+    ctx.stroke();
+    ctx.restore();
+  }
+  const w=Math.round(s*0.4);
+  const y=cy+Math.round(s*0.14);
+  one(cx+Math.round(s*0.06), y, w, false);
+  one(cx+Math.round(s*0.52), y, w, true);
+}
+
+/** Заяц для заставки — тот же профиль, что и на поле. */
+function drawForestIntroHare(ctx,cx,cy,sz){
+  drawForestHareProfileSprite(ctx,cx,cy,sz);
+}
+
+/** Змея: голова в сторону +X (для поворота на поле). */
+function drawForestSnakeProfileSprite(ctx,cx,cy,sz){
+  const s=sz;
+  ctx.strokeStyle='#2e7d32';
+  ctx.lineWidth=Math.max(5, s*0.09);
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.12, cy+s*0.75);
+  ctx.bezierCurveTo(cx+s*0.28, cy+s*0.42, cx+s*0.48, cy+s*0.88, cx+s*0.68, cy+s*0.48);
+  ctx.bezierCurveTo(cx+s*0.76, cy+s*0.38, cx+s*0.84, cy+s*0.36, cx+s*0.88, cy+s*0.44);
+  ctx.stroke();
+  ctx.strokeStyle='#66bb6a';
+  ctx.lineWidth=Math.max(2, s*0.034);
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.14, cy+s*0.72);
+  ctx.bezierCurveTo(cx+s*0.3, cy+s*0.44, cx+s*0.5, cy+s*0.84, cx+s*0.7, cy+s*0.5);
+  ctx.stroke();
+  const hx=cx+s*0.88, hy=cy+s*0.44;
+  ctx.fillStyle='#43a047';
+  ctx.beginPath();
+  ctx.ellipse(hx, hy, s*0.085, s*0.065, 0.25, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();
+  ctx.arc(hx+s*0.04, hy-s*0.02, s*0.022, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#c62828';
+  ctx.lineWidth=Math.max(1.2, s*0.018);
+  ctx.beginPath();
+  ctx.moveTo(hx+s*0.06, hy+s*0.02);
+  ctx.lineTo(hx+s*0.12, hy+s*0.01);
+  ctx.lineTo(hx+s*0.06, hy+s*0.04);
+  ctx.stroke();
+}
+function drawForestSnakeOnField(ctx,cx,cy,sz,dx,dy){
+  const s=sz;
+  const vx=(typeof dx==='number'?dx:1);
+  const vy=(typeof dy==='number'?dy:0);
+  const ox=cx+s*0.5, oy=cy+s*0.5;
+  ctx.save();
+  ctx.translate(ox,oy);
+  if(vx!==0||vy!==0) ctx.rotate(Math.atan2(vy,vx));
+  ctx.translate(-ox,-oy);
+  drawForestSnakeProfileSprite(ctx,cx,cy,sz);
+  ctx.restore();
+}
+/** Змея для заставки серии 7. */
+function drawForestIntroSnake(ctx,cx,cy,sz){
+  drawForestSnakeProfileSprite(ctx,cx,cy,sz);
+}
+
+/** Ворона на ветке / ёлке для заставки серии 8. */
+function drawForestIntroCrow(ctx,cx,cy,sz){
+  const s=sz;
+  drawForestTree(ctx, cx+s*0.06, cy+s*0.1, s*0.52);
+  const bx=cx+s*0.58, by=cy+s*0.36;
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();
+  ctx.ellipse(bx, by+s*0.06, s*0.11, s*0.075, 0.15, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(bx+s*0.04, by+s*0.14, s*0.13, s*0.095, 0.35, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(bx-s*0.06, by+s*0.06, s*0.048, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#333';
+  ctx.beginPath();
+  ctx.moveTo(bx-s*0.12, by+s*0.06);
+  ctx.lineTo(bx-s*0.22, by+s*0.09);
+  ctx.lineTo(bx-s*0.1, by+s*0.11);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#424242';
+  ctx.beginPath();
+  ctx.moveTo(bx+s*0.12, by+s*0.1);
+  ctx.quadraticCurveTo(bx+s*0.22, by+s*0.06, bx+s*0.2, by+s*0.16);
+  ctx.quadraticCurveTo(bx+s*0.16, by+s*0.14, bx+s*0.12, by+s*0.12);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Сова для заставки серии 9. */
+function drawForestIntroOwl(ctx,cx,cy,sz){
+  const s=sz;
+  ctx.strokeStyle='#3e2723';
+  ctx.lineWidth=Math.max(3, s*0.045);
+  ctx.beginPath();
+  ctx.moveTo(cx+s*0.08, cy+s*0.62);
+  ctx.quadraticCurveTo(cx+s*0.5, cy+s*0.52, cx+s*0.92, cy+s*0.58);
+  ctx.stroke();
+  const ox=cx+s*0.5, oy=cy+s*0.4;
+  ctx.fillStyle='#5d4037';
+  ctx.beginPath();
+  ctx.ellipse(ox, oy, s*0.24, s*0.28, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#4e342e';
+  ctx.beginPath();
+  ctx.moveTo(ox-s*0.2, oy-s*0.2);
+  ctx.lineTo(ox-s*0.26, oy-s*0.36);
+  ctx.lineTo(ox-s*0.12, oy-s*0.24);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(ox+s*0.2, oy-s*0.2);
+  ctx.lineTo(ox+s*0.26, oy-s*0.36);
+  ctx.lineTo(ox+s*0.12, oy-s*0.24);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#795548';
+  ctx.beginPath();
+  ctx.ellipse(ox, oy+s*0.05, s*0.2, s*0.22, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fffde7';
+  ctx.beginPath();
+  ctx.arc(ox-s*0.1, oy+s*0.02, s*0.09, 0, Math.PI*2);
+  ctx.arc(ox+s*0.1, oy+s*0.02, s*0.09, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#263238';
+  ctx.beginPath();
+  ctx.arc(ox-s*0.1, oy+s*0.02, s*0.045, 0, Math.PI*2);
+  ctx.arc(ox+s*0.1, oy+s*0.02, s*0.045, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#ffb300';
+  ctx.beginPath();
+  ctx.moveTo(ox, oy+s*0.12);
+  ctx.lineTo(ox-s*0.05, oy+s*0.22);
+  ctx.lineTo(ox+s*0.05, oy+s*0.22);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function useTorus(){
   if(FOREST_CAMPAIGN_2027) return false;
   return stage===7||stage===8;
@@ -1504,7 +2656,10 @@ const K2_OWNER_HERO=-1;
 let hero={x:0,y:0,lvl:2,dots:[],alive:true,isHero:true,navDigit:0};
 let darkMode=true; // always dark
 let gameStarted=false;
-gel('n-slider').oninput=function(){gel('n-out').textContent=this.value+'×'+this.value;};
+gel('n-slider').oninput=function(){
+  this.value=String(FIXED_BOARD_N);
+  gel('n-out').textContent=FIXED_BOARD_N+'×'+FIXED_BOARD_N;
+};
 gel('wall-slider').oninput=function(){gel('wall-out').textContent=this.value+'%';};
 gel('start-btn').onclick=()=>{gel('start-btn').blur();startGame();};
 
@@ -1559,9 +2714,10 @@ function initCampaignSession(){
   campaignMovesTotal=0;
   campaignHistory=[];
   if(FOREST_CAMPAIGN_2027){
-    campaignHistory.push('Старт: 15 мини-игр «лес — домой», считаем сумму ходов.');
+    const s=forestPhaseToSeries(forestPhase);
+    campaignHistory.push('Старт: серия '+s+' («'+forestSeriesLabel(s)+'»), 15 мини-игр, считаем сумму ходов.');
   } else {
-    const n0=parseInt(gel('n-slider').value)||15;
+    const n0=parseInt(gel('n-slider').value)||FIXED_BOARD_N;
     const w0=parseInt(gel('wall-slider').value)||14;
     campaignHistory.push('Старт кампании: этап '+startStage+' (поле '+n0+'×'+n0+', стены '+w0+'%). Войти можно не с 1-го этапа.');
   }
@@ -1570,10 +2726,14 @@ function initCampaignSession(){
 function hideVictoryOverlay(){
   try{ window.removeEventListener('keydown', forestHomeMushStoryOnKeydown, true); }catch(e){}
   try{ window.removeEventListener('keydown', forestMushToMoleStoryOnKeydown, true); }catch(e){}
+  try{ window.removeEventListener('keydown', forestNeedMoleBeforeMushOnKeydown, true); }catch(e){}
+  try{ window.removeEventListener('keydown', forestGenericIntroOnKeydown, true); }catch(e){}
   const ov=gel('victory-overlay');
   if(!ov||ov===_stub) return;
   try{ ov.removeEventListener('pointerdown', forestHomeMushStoryOnPointer, true); }catch(e){}
   try{ ov.removeEventListener('pointerdown', forestMushToMoleStoryOnPointer, true); }catch(e){}
+  try{ ov.removeEventListener('pointerdown', forestNeedMoleBeforeMushOnPointer, true); }catch(e){}
+  try{ ov.removeEventListener('pointerdown', forestGenericIntroOnPointer, true); }catch(e){}
   ov.classList.remove('victory-open');
   ov.innerHTML='';
   ov.style.display='none';
@@ -1641,17 +2801,21 @@ function startGame(){
   playerName=(gel('player-name').value||'').trim()||'Игрок';
   movesPerStage=[0,0,0,0,0,0,0,0];
   if(FOREST_CAMPAIGN_2027){
-    forestMiniGameIndex=FOREST_START_N;
+    const s=getForestStartSeriesFromSetup();
+    forestPhase=forestSeriesToPhase(s);
+    const idx=forestSeriesStartN(s);
+    forestMiniGameIndex=idx;
+    forestCampaignSpec=String(forestMiniGameIndex);
     startStage=1;
-    N=parseInt(gel('n-slider').value)||15;
-    wallPct=parseInt(gel('wall-slider').value)||forestWallPctForIndex(1);
+    N=FIXED_BOARD_N;
+    wallPct=forestWallPctForIndex(1);
     replayMeta={
       startStage:1, N, wallPct:forestWallPctForIndex(1),
-      npcCounts:{...npcCounts}, forestMiniGameIndex:FOREST_START_N,
+      npcCounts:{...npcCounts}, forestMiniGameIndex:forestMiniGameIndex,
     };
   } else {
-    N=parseInt(gel('n-slider').value);
-    wallPct=parseInt(gel('wall-slider').value);
+    N=FIXED_BOARD_N;
+    wallPct=14;
     replayMeta={
       startStage,
       N,
@@ -1984,8 +3148,8 @@ function kxy(m){ return m.x+','+m.y; }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];} }
 
 function maxNpcLvl(){
-  if(stage>=8&&M7.some(m=>!m.collected)) return 7;
-  if(stage>=7&&M6.some(m=>!m.collected)) return 6;
+  if((stage>=8||M7.length>0)&&M7.some(m=>!m.collected)) return 7;
+  if((stage>=7||M6.length>0)&&M6.some(m=>!m.collected)) return 6;
   if(stage>=6&&M5.some(m=>!m.collected)) return 5;
   if(stage>=5&&P4.some(p=>!p.a.collected||!p.b.collected)) return 4;
   if(stage>=4&&M3.some(m=>!m.collected)) return 3;
@@ -2225,6 +3389,16 @@ function heroDisplayLvl(){
 /** Этапы 1–8: строка «пенал» (все цифры набора по убыванию) и через « · » хвосты кооптированных наборов. */
 function penaltyUIFullText(mob){
   if(!mob||stage===9) return '';
+  if(mob.isHero){
+    const head=String(Math.min(Math.max(1, heroDisplayLvl()),9));
+    const absorbedFlat=(mob.absorbed&&mob.absorbed.length)
+      ?mob.absorbed.flatMap(ch=>(Array.isArray(ch)?ch:[]))
+        .map(d=>d|0)
+        .filter(d=>d>=1&&d<=9)
+        .map(String)
+      :[];
+    return absorbedFlat.length ? (head+' '+absorbedFlat.join(' ')) : head;
+  }
   const base=[...fullSet(mob)].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a).join(' ');
   const tail=(mob.absorbed&&mob.absorbed.length)
     ?mob.absorbed.map(ch=>[...ch].filter(d=>d>=1&&d<=9).sort((a,b)=>b-a).join(' ')).join(' · ')
@@ -2275,7 +3449,7 @@ function registerNpcCollectedByHero(npc){
   else if(n===4){col4++;gel('c4-cnt').textContent=col4;}
   else if(n===5){col5++;gel('c5-cnt').textContent=col5;}
   else if(n===6){col6++;gel('c6-cnt').textContent=col6;}
-  else if(n===7&&stage>=8){col7++;gel('c7-cnt').textContent=col7;}
+  else if(n===7){col7++;gel('c7-cnt').textContent=col7;}
 }
 
 function meetPriorityPair(a,b){
@@ -2495,6 +3669,13 @@ function penaltyDigitsSet(obj){
 /** Универсальное правило "конкуренция/кооперация/война" для встречи с грибом (пенал [1]). */
 function resolveMushroomMeet(actor,mushKey){
   if(!actor||actor.collected||!forestMushrooms||!forestMushrooms.has(mushKey)) return 'none';
+  // Для колобка гриб всегда кооптируется: войны/красного экрана с грибом нет.
+  if(actor.isHero){
+    absorbSetIntoSenior(actor, new Set([1]));
+    forestMushrooms.delete(mushKey);
+    if(forestMushroomsCollected<forestMushroomsTotal) forestMushroomsCollected++;
+    return 'cooperation_or_war_mush';
+  }
   const mush=mushroomUnitAt(actor.x,actor.y);
   const beforeActorAlive=actor.isHero?actor.alive:!actor.collected;
   meet(actor,mush); // единый механизм встреч
@@ -2562,17 +3743,12 @@ function handleHeroDeath(info){
   clrT(); // stop tick and animation timers
   setMsg('');
   draw();
-  // Новый сценарий: мгновенный красный экран и авто-перезапуск текущего этапа.
-  const cv=gel('c');
-  const ctx=cv.getContext('2d');
-  ctx.fillStyle='rgba(200,0,0,0.52)';
-  ctx.fillRect(0,0,cv.width,cv.height);
   resetT=setTimeout(()=>{ loadStage(); }, 1000);
 }
 
 function getAllNPC(){
   const all=[...M1,...M2,...M3,...M5,...M6];
-  if(stage>=8) for(const m of M7) all.push(m);
+  if(stage>=8||M7.length>0) for(const m of M7) all.push(m);
   for(const p of P4) all.push(p.a,p.b);
   return all;
 }
@@ -2587,7 +3763,6 @@ const PANEL_COLORS={
   7:{bg:'#042f2e',border:'#14b8a6',text:'#5eead4'},
   8:{bg:'#3f0d1f',border:'#f43f5e',text:'#fda4af'},
 };
-
 function makePanel(lvl,small){
   const c=PANEL_COLORS[lvl]||PANEL_COLORS[1];
   const el=document.createElement('span');
@@ -2666,8 +3841,8 @@ function drawPanels(){
 
   // All live NPCs, sorted by lvl desc
   const allNPC=[];
-  if(stage>=8) for(const m of M7) if(!m.collected) allNPC.push(m);
-  if(stage>=7) for(const m of M6) if(!m.collected) allNPC.push(m);
+  if(stage>=8||M7.length>0) for(const m of M7) if(!m.collected) allNPC.push(m);
+  if(stage>=7||M6.length>0) for(const m of M6) if(!m.collected) allNPC.push(m);
   if(stage>=6) for(const m of M5) if(!m.collected) allNPC.push(m);
   if(stage>=5) for(const p of P4){ if(!p.a.collected) allNPC.push(p.a); if(!p.b.collected) allNPC.push(p.b); }
   if(stage>=4) for(const m of M3) if(!m.collected) allNPC.push(m);
@@ -2708,8 +3883,8 @@ function refreshCounters(){
   if(stage>=4) gel('c3-tot').textContent=M3.filter(x=>!x.collected).length+col3;
   if(stage>=5) gel('c4-tot').textContent=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0)+col4;
   if(stage>=6) gel('c5-tot').textContent=M5.filter(x=>!x.collected).length+col5;
-  if(stage>=7) gel('c6-tot').textContent=M6.filter(x=>!x.collected).length+col6;
-  if(stage>=8) gel('c7-tot').textContent=M7.filter(x=>!x.collected).length+col7;
+  if(stage>=7||M6.length>0) gel('c6-tot').textContent=M6.filter(x=>!x.collected).length+col6;
+  if(stage>=8||M7.length>0) gel('c7-tot').textContent=M7.filter(x=>!x.collected).length+col7;
   if(stage===8) gel('c8-tot').textContent='1';
   drawPanels();
 }
@@ -2739,12 +3914,18 @@ function loadStage(){
   hideL(); setMsg('');
 
   if(stage===1){ genGrid(); }
-  else if(stage===2){ genGrid(); plM1(); showL('line2','c1-cnt','c1-tot',0,M1.length); }
+  else if(stage===2){
+    let ok=false,a=0;
+    while(!ok&&a++<200){ genGrid(); plM1(); ok=M1.length>=requiredNpcCount(1)&&allM1Reachable(); }
+    showL('line2','c1-cnt','c1-tot',0,M1.length);
+  }
   else if(stage===3){ let ok=false,a=0; while(!ok&&a++<200){genGrid();plM1();plM2();ok=vS3();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); }
   else if(stage===4){ let ok=false,a=0; while(!ok&&a++<200){genGrid();plM1();plM2();plM3();ok=vS4();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); }
   else if(stage===5){ let ok=false,a=0; while(!ok&&a++<200){genGrid();plM1();plM2();plM3();plP4();ok=vS5();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); }
-  else if(stage===6){ let ok=false,a=0; while(!ok&&a++<400){genGrid();plM1();plM2();plM3();plP4();plM5();ok=vS6();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); }
-  else if(stage===7){ let ok=false,a=0; while(!ok&&a++<500){genGrid();plM1();plM2();plM3();plP4();plM5();plM6();ok=vS7();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); }
+  else if(stage===6 && FOREST_CAMPAIGN_2027 && forestIsHare()){ let ok=false,a=0; while(!ok&&a++<700){M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[]; genGrid();plM1();plM2();plM3();plP4();plM5();ok=vS6();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); }
+  else if(stage===6){ let ok=false,a=0; while(!ok&&a++<700){M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[]; genGrid();plM1();plM2();plM3();plP4();plM5();ok=vS6();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); }
+  else if(stage===7 && FOREST_CAMPAIGN_2027 && forestIsSnake()){ let ok=false,a=0; while(!ok&&a++<700){M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[]; genGrid();plM1();plM2();plM3();plP4();plM5();plM6();ok=vS7();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); }
+  else if(stage===7){ let ok=false,a=0; while(!ok&&a++<700){M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[]; genGrid();plM1();plM2();plM3();plP4();plM5();plM6();ok=vS7();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); }
   else if(stage===8){ let ok=false,a=0; while(!ok&&a++<700){M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[]; genGrid(); plM1(); plM2(); plM3(); plP4(); plM5(); plM6(); plM7(); ok=vS8();} showL('line2','c1-cnt','c1-tot',0,M1.length); showL('line3','c2-cnt','c2-tot',0,M2.length); showL('line4','c3-cnt','c3-tot',0,M3.length); showL('line5','c4-cnt','c4-tot',0,P4.length*2); showL('line6','c5-cnt','c5-tot',0,M5.length); showL('line7','c6-cnt','c6-tot',0,M6.length); showL('line8','c7-cnt','c7-tot',0,M7.length); showL('line9','c8-cnt','c8-tot',0,1); }
   else if(stage===9 && !FOREST_CAMPAIGN_2027){
     const saved={...npcCounts};
@@ -2805,7 +3986,12 @@ function loadStage(){
         if(nearTree) cand.push({x,y});
       }
       // Если у ёлок нет подходящих мест, берём любые клетки пола.
-      const pool=(cand.length?cand:anyFloor);
+      const npcOcc=collectNpcOccupiedKeys();
+      const notOnNpc=p=>!npcOcc.has(p.x+','+p.y);
+      const candFree=cand.filter(notOnNpc);
+      const anyFree=anyFloor.filter(notOnNpc);
+      const poolRaw=(candFree.length?candFree:anyFree);
+      const pool=poolRaw.slice();
       shuffle(pool);
       // В серии 3 «Кроты и грибы» грибов столько же, сколько кротов.
       const maxAvail=pool.length;
@@ -2822,6 +4008,10 @@ function loadStage(){
       if(forestIsHorse()) setMsg('Сначала лошади → кабан → крот → гриб');
       else if(forestIsMole()||forestIsBoar()) setMsg('Возьми крота, затем грибы: 0/'+forestMushroomsTotal);
       else setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal+', затем доберись до домика');
+    } else if(forestIsHare()){
+      setMsg('Заяц ходит как шахматный король (включая диагонали), может вставать на ёлки, и прыгает между полями 1–10. Доберись до домика.');
+    } else if(forestIsSnake()){
+      setMsg('Змеи только по ёлкам, порядок обхода фиксирован. Под ёлкой ход «отдыха» — выбирают следующую цель; дальше каждый ход — на шаг короля ближе. Доберись до домика.');
     } else {
       setMsg('Помоги колобку вернуться домой');
     }
@@ -3056,16 +4246,23 @@ function plM5(){
   for(const m of M2) occ.add(kxy(m));
   for(const m of M3) occ.add(kxy(m));
   for(const p of P4){ occ.add(kxy(p.a)); occ.add(kxy(p.b)); }
-  let fr=freeC(occ).filter(p=>m5RayPlayable(p.x,p.y));
-  if(fr.length<npcCap(5)){
-    const occ2=bOcc();
-    fr=freeC(occ2).filter(p=>m5RayPlayable(p.x,p.y));
+  const cap=npcCap(5);
+  let fr=freeC(occ).filter(p=>m5SpawnOkForest(p.x,p.y));
+  if(fr.length<cap){
+    fr=freeC(occ);
+    shuffle(fr);
   }
-  if(fr.length<npcCap(5)){
-    const occ3=bOcc();
-    fr=freeC(occ3); shuffle(fr);
-  } else shuffle(fr);
-  M5=fr.slice(0,Math.min(npcCap(5),fr.length)).map(({x,y})=>mkNPC(x,y,5));
+  if(fr.length<cap && FOREST_CAMPAIGN_2027){
+    const ext=freeCForestFloorOrTree(occ).filter(p=>m5SpawnOkForest(p.x,p.y));
+    shuffle(ext);
+    const seen=new Set(fr.map(p=>`${p.x},${p.y}`));
+    for(const p of ext){
+      const k=`${p.x},${p.y}`;
+      if(!seen.has(k)){ seen.add(k); fr.push(p); }
+    }
+  }
+  shuffle(fr);
+  M5=fr.slice(0,Math.min(cap,fr.length)).map(({x,y})=>mkNPC(x,y,5));
 }
 
 function plM6(){
@@ -3074,14 +4271,23 @@ function plM6(){
   for(const m of M3) occ.add(kxy(m));
   for(const p of P4){ occ.add(kxy(p.a)); occ.add(kxy(p.b)); }
   for(const m of M5) occ.add(kxy(m));
-  let fr=freeC(occ).filter(p=>k6SpawnPlayable(p.x,p.y));
-  if(fr.length<npcCap(6)){
-    const occ2=bOcc();
-    fr=freeC(occ2).filter(p=>k6SpawnPlayable(p.x,p.y));
+  const cap=npcCap(6);
+  let fr=freeC(occ).filter(p=>k6SpawnOkForest(p.x,p.y));
+  if(fr.length<cap){
+    fr=freeC(occ);
+    shuffle(fr);
   }
-  if(fr.length<npcCap(6)){ const occ3=bOcc(); fr=freeC(occ3); shuffle(fr); }
-  else shuffle(fr);
-  M6=fr.slice(0,Math.min(npcCap(6),fr.length)).map(({x,y})=>mkNPC(x,y,6));
+  if(fr.length<cap && FOREST_CAMPAIGN_2027){
+    const ext=freeCForestFloorOrTree(occ).filter(p=>k6SpawnOkForest(p.x,p.y));
+    shuffle(ext);
+    const seen=new Set(fr.map(p=>`${p.x},${p.y}`));
+    for(const p of ext){
+      const k=`${p.x},${p.y}`;
+      if(!seen.has(k)){ seen.add(k); fr.push(p); }
+    }
+  }
+  shuffle(fr);
+  M6=fr.slice(0,Math.min(cap,fr.length)).map(({x,y})=>mkNPC(x,y,6));
 }
 
 /** к-7: любая клетка кроме старта/финиша и занятых (включая стены). */
@@ -3095,6 +4301,7 @@ function plM7(){
   const fgx=finishGX(), fgy=finishGY();
   const pool=[];
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    if(grid[y][x]!==0) continue;
     if(occ.has(`${x},${y}`)) continue;
     if((x===0&&y===0)||(x===fgx&&y===fgy)) continue;
     pool.push({x,y});
@@ -3110,7 +4317,8 @@ function plM7(){
 
 function vS8(){
   if(!vS7()) return false;
-  if(M7.length<npcCap(7)) return false;
+  if(M7.length<requiredNpcCount(7)) return false;
+  if(!allNpcSpawnCellsUnique()) return false;
   return true;
 }
 
@@ -3194,6 +4402,7 @@ function k5StepEntity(ent){
 
 function stepM5(m){
   if(m.collected) return;
+  if(FOREST_CAMPAIGN_2027 && forestIsHare() && m.isForestHare){ stepForestHare(m); return; }
   k5StepEntity(m);
 }
 
@@ -3226,6 +4435,9 @@ function stepP4(pair){
 
 function allM1Reachable(){ return M1.every(m=>pOK(0,0,m.x,m.y)); }
 function vS3(){
+  if(M1.length<requiredNpcCount(1)) return false;
+  if(M2.length<requiredNpcCount(2)) return false;
+  if(!allNpcSpawnCellsUnique()) return false;
   if(!allM1Reachable()) return false;
   for(const m2 of M2){
     if(!orthWalkerPlayable(m2.x,m2.y)) return false;
@@ -3235,6 +4447,7 @@ function vS3(){
 }
 function vS4(){
   if(!vS3()) return false;
+  if(M3.length<requiredNpcCount(3)) return false;
   for(const m3 of M3){
     if(!orthWalkerPlayable(m3.x,m3.y)) return false;
     for(const m1 of M1) if(m3.x===m1.x&&m3.y===m1.y) return false;
@@ -3244,20 +4457,23 @@ function vS4(){
 }
 function vS5(){
   if(!vS4()) return false;
-  if(P4.length<npcP4Pairs()) return false;
+  if(P4.length<requiredP4PairsCount()) return false;
   for(const p of P4) if(!p4PairPlayable(p)) return false;
   return true;
 }
 function vS6(){
   if(!vS5()) return false;
-  if(M5.length<npcCap(5)) return false;
-  for(const m of M5) if(!m5RayPlayable(m.x,m.y)) return false;
+  if(M5.length<requiredNpcCount(5)) return false;
+  for(const m of M5) if(!m5SpawnOkForest(m.x,m.y)) return false;
+  if(!allNpcSpawnCellsUnique()) return false;
   return true;
 }
 function vS7(){
   if(!vS6()) return false;
-  for(const m of M6) if(!k6SpawnPlayable(m.x,m.y)) return false;
-  return M6.length>=npcCap(6);
+  if(M6.length<requiredNpcCount(6)) return false;
+  for(const m of M6) if(!k6SpawnOkForest(m.x,m.y)) return false;
+  if(!allNpcSpawnCellsUnique()) return false;
+  return true;
 }
 
 function entitiesAtCell(x,y, ignoreMob){
@@ -3311,6 +4527,10 @@ function k6CooptKindOnCell(m, nx, ny){
 }
 function stepM6AI(m){
   if(m.collected||!hero.alive) return;
+  if(FOREST_CAMPAIGN_2027 && forestIsSnake() && m.isForestSnake){
+    stepForestSnake(m);
+    return;
+  }
   const moves=[];
   for(const[dx,dy] of KING_DIRS){
     let nx=m.x+dx, ny=m.y+dy;
@@ -3361,6 +4581,56 @@ function bOcc(){
   return o;
 }
 function freeC(occ){ const f=[]; for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(grid[y][x]===0&&!occ.has(`${x},${y}`))f.push({x,y}); return f; }
+/** Клетки пола или ёлки (только лес): для старта зайца/змеи на ёлке — без пересечения с другими фишками. */
+function freeCForestFloorOrTree(occ){
+  const f=[];
+  if(!FOREST_CAMPAIGN_2027) return freeC(occ);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const g=grid[y][x];
+    if((g===0||g===1)&&!occ.has(`${x},${y}`)) f.push({x,y});
+  }
+  return f;
+}
+function m5SpawnOkForest(x,y){
+  if(m5RayPlayable(x,y)) return true;
+  return FOREST_CAMPAIGN_2027 && grid[y][x]===1;
+}
+function k6SpawnOkForest(x,y){
+  if(k6SpawnPlayable(x,y)) return true;
+  return FOREST_CAMPAIGN_2027 && grid[y][x]===1;
+}
+/** Старт: не две фишки на одной клетке (герой 0,0 не в счёте). */
+function allNpcSpawnCellsUnique(){
+  const seen=new Set();
+  const put=(x,y)=>{
+    const k=`${x},${y}`;
+    if(seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  };
+  for(const m of M1) if(!put(m.x,m.y)) return false;
+  for(const m of M2) if(!put(m.x,m.y)) return false;
+  for(const m of M3) if(!put(m.x,m.y)) return false;
+  for(const p of P4){
+    if(!put(p.a.x,p.a.y)) return false;
+    if(!put(p.b.x,p.b.y)) return false;
+  }
+  for(const m of M5) if(!put(m.x,m.y)) return false;
+  for(const m of M6) if(!put(m.x,m.y)) return false;
+  for(const m of M7) if(!put(m.x,m.y)) return false;
+  return true;
+}
+function collectNpcOccupiedKeys(){
+  const s=new Set();
+  for(const m of M1) s.add(kxy(m));
+  for(const m of M2) s.add(kxy(m));
+  for(const m of M3) s.add(kxy(m));
+  for(const p of P4){ s.add(kxy(p.a)); s.add(kxy(p.b)); }
+  for(const m of M5) s.add(kxy(m));
+  for(const m of M6) s.add(kxy(m));
+  for(const m of M7) s.add(kxy(m));
+  return s;
+}
 function pOK(sx,sy,ex,ey){
   const v=Array.from({length:N},()=>new Array(N).fill(false));
   const q=[[sx,sy]]; v[sy][sx]=true;
@@ -3476,7 +4746,7 @@ function tick(){
   tickCount++;
   // к‑6: первый проход до к‑7 и остальных
   if(!stepAllM6()) return;
-  if(stage>=8){
+  if(stage>=8||M7.length>0){
     for(const m of M7){
       if(m.collected) continue;
       stepM7(m);
@@ -3677,21 +4947,21 @@ function draw(){
   }
 
   // к-5 jump ring
-  if(stage>=6) for(const m of M5) if(!m.collected){
+  if(stage>=6) for(const m of M5) if(!m.collected && !m.isForestHare){
     const cx=m.x*CELL+CELL/2,cy=m.y*CELL+CELL/2,r=CELL*0.22;
     ctx.strokeStyle=dk?'rgba(250,199,117,0.5)':'rgba(186,117,23,0.4)';
     ctx.lineWidth=1;ctx.setLineDash([2,3]);
     ctx.beginPath();ctx.arc(cx,cy,r*1.7,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
   }
 
-  if(stage>=7) for(const m of M6) if(!m.collected){
+  if(stage>=7) for(const m of M6) if(!m.collected && !(FOREST_CAMPAIGN_2027&&forestIsSnake()&&m.isForestSnake)){
     ctx.strokeStyle=dk?'rgba(200,160,230,0.55)':'rgba(155,107,184,0.45)';
     ctx.lineWidth=1.2; ctx.setLineDash([3,2]);
     ctx.strokeRect(m.x*CELL+CELL*0.12, m.y*CELL+CELL*0.12, CELL*0.76, CELL*0.76);
     ctx.setLineDash([]);
   }
 
-  if(stage>=8) for(const m of M7) if(!m.collected){
+  if(stage>=8||M7.length>0) for(const m of M7) if(!m.collected){
     ctx.strokeStyle=dk?'rgba(20,184,166,0.5)':'rgba(20,184,166,0.4)';
     ctx.lineWidth=1.2; ctx.setLineDash([2,2]);
     ctx.strokeRect(m.x*CELL+CELL*0.1, m.y*CELL+CELL*0.1, CELL*0.8, CELL*0.8);
@@ -3704,7 +4974,7 @@ function draw(){
   if(stage>=5) for(const p of P4){ if(!p.a.collected)drawBall(ctx,p.a,0,dk); if(!p.b.collected)drawBall(ctx,p.b,0,dk); }
   if(stage>=6) for(const m of M5) if(!m.collected) drawBall(ctx,m,0,dk);
   if(stage>=7) for(const m of M6) if(!m.collected) drawBall(ctx,m,0,dk);
-  if(stage>=8) for(const m of M7) if(!m.collected) drawBall(ctx,m,0,dk);
+  if(stage>=8||M7.length>0) for(const m of M7) if(!m.collected) drawBall(ctx,m,0,dk);
   if(stage===9 && hero && hero.alive && heroMovementRank()===4 && hero._satL && hero._satR){
     for(const g of[hero._satL,hero._satR]){
       const cx=g.x*CELL+CELL/2, cy=g.y*CELL+CELL/2, rr=CELL*0.38;
@@ -3715,10 +4985,6 @@ function draw(){
     }
   }
   if(hero.alive) drawHero(ctx,dk);
-  if(FOREST_CAMPAIGN_2027 && Date.now()<forestRedFlashUntil){
-    ctx.fillStyle='rgba(200,0,0,0.45)';
-    ctx.fillRect(0,0,sz,sz);
-  }
   }catch(e){}
 }
 
@@ -3766,6 +5032,24 @@ function drawSquareBall(ctx, gx, gy, lvl, dots, frameOffset, rawText){
 
 function drawBall(ctx,m,r,dk){
   if(!m||m.collected) return;
+  if(FOREST_CAMPAIGN_2027 && forestIsHare() && m.isForestHare){
+    const pad=2;
+    const x=m.x*CELL+pad, y=m.y*CELL+pad;
+    const s=CELL-pad*2;
+    const hdx=(typeof m.dx==='number'?m.dx:1);
+    const hdy=(typeof m.dy==='number'?m.dy:0);
+    drawHare(ctx,x,y,s,hdx,hdy);
+    return;
+  }
+  if(FOREST_CAMPAIGN_2027 && forestIsSnake() && m.isForestSnake){
+    const pad=2;
+    const x=m.x*CELL+pad, y=m.y*CELL+pad;
+    const s=CELL-pad*2;
+    const sdx=(typeof m.dx==='number'?m.dx:1);
+    const sdy=(typeof m.dy==='number'?m.dy:0);
+    drawForestSnakeOnField(ctx,x,y,s,sdx,sdy);
+    return;
+  }
   if(FOREST_CAMPAIGN_2027 && (forestIsMole()||forestIsBoar()||forestIsHorse())){
     const pad=2;
     const x=m.x*CELL+pad, y=m.y*CELL+pad;
@@ -3794,6 +5078,30 @@ function drawBall(ctx,m,r,dk){
       drawHorse(ctx,x,y,s,dx,dy);
       return;
     }
+  }
+  // Во всех режимах на поле показываем персонажей картинками (к-1..к-6).
+  {
+    const pad=2;
+    const x=m.x*CELL+pad, y=m.y*CELL+pad;
+    const s=CELL-pad*2;
+    const lv=(m.lvl|0);
+    if(lv===1){ drawMushroom(ctx,x,y,s); return; }
+    if(lv===2){ drawMole(ctx,x,y,s); return; }
+    if(lv===3){ drawBoar(ctx,x,y,s,m.dx,m.dy); return; }
+    if(lv===4){
+      let dx=1, dy=0;
+      for(const p of P4){
+        if(p.a===m || p.b===m){
+          if(p.horiz){ dx=(p.dir||1); dy=0; }
+          else { dx=0; dy=(p.dir||1); }
+          break;
+        }
+      }
+      drawHorse(ctx,x,y,s,dx,dy);
+      return;
+    }
+    if(lv===5){ drawHare(ctx,x,y,s,m.dx,m.dy); return; }
+    if(lv===6){ drawForestSnakeOnField(ctx,x,y,s,m.dx,m.dy); return; }
   }
   const frameOff=((m.x||0)*7+(m.y||0)*13)%97;
   if(stage===9) drawSquareBall(ctx,m.x,m.y,m.lvl,[m.lvl],frameOff);
@@ -4042,19 +5350,8 @@ function heroResolveCellAfterMove(){
     if(forestMushrooms.has(k)){
       const standingNpc=getAllNPC().some(n=>!n.collected&&n.x===hero.x&&n.y===hero.y);
       if((forestIsMole()||forestIsBoar()||forestIsHorse()) && !forestMoleTaken && !standingNpc){
-        setMsg('');
-        triggerForestRedFlash(1000);
-        draw();
         clrT();
-        resetT=setTimeout(()=>{ loadStage(); }, 1000);
-        return false;
-      }
-      if(forestIsHorse() && forestHorseNeed()!=='mushroom'){
-        setMsg('');
-        triggerForestRedFlash(1000);
-        draw();
-        clrT();
-        resetT=setTimeout(()=>{ loadStage(); }, 1000);
+        showForestNeedMoleBeforeMushStory();
         return false;
       }
       const mushRes=resolveMushroomMeet(hero,k);
@@ -4080,18 +5377,7 @@ function heroResolveCellAfterMove(){
     if(!adj.length) break;
     const order=sortPartnersForMeet(hero,adj);
     const npc=order[0];
-    if(FOREST_CAMPAIGN_2027 && forestIsHorse()){
-      const need=forestHorseNeed();
-      const kind=(npc.lvl|0)===4?'horse':(npc.lvl|0)===3?'boar':(npc.lvl|0)===2?'mole':'other';
-      if(kind!==need){
-        setMsg('');
-        triggerForestRedFlash(1000);
-        draw();
-        clrT();
-        resetT=setTimeout(()=>{ loadStage(); }, 1000);
-        return false;
-      }
-    }
+    // В серии с лошадьми не штрафуем красным экраном за встречи после шага героя.
     if(stage!==9 && maxOfSet(fullSet(hero))===maxOfSet(fullSet(npc))){
       const nonEq=order.find(n=>maxOfSet(fullSet(hero))!==maxOfSet(fullSet(n)));
       if(!nonEq) break;
@@ -4640,13 +5926,18 @@ function checkWin(){
   }
   if(FOREST_CAMPAIGN_2027){
     const allMushCollected=!(forestUsesMushrooms() && forestMushrooms.size);
+    const aliveNpcOnField=getAllNPC().some(n=>!n.collected);
     // Серия «Собери грибы»: все грибы + домик. Остальные лесные серии — домик + грибы (и крот при необходимости).
     if(forestIsMush()){
       if(!allMushCollected) return;
+      if(aliveNpcOnField) return;
+      if(hero.x!==finishGX()||hero.y!==finishGY()) return;
+    } else if(forestIsHare()||forestIsSnake()){
       if(hero.x!==finishGX()||hero.y!==finishGY()) return;
     } else {
       if(hero.x!==finishGX()||hero.y!==finishGY()) return;
       if(!allMushCollected) return;
+      if(aliveNpcOnField) return;
     }
     if((forestIsMole()||forestIsBoar()||forestIsHorse()) && !forestMoleTaken) return;
     won=true;
@@ -4659,7 +5950,7 @@ function checkWin(){
   const a1=M1.filter(m=>!m.collected).length,a2=M2.filter(m=>!m.collected).length;
   const a3=M3.filter(m=>!m.collected).length,a4=P4.reduce((s,p)=>s+(p.a.collected?0:1)+(p.b.collected?0:1),0);
   const a5=M5.filter(m=>!m.collected).length,a6=M6.filter(m=>!m.collected).length;
-  const a7=stage>=8?M7.filter(m=>!m.collected).length:0;
+  const a7=M7.filter(m=>!m.collected).length;
   if(stage===1){won=true;setMsg('Этап 1 пройден!');scheduleNextStage(1,2);if(replayRecording && !replayMode) maybeRecordSnapshot('win');}
   else if(stage===2){if(a1>0) return; won=true;setMsg('Этап 2 пройден!');scheduleNextStage(2,3);if(replayRecording && !replayMode) maybeRecordSnapshot('win');}
   else if(stage===3){
@@ -4858,6 +6149,11 @@ function goToSetup(){
   won=false;
   clrT(); paused=false;
   const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
+  if(FOREST_CAMPAIGN_2027){
+    forestSelectSetupSeries(forestPhaseToSeries(forestPhase));
+    gel('n-slider').value=String(FIXED_BOARD_N);
+    gel('n-out').textContent=FIXED_BOARD_N+'×'+FIXED_BOARD_N;
+  }
   gel('game').style.display='none';
   gel('setup').style.display='flex';
   updateReplayMenuButtons();
@@ -4872,7 +6168,13 @@ function fullReset(){
   movesStage9=0;
   campaignMovesTotal=0;
   campaignHistory=[];
-  if(FOREST_CAMPAIGN_2027) forestMiniGameIndex=FOREST_START_N;
+  if(FOREST_CAMPAIGN_2027){
+    forestMiniGameIndex=FOREST_START_N;
+    forestPhase='home';
+    forestSelectSetupSeries(1);
+    gel('n-slider').value=String(FIXED_BOARD_N);
+    gel('n-out').textContent=FIXED_BOARD_N+'×'+FIXED_BOARD_N;
+  }
   gameStarted=false;
   const sb=gel('stop-btn'); if(sb){sb.textContent='⏸ Стоп';sb.classList.remove('active');}
   document.querySelectorAll('.stage-sel').forEach((b,i)=>b.classList.toggle('active',i===0));
@@ -4912,8 +6214,8 @@ function showLeaderboard(){
   const el=gel('lb-content');
   if(!el||el===_stub) return;
   if(FOREST_CAMPAIGN_2027){
-    const scores=forestIsHorse()?loadForestHorseChampions():(forestIsBoar()?loadForestBoarChampions():(forestIsMole()?loadForestMoleChampions():(forestIsMush()?loadForestMushChampions():loadForestChampions())));
-    const modeTitle=forestIsHorse()?'«Лошади, кабан, крот и гриб»':(forestIsBoar()?'«Кроты, кабан и грибы»':(forestIsMole()?'«Кроты и грибы»':(forestIsMush()?'«Собери грибы»':'«Домой»')));
+    const scores=forestIsSnake()?loadForestSnakeChampions():(forestIsHare()?loadForestHareChampions():(forestIsHorse()?loadForestHorseChampions():(forestIsBoar()?loadForestBoarChampions():(forestIsMole()?loadForestMoleChampions():(forestIsMush()?loadForestMushChampions():loadForestChampions())))));
+    const modeTitle=forestIsSnake()?'«Змеи по ёлкам»':(forestIsHare()?'«Заяц (король, ёлки)»':(forestIsHorse()?'«Лошади, кабан, крот и гриб»':(forestIsBoar()?'«Кроты, кабан и грибы»':(forestIsMole()?'«Кроты и грибы»':(forestIsMush()?'«Собери грибы»':'«Домой»')))));
     if(!scores.length){
       el.innerHTML='<p style="color:#666;font-size:13px;">Пока нет результатов для режима '+modeTitle+'. Меньше суммарных ходов — выше в таблице.</p>';
     } else {
@@ -4965,6 +6267,8 @@ function clearLeaderboard(){
       localStorage.removeItem(LS_FOREST_MOLE_CHAMPIONS);
       localStorage.removeItem(LS_FOREST_BOAR_CHAMPIONS);
       localStorage.removeItem(LS_FOREST_HORSE_CHAMPIONS);
+      localStorage.removeItem(LS_FOREST_HARE_CHAMPIONS);
+      localStorage.removeItem(LS_FOREST_SNAKE_CHAMPIONS);
     }
   }catch(e){}
   showLeaderboard();
