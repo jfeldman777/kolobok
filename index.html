@@ -70,6 +70,18 @@ h1 {
 }
 .section-heading:first-child { margin-top: 0; }
 #games .section-heading { color: #8a7848; }
+.category-block { margin-bottom: 22px; }
+.category-block:last-of-type { margin-bottom: 0; }
+.category-heading {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a8a5a;
+  margin: 0 0 12px 2px;
+}
+.category-block-adults .category-heading { color: #6a8aaa; }
+.category-block-group .category-heading { color: #7a9a7a; }
 #video .section-heading { color: #4a7a9a; }
 .card {
   background: #1a1a1a;
@@ -446,7 +458,7 @@ body.modal-open { overflow: hidden; }
   </div>
 
   <h1>Колобок — игры</h1>
-  <p class="lead">Откройте в браузере или сохраните HTML на устройство.</p>
+  <p class="lead">Игры для детей, тренажёры для взрослых и коллективные режимы. Откройте в браузере или сохраните HTML на устройство.</p>
 
   <nav class="page-nav" aria-label="Быстрые ссылки">
     <a href="#donate">Донаты</a>
@@ -456,7 +468,41 @@ body.modal-open { overflow: hidden; }
   </nav>
 
   <section id="games" class="page-section" aria-labelledby="games-heading">
-    <h2 class="section-heading" id="games-heading">Игры и поддержка</h2>
+    <h2 class="section-heading" id="games-heading">Каталог игр</h2>
+
+  <div class="category-block">
+    <h3 class="category-heading">Игры для детей</h3>
+
+  <article class="card">
+    <h2>Колобок для Мартина</h2>
+    <p>Лес, поезд из друзей и грибы — простая сказочная прогулка.</p>
+    <div class="row">
+      <a class="btn btn-play" href="kolobok_martina.html">Играть</a>
+      <a class="btn btn-dl" href="kolobok_martina.html" download="kolobok_martina.html">Скачать файл</a>
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Мр-потейто</h2>
+    <p>Органы чувств: выбери, чем мы воспринимаем мир.</p>
+    <div class="row">
+      <a class="btn btn-play" href="mr_potato.html">Играть</a>
+      <a class="btn btn-dl" href="mr_potato.html" download="mr_potato.html">Скачать файл</a>
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Колобок-альпинист</h2>
+    <p>Эталонные кривые и «горы».</p>
+    <div class="row">
+      <a class="btn btn-play" href="razogrev.html">Играть</a>
+      <a class="btn btn-dl" href="razogrev.html" download="razogrev.html">Скачать файл</a>
+    </div>
+  </article>
+  </div>
+
+  <div class="category-block category-block-adults">
+    <h3 class="category-heading">Тренажёры для взрослых</h3>
 
   <article class="card">
     <h2>Колобок и его команда</h2>
@@ -469,16 +515,20 @@ body.modal-open { overflow: hidden; }
 
   <article class="card">
     <h2>Колобок-экстрасенс</h2>
-    <p>Теперь колобок должен сам догадаться, кто перед ним.</p>
+    <p>Колобок должен сам догадаться, кто перед ним.</p>
     <div class="row">
       <a class="btn btn-play" href="kolobok_extra.html">Играть</a>
       <a class="btn btn-dl" href="kolobok_extra.html" download="kolobok_extra.html">Скачать файл</a>
     </div>
   </article>
+  </div>
+
+  <div class="category-block category-block-group">
+    <h3 class="category-heading">Коллективные игры</h3>
 
   <article class="card">
-    <h2>Два брата-колобка</h2>
-    <p>Два игрока на одном поле: конкуренция или кооперация.</p>
+    <h2>Два брата-колобка — кооперация</h2>
+    <p>Два игрока на одном поле; режим «Кооперация» выбирается внутри игры.</p>
     <div class="row">
       <a class="btn btn-play" href="kolobok2brata.html">Играть</a>
       <a class="btn btn-dl" href="kolobok2brata.html" download="kolobok2brata.html">Скачать файл</a>
@@ -486,22 +536,14 @@ body.modal-open { overflow: hidden; }
   </article>
 
   <article class="card">
-    <h2>Колобок-альпинист</h2>
-    <p>Эталонные кривые и «горы»</p>
+    <h2>Два брата-колобка — конкуренция</h2>
+    <p>Тот же файл; режим «Конкуренция» переключается кнопками в шапке.</p>
     <div class="row">
-      <a class="btn btn-play" href="razogrev.html">Играть</a>
-      <a class="btn btn-dl" href="razogrev.html" download="razogrev.html">Скачать файл</a>
+      <a class="btn btn-play" href="kolobok2brata.html">Играть</a>
+      <a class="btn btn-dl" href="kolobok2brata.html" download="kolobok2brata.html">Скачать файл</a>
     </div>
   </article>
-
-  <article class="card">
-    <h2>Мистер Потейто</h2>
-    <p>Игра на органы чувств: выбери, чем мы чувствуем</p>
-    <div class="row">
-      <a class="btn btn-play" href="mr_potato.html">Играть</a>
-      <a class="btn btn-dl" href="mr_potato.html" download="mr_potato.html">Скачать файл</a>
-    </div>
-  </article>
+  </div>
 
   <article id="donate" class="card card-donate">
     <h2>Поддержать автора</h2>
