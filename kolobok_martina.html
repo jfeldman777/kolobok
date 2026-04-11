@@ -703,6 +703,14 @@
         if (key === mushKeySquirrel) pickedSquirrelMush = true;
       }
 
+      /** Все грибы могут быть собраны в visit_* / рано — не только в pick_mush_free. */
+      function syncGoHomeWhenAllMushrooms() {
+        if (mushroomsCollected < MUSH_TOTAL || won) return;
+        phase = 'go_home';
+        crowFollowing = true;
+        squirrelFollowing = true;
+      }
+
       /** До зайца: любой один гриб — только наступив на клетку гриба; нужно место в поезде. */
       function tryEarlyMushroomBeforeHare() {
         if (phase !== 'goto_hare' || hareFollowing || earlyKey !== null) return;
@@ -762,11 +770,6 @@
           for (const fk of mushKeysFree) {
             if (mushroomOnBoard.has(fk) && onMushroomCell(kGx, kGy, fk)) {
               applyMushroomFromBoard(fk);
-              if (mushroomsCollected >= MUSH_TOTAL) {
-                phase = 'go_home';
-                crowFollowing = true;
-                squirrelFollowing = true;
-              }
               return;
             }
           }
@@ -775,6 +778,7 @@
 
       function tryMove(dx, dy) {
         if (won) return;
+        syncGoHomeWhenAllMushrooms();
         const nx = kGx + dx;
         const ny = kGy + dy;
         if (nx < 0 || nx >= N || ny < 0 || ny >= N) return;
@@ -863,6 +867,8 @@
         }
 
         tryMushPickup();
+
+        syncGoHomeWhenAllMushrooms();
 
         if (phase === 'go_home' && kGx === homeX && kGy === homeY) {
           won = true;
