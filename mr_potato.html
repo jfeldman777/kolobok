@@ -355,7 +355,68 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     itemSpeech:'brief',
     base:null, lines:null, masks:new Map(), maskData:new Map(),
     drawRect:{x:0,y:0,w:0,h:0},
+    flashOrganId:null,
+    flashStart:0,
+    flashDur:600,
+    _flashBuf:null,
+    _flashRaf:0,
   };
+  function cancelOrganFlash(){
+    if(state._flashRaf){
+      cancelAnimationFrame(state._flashRaf);
+      state._flashRaf=0;
+    }
+    state.flashOrganId=null;
+  }
+  /** Белая подсветка по форме маски; маска масштабируется под размер базового изображения. */
+  function drawWhiteMaskOverlay(ctx, maskImg, dx, dy, dw, dh, alpha, compOp){
+    if(alpha<=0.02) return;
+    const iw=state.base.width, ih=state.base.height;
+    let buf=state._flashBuf;
+    if(!buf||buf.width!==iw||buf.height!==ih){
+      buf=document.createElement('canvas');
+      buf.width=iw;
+      buf.height=ih;
+      state._flashBuf=buf;
+    }
+    const b=buf.getContext('2d');
+    b.clearRect(0,0,iw,ih);
+    b.drawImage(maskImg,0,0,iw,ih);
+    b.globalCompositeOperation='source-in';
+    b.fillStyle='#ffffff';
+    b.fillRect(0,0,iw,ih);
+    b.globalCompositeOperation='source-over';
+    ctx.save();
+    ctx.globalCompositeOperation=compOp||'source-over';
+    ctx.globalAlpha=Math.min(1, alpha);
+    ctx.drawImage(buf,dx,dy,dw,dh);
+    ctx.restore();
+  }
+  /** Три коротких «включения» за время анимации (хорошо видно поверх картинки). */
+  function flashBlinkAlpha(elapsed, total){
+    const seg=3;
+    const u=(elapsed/total)*seg;
+    const f=u-Math.floor(u);
+    return f<0.48?1:0;
+  }
+  function triggerOrganFlash(id){
+    if(!id||!state.running) return;
+    state.flashOrganId=id;
+    state.flashStart=performance.now();
+    if(state._flashRaf) cancelAnimationFrame(state._flashRaf);
+    function loop(){
+      const elapsed=performance.now()-state.flashStart;
+      if(elapsed>=state.flashDur){
+        state.flashOrganId=null;
+        state._flashRaf=0;
+        draw();
+        return;
+      }
+      state._flashRaf=requestAnimationFrame(loop);
+      draw();
+    }
+    state._flashRaf=requestAnimationFrame(loop);
+  }
   function feedbackSpeakStem(id){
     if(id==='hands') return 'Рука осязание мышечное чувство';
     if(id==='ears') return 'Уши, слух';
@@ -649,6 +710,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
       return;
     }
     if(state.selected.has(id)) return;
+    triggerOrganFlash(id);
     const isNeed=state.item.needs.includes(id);
     const isPossible=(state.item.possible||[]).includes(id);
     if(!isNeed && !isPossible){
@@ -696,6 +758,19 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
       }
     }
     if(state.lines) ctx.drawImage(state.lines, dx, dy, dw, dh);
+    if(state.flashOrganId && state.base){
+      const elapsed=performance.now()-state.flashStart;
+      if(elapsed<state.flashDur){
+        const fm=state.masks.get(state.flashOrganId);
+        if(fm){
+          const blink=flashBlinkAlpha(elapsed, state.flashDur);
+          if(blink>0){
+            drawWhiteMaskOverlay(ctx, fm, dx, dy, dw, dh, 0.92*blink, 'source-over');
+            drawWhiteMaskOverlay(ctx, fm, dx, dy, dw, dh, 0.5*blink, 'screen');
+          }
+        }
+      }
+    }
   }
   function canvasToImgCoords(clientX, clientY){
     const r=cv.getBoundingClientRect();
@@ -745,6 +820,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     if(!state.loaded) return;
     closeRulesModal();
     closeJournalModal();
+    cancelOrganFlash();
     clearSpeakQueue();
     speakIdleCallbacks.length=0;
     state.running=true;
@@ -757,6 +833,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   function resetGame(){
     closeRulesModal();
     closeJournalModal();
+    cancelOrganFlash();
     clearSpeakQueue();
     speakIdleCallbacks.length=0;
     state.running=false;

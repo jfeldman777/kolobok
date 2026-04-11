@@ -1,0 +1,105 @@
+# Мр-потейто — список фраз для своей озвучки
+# Сохраняйте звук как: 001.mp3, 002.mp3, … (или .ogg / .m4a — как договоритесь в коде)
+#
+# Формат строки: НОМЕР <таб> символическое_имя <таб> текст, который нужно прочитать
+#
+# 001–036  — режим «Краткая»: только название предмета
+# 037–072  — режим «Полная»: целиком фраза «Чем мы чувствуем …»
+# 073      — первая реплика при ответе про кожу
+# 074–076  — вторая реплика про кожу (с заглавной буквы, как в игре)
+# 077–091  — ответы по органам: «… — да / возможно / нет» (строчные да/возможно/нет)
+
+001	item_brief_01_cvetok	цветок
+002	item_brief_02_konfeta	конфета
+003	item_brief_03_kolokolchik	колокольчик
+004	item_brief_04_sup	суп
+005	item_brief_05_kniga	книга
+006	item_brief_06_yabloko	яблоко
+007	item_brief_07_myach	мяч
+008	item_brief_08_baraban	музыкальный барабан
+009	item_brief_09_apelsin	апельсин
+010	item_brief_10_limon	лимон
+011	item_brief_11_shokolad	шоколад
+012	item_brief_12_lozhka	ложка
+013	item_brief_13_chay	чай
+014	item_brief_14_svecha	свеча
+015	item_brief_15_dozhd	дождь
+016	item_brief_16_pesok	песок
+017	item_brief_17_kubiki	кубики
+018	item_brief_18_pogremushka	погремушка
+019	item_brief_19_mylo	мыло
+020	item_brief_20_morkovka	морковка
+021	item_brief_21_banan	банан
+022	item_brief_22_sharik	воздушный шарик
+023	item_brief_23_koshka	кошка
+024	item_brief_24_sobaka	собака
+025	item_brief_25_trava	трава
+026	item_brief_26_karandash	цветной карандаш
+027	item_brief_27_muzyka	музыка
+028	item_brief_28_veter	ветер
+029	item_brief_29_lyod	лёд
+030	item_brief_30_myod	мёд
+031	item_brief_31_chasy	часы (тикают)
+032	item_brief_32_zerkalo	зеркало
+033	item_brief_33_hleb	хлеб
+034	item_brief_34_sok	сок
+035	item_brief_35_perets	перец (болгарский)
+036	item_brief_36_shishka	шишка
+
+037	item_full_01_cvetok	Чем мы чувствуем ЦВЕТОК
+038	item_full_02_konfeta	Чем мы чувствуем КОНФЕТА
+039	item_full_03_kolokolchik	Чем мы чувствуем КОЛОКОЛЬЧИК
+040	item_full_04_sup	Чем мы чувствуем СУП
+041	item_full_05_kniga	Чем мы чувствуем КНИГА
+042	item_full_06_yabloko	Чем мы чувствуем ЯБЛОКО
+043	item_full_07_myach	Чем мы чувствуем МЯЧ
+044	item_full_08_baraban	Чем мы чувствуем МУЗЫКАЛЬНЫЙ БАРАБАН
+045	item_full_09_apelsin	Чем мы чувствуем АПЕЛЬСИН
+046	item_full_10_limon	Чем мы чувствуем ЛИМОН
+047	item_full_11_shokolad	Чем мы чувствуем ШОКОЛАД
+048	item_full_12_lozhka	Чем мы чувствуем ЛОЖКА
+049	item_full_13_chay	Чем мы чувствуем ЧАЙ
+050	item_full_14_svecha	Чем мы чувствуем СВЕЧА
+051	item_full_15_dozhd	Чем мы чувствуем ДОЖДЬ
+052	item_full_16_pesok	Чем мы чувствуем ПЕСОК
+053	item_full_17_kubiki	Чем мы чувствуем КУБИКИ
+054	item_full_18_pogremushka	Чем мы чувствуем ПОГРЕМУШКА
+055	item_full_19_mylo	Чем мы чувствуем МЫЛО
+056	item_full_20_morkovka	Чем мы чувствуем МОРКОВКА
+057	item_full_21_banan	Чем мы чувствуем БАНАН
+058	item_full_22_sharik	Чем мы чувствуем ВОЗДУШНЫЙ ШАРИК
+059	item_full_23_koshka	Чем мы чувствуем КОШКА
+060	item_full_24_sobaka	Чем мы чувствуем СОБАКА
+061	item_full_25_trava	Чем мы чувствуем ТРАВА
+062	item_full_26_karandash	Чем мы чувствуем ЦВЕТНОЙ КАРАНДАШ
+063	item_full_27_muzyka	Чем мы чувствуем МУЗЫКА
+064	item_full_28_veter	Чем мы чувствуем ВЕТЕР
+065	item_full_29_lyod	Чем мы чувствуем ЛЁД
+066	item_full_30_myod	Чем мы чувствуем МЁД
+067	item_full_31_chasy	Чем мы чувствуем ЧАСЫ (ТИКАЮТ)
+068	item_full_32_zerkalo	Чем мы чувствуем ЗЕРКАЛО
+069	item_full_33_hleb	Чем мы чувствуем ХЛЕБ
+070	item_full_34_sok	Чем мы чувствуем СОК
+071	item_full_35_perets	Чем мы чувствуем ПЕРЕЦ (БОЛГАРСКИЙ)
+072	item_full_36_shishka	Чем мы чувствуем ШИШКА
+
+073	feedback_skin_part1	Кожа осязания
+074	feedback_skin_yes	Да
+075	feedback_skin_maybe	Возможно
+076	feedback_skin_no	Нет
+
+077	feedback_ears_yes	Уши, слух — да
+078	feedback_ears_maybe	Уши, слух — возможно
+079	feedback_ears_no	Уши, слух — нет
+080	feedback_eyes_yes	Глаза, зрение — да
+081	feedback_eyes_maybe	Глаза, зрение — возможно
+082	feedback_eyes_no	Глаза, зрение — нет
+083	feedback_nose_yes	Нос, обоняние — да
+084	feedback_nose_maybe	Нос, обоняние — возможно
+085	feedback_nose_no	Нос, обоняние — нет
+086	feedback_mouth_yes	Рот, вкус — да
+087	feedback_mouth_maybe	Рот, вкус — возможно
+088	feedback_mouth_no	Рот, вкус — нет
+089	feedback_hands_yes	Рука осязание мышечное чувство — да
+090	feedback_hands_maybe	Рука осязание мышечное чувство — возможно
+091	feedback_hands_no	Рука осязание мышечное чувство — нет
