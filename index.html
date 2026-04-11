@@ -329,84 +329,6 @@ a.req-val:active { opacity: 0.85; }
   color: #666;
   border: 1px solid #2a2a2a;
 }
-body.modal-open { overflow: hidden; }
-.parents-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-  background: rgba(0, 0, 0, 0.72);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-.parents-overlay[hidden] { display: none !important; }
-.parents-panel {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  max-height: min(88vh, 520px);
-  overflow: auto;
-  background: linear-gradient(180deg, #222 0%, #181818 100%);
-  border: 1px solid #3d3528;
-  border-radius: 16px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
-  padding: 22px 20px 20px;
-}
-.parents-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 10px;
-  background: #2a2a2a;
-  color: #888;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-}
-.parents-close:active { background: #333; color: #ccc; }
-.parents-panel h2 {
-  font-size: clamp(1.1rem, 4vw, 1.35rem);
-  font-weight: 800;
-  color: #E8A020;
-  margin: 0 36px 16px 0;
-  line-height: 1.25;
-}
-.parents-panel .parents-p {
-  font-size: 15px;
-  color: #c8c8c8;
-  margin: 0 0 14px;
-  line-height: 1.5;
-}
-.parents-panel .parents-p:last-of-type { margin-bottom: 18px; }
-.parents-formula {
-  margin: 4px 0 0;
-  padding: 12px 14px;
-  background: #141414;
-  border-radius: 10px;
-  border-left: 3px solid #E8A020;
-  font-size: 14px;
-  font-weight: 600;
-  color: #f0c04a;
-  line-height: 1.45;
-}
-.parents-ok {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #a67c2e;
-  background: #E8A020;
-  color: #111;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-}
-.parents-ok:active { filter: brightness(1.05); }
 .card-video { border-color: #2a4a6a; }
 .card-video h2 { color: #7ec8e3; }
 .soon-mark {
@@ -446,17 +368,6 @@ body.modal-open { overflow: hidden; }
 </style>
 </head>
 <body>
-  <div id="parents-overlay" class="parents-overlay" role="dialog" aria-modal="true" aria-labelledby="parents-title" hidden>
-    <div class="parents-panel">
-      <button type="button" class="parents-close" id="parents-close" aria-label="Закрыть">×</button>
-      <h2 id="parents-title">Дорогие родители!</h2>
-      <p class="parents-p">Хотите определить умственный возраст вашего ребёнка?</p>
-      <p class="parents-p">Дайте ему сыграть в игру…</p>
-      <p class="parents-p parents-formula">Умственный возраст равен номеру максимального этапа, умноженному на три.</p>
-      <button type="button" class="parents-ok" id="parents-ok">Понятно, продолжить</button>
-    </div>
-  </div>
-
   <h1>Колобок — игры</h1>
   <p class="lead">Игры для детей, тренажёры для взрослых и коллективные режимы. Откройте в браузере или сохраните HTML на устройство.</p>
 
@@ -660,28 +571,6 @@ body.modal-open { overflow: hidden; }
         history.replaceState(null, '', location.pathname + location.hash);
       }
     } catch (e) {}
-
-    var ov = document.getElementById('parents-overlay');
-    if (!ov) return;
-    function openParents() {
-      ov.hidden = false;
-      document.body.classList.add('modal-open');
-      var okBtn = document.getElementById('parents-ok');
-      if (okBtn) okBtn.focus();
-    }
-    function closeParents() {
-      ov.hidden = true;
-      document.body.classList.remove('modal-open');
-    }
-    openParents();
-    document.getElementById('parents-close').addEventListener('click', closeParents);
-    document.getElementById('parents-ok').addEventListener('click', closeParents);
-    ov.addEventListener('click', function (e) {
-      if (e.target === ov) closeParents();
-    });
-    document.addEventListener('keydown', function (e) {
-      if (!ov.hidden && e.key === 'Escape') closeParents();
-    });
   })();
 
   (function () {
