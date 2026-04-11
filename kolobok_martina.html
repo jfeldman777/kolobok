@@ -818,17 +818,19 @@
       function startSalute() {
         const now = performance.now();
         saluteStartTime = now;
-        saluteUntil = now + 2800;
+        saluteUntil = now + 6200;
         saluteParticles = [];
-        for (let i = 0; i < 56; i++) {
-          const a = (Math.PI * 2 * i) / 56 + Math.random() * 0.4;
-          const sp = 1.8 + Math.random() * 2.8;
+        const n = 110;
+        for (let i = 0; i < n; i++) {
+          const a = (Math.PI * 2 * i) / n + Math.random() * 0.45;
+          const sp = 2.4 + Math.random() * 3.6;
           saluteParticles.push({
             x: 0,
             y: 0,
             vx: Math.cos(a) * sp,
-            vy: Math.sin(a) * sp - 1.2,
-            life: 0.85 + Math.random() * 0.5,
+            vy: Math.sin(a) * sp - 1.45,
+            /* life в тех же единицах, что и t в отрисовке (см. draw); больше — дольше виден след. */
+            life: 15 + Math.random() * 7,
             hue: 35 + (Math.random() * 80) | 0,
           });
         }
@@ -978,11 +980,11 @@
         c.restore();
       }
 
-      /** Ёлка в клетке, поверх — зверь; ворона чуть крупнее белки. */
+      /** Ёлка в клетке, поверх — зверь (на дереве крупно, можно больше клетки — обрезка по рамке). */
       function drawBeastOnTree(c, gx, gy, cellSz, kind) {
         const x0 = gx * cellSz;
         const y0 = gy * cellSz;
-        const scale = kind === 'crow' ? 0.88 : 0.72;
+        const scale = kind === 'crow' ? 1.28 : 1.12;
         c.save();
         c.beginPath();
         c.rect(x0 + 0.5, y0 + 0.5, cellSz - 1, cellSz - 1);
@@ -992,31 +994,36 @@
         c.restore();
       }
 
+      /** Ёлка выше и шире; ствол от середины кроны до «земли» (низ клетки), рисуется поверх нижних ярусов. */
       function drawForestTree(ctx, cx, cy, sz) {
         const s = sz;
-        ctx.fillStyle = '#3e2723';
-        ctx.fillRect(cx + s * 0.44, cy + s * 0.58, s * 0.12, s * 0.34);
+        const ground = cy + s * 0.98;
+        const trunkTop = cy + s * 0.5;
+        const tw = s * 0.15;
+        const tx = cx + s * 0.5 - tw * 0.5;
         ctx.fillStyle = '#1b5e20';
         ctx.beginPath();
-        ctx.moveTo(cx + s * 0.5, cy + s * 0.1);
-        ctx.lineTo(cx + s * 0.85, cy + s * 0.62);
-        ctx.lineTo(cx + s * 0.15, cy + s * 0.62);
+        ctx.moveTo(cx + s * 0.5, cy + s * 0.02);
+        ctx.lineTo(cx + s * 0.92, cy + s * 0.86);
+        ctx.lineTo(cx + s * 0.08, cy + s * 0.86);
         ctx.closePath();
         ctx.fill();
         ctx.fillStyle = '#2e7d32';
         ctx.beginPath();
-        ctx.moveTo(cx + s * 0.5, cy + s * 0.22);
-        ctx.lineTo(cx + s * 0.78, cy + s * 0.52);
-        ctx.lineTo(cx + s * 0.22, cy + s * 0.52);
+        ctx.moveTo(cx + s * 0.5, cy + s * 0.14);
+        ctx.lineTo(cx + s * 0.84, cy + s * 0.7);
+        ctx.lineTo(cx + s * 0.16, cy + s * 0.7);
         ctx.closePath();
         ctx.fill();
         ctx.fillStyle = '#43a047';
         ctx.beginPath();
-        ctx.moveTo(cx + s * 0.5, cy + s * 0.3);
-        ctx.lineTo(cx + s * 0.68, cy + s * 0.46);
-        ctx.lineTo(cx + s * 0.32, cy + s * 0.46);
+        ctx.moveTo(cx + s * 0.5, cy + s * 0.26);
+        ctx.lineTo(cx + s * 0.72, cy + s * 0.54);
+        ctx.lineTo(cx + s * 0.28, cy + s * 0.54);
         ctx.closePath();
         ctx.fill();
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(tx, trunkTop, tw, ground - trunkTop);
       }
 
       function drawForestHouse(ctx, cx, cy, sz) {
@@ -1397,7 +1404,7 @@
         c.restore();
       }
 
-      /** Мухомор отдельной картинкой: ножка с объёмом, шляпка с градиентом и пятнами. */
+      /** Мухомор: ножка с объёмом, шляпка с градиентом (без белых пятен). */
       function drawMushroom(c, cx, cy, u) {
         c.save();
         c.translate(cx, cy);
@@ -1457,34 +1464,6 @@
         c.fill();
         c.stroke();
 
-        // Белые «чешуйки» — пятна разного размера
-        const spots = [
-          [-0.28, -0.52, 0.09],
-          [0.18, -0.62, 0.07],
-          [0.32, -0.38, 0.055],
-          [-0.08, -0.42, 0.065],
-          [-0.38, -0.35, 0.045],
-          [0.05, -0.72, 0.05],
-        ];
-        for (const [dx, dy, rr] of spots) {
-          const px = dx * u;
-          const py = cyCap + dy * u;
-          const g = c.createRadialGradient(px - rr * u * 0.2, py - rr * u * 0.2, 0, px, py, rr * u);
-          g.addColorStop(0, 'rgba(255,255,255,0.98)');
-          g.addColorStop(0.7, 'rgba(255,250,248,0.88)');
-          g.addColorStop(1, 'rgba(240,230,225,0.35)');
-          c.fillStyle = g;
-          c.beginPath();
-          c.arc(px, py, rr * u, 0, Math.PI * 2);
-          c.fill();
-        }
-
-        // Лёгкий блик на шляпке
-        c.fillStyle = 'rgba(255,255,255,0.2)';
-        c.beginPath();
-        c.ellipse(-capW * 0.35, cyCap - capH * 0.75, capW * 0.2, capH * 0.25, -0.4, 0, Math.PI * 2);
-        c.fill();
-
         c.restore();
       }
 
@@ -1533,11 +1512,12 @@
         for (let y = 0; y < N; y++) {
           for (let x = 0; x < N; x++) {
             const light = (x + y) % 2 === 0;
-            ctx.fillStyle = light ? '#4a8f4a' : '#3d7d3d';
+            /* Бледное поле — сильнее отделяет насыщенную ёлку от клетки. */
+            ctx.fillStyle = light ? '#e4f0d8' : '#d2e6c4';
             ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
           }
         }
-        ctx.strokeStyle = 'rgba(20, 50, 20, 0.35)';
+        ctx.strokeStyle = 'rgba(55, 85, 45, 0.22)';
         ctx.lineWidth = 1;
         for (let i = 0; i <= N; i++) {
           const p = i * cell;
@@ -1567,7 +1547,7 @@
         for (const step of trail) {
           const tcx = (step.x + 0.5) * cell;
           const tcy = (step.y + 0.5) * cell;
-          ctx.fillStyle = 'rgba(35, 65, 35, 0.38)';
+          ctx.fillStyle = 'rgba(70, 110, 55, 0.32)';
           ctx.beginPath();
           ctx.arc(tcx, tcy, cell * 0.11, 0, Math.PI * 2);
           ctx.fill();
@@ -1607,14 +1587,14 @@
         if (won && saluteParticles.length && performance.now() < saluteUntil) {
           const ox = (homeX + 0.5) * cell;
           const oy = (homeY + 0.5) * cell;
-          const t = (performance.now() - saluteStartTime) / 340;
+          const t = (performance.now() - saluteStartTime) / 380;
           for (const p of saluteParticles) {
-            const px = ox + p.vx * t * cell * 0.45;
-            const py = oy + p.vy * t * cell * 0.45 + t * t * cell * 0.24;
+            const px = ox + p.vx * t * cell * 0.62;
+            const py = oy + p.vy * t * cell * 0.62 + t * t * cell * 0.2;
             const al = Math.max(0, 1 - t / p.life);
             ctx.fillStyle = `hsla(${p.hue}, 82%, 56%, ${al})`;
             ctx.beginPath();
-            ctx.arc(px, py, Math.max(2, cell * 0.065 * (1 - t * 0.12)), 0, Math.PI * 2);
+            ctx.arc(px, py, Math.max(2.5, cell * 0.095 * (1 - t * 0.08)), 0, Math.PI * 2);
             ctx.fill();
           }
         }
