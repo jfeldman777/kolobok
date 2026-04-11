@@ -237,23 +237,47 @@
       background: rgba(0, 0, 0, 0.2);
       border-radius: 10px;
     }
+    .btn-restart {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 10px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #e8f5e9;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-restart:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+    .btn-restart:active {
+      transform: scale(0.98);
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <h1>Колобок Мартина</h1>
     <p class="game-hint" id="game-hint" aria-live="polite"></p>
+    <button type="button" class="btn-restart" id="btn-restart" title="Новая раскладка и с начала">
+      Сначала
+    </button>
     <button type="button" class="task-mobile-toggle" id="task-open" aria-expanded="false" aria-controls="task-backdrop">
-      Описание задачи
+      Как играть
     </button>
     <div class="game-row">
       <aside class="task-panel" aria-labelledby="task-heading-desktop">
-        <h2 id="task-heading-desktop">Задание</h2>
-        <p>Колобок вышел из дома. Он решил привести своих друзей к себе домой и собрать в подарок лесные грибы.</p>
-        <p style="margin-top:12px">На компьютере двигайте колобка стрелками на клавиатуре (↑ ↓ ← →). Стрелками подведите колобка к зайцу на соседнюю клетку. Потом идите по следам: вместе находите грибы — первый гриб оказывается у зайца, второй и третий несут ворона и белка, четвёртый — сам колобок. Ведите колобка домой: заяц, ворона и белка следуют хвостом. Когда колобок заходит в клетку с домом — салют!</p>
+        <h2 id="task-heading-desktop">Как играть</h2>
+        <p>Колобок вышел из дома: он хочет привести друзей к себе домой и собрать лесные грибы в подарок.</p>
+        <p style="margin-top:12px"><strong>Управление:</strong> на компьютере — стрелки на клавиатуре (↑ ↓ ← →), на телефоне — кнопки под полем.</p>
+        <p style="margin-top:10px"><strong>Поезд:</strong> в поезд входят колобок и все, кто уже идёт за ним (заяц, ворона, белка). <strong>Длина поезда</strong> — сколько клеток занимает цепочка, <strong>включая колобка</strong>. <strong>Свободные места</strong> — вагончики без гриба. Грибы кладутся по порядку: сначала у колобка, потом у следующего и так далее. Гриб с поля берётся <strong>только наступив на клетку гриба</strong> (не с соседней). <strong>Новый гриб взять нельзя, если свободных мест нет.</strong> К <strong>ёлке вороны или белки</strong> птица присоединяется к поезду <strong>только когда свободных мест нет</strong> (все вагончики уже с грибами).</p>
+        <p style="margin-top:10px"><strong>Ход игры:</strong> Порядок в начале любой: <strong>любой один гриб</strong> — <strong>наступив на клетку гриба</strong> (если есть место в поезде), или сначала заяц. (1) Заяц — на клетку зайца или соседнюю. (2) Когда поезд полон грибами — к ёлке первой птицы (соседняя клетка); гриб — только <strong>на клетку гриба</strong>. (3) Вторая птица — то же. (4) Лесные грибы — на клетку. Домой; в клетку с домиком — салют. Кнопка <strong>«Сначала»</strong> — заново.</p>
       </aside>
       <div class="board-wrap">
-        <canvas id="field" width="440" height="440" aria-label="Поле 11 на 11"></canvas>
+        <canvas id="field" width="440" height="440" aria-label="Колобок Мартина: поле 11 на 11, стрелки двигают колобка"></canvas>
       </div>
     </div>
     <div class="mobile-arrows" aria-hidden="true">
@@ -292,11 +316,13 @@
     >
       <div class="task-sheet-bar" aria-hidden="true"></div>
       <div class="task-sheet-top">
-        <h2 id="task-heading-sheet">Задание</h2>
+        <h2 id="task-heading-sheet">Как играть</h2>
         <button type="button" class="task-sheet-close" id="task-close" aria-label="Закрыть описание">×</button>
       </div>
-      <p>Колобок вышел из дома. Он решил привести своих друзей к себе домой и собрать в подарок лесные грибы.</p>
-      <p style="margin-top:12px">На компьютере двигайте колобка стрелками на клавиатуре (↑ ↓ ← →). Стрелками подведите колобка к зайцу на соседнюю клетку. Потом идите по следам: вместе находите грибы — первый гриб оказывается у зайца, второй и третий несут ворона и белка, четвёртый — сам колобок. Ведите колобка домой: заяц, ворона и белка следуют хвостом. Когда колобок заходит в клетку с домом — салют!</p>
+      <p>Колобок вышел из дома: он хочет привести друзей к себе домой и собрать лесные грибы в подарок.</p>
+      <p style="margin-top:12px"><strong>Управление:</strong> на компьютере — стрелки на клавиатуре (↑ ↓ ← →), на телефоне — кнопки под полем.</p>
+      <p style="margin-top:10px"><strong>Поезд:</strong> в поезд входят колобок и все, кто уже идёт за ним (заяц, ворона, белка). <strong>Длина поезда</strong> — сколько клеток занимает цепочка, <strong>включая колобка</strong>. <strong>Свободные места</strong> — вагончики без гриба. Грибы кладутся по порядку: сначала у колобка, потом у следующего и так далее. Гриб с поля берётся <strong>только наступив на клетку гриба</strong> (не с соседней). <strong>Новый гриб взять нельзя, если свободных мест нет.</strong> К <strong>ёлке вороны или белки</strong> птица присоединяется к поезду <strong>только когда свободных мест нет</strong> (все вагончики уже с грибами).</p>
+      <p style="margin-top:10px"><strong>Ход игры:</strong> Порядок в начале любой: <strong>любой один гриб</strong> — <strong>наступив на клетку гриба</strong> (если есть место в поезде), или сначала заяц. (1) Заяц — на клетку зайца или соседнюю. (2) Когда поезд полон грибами — к ёлке первой птицы (соседняя клетка); гриб — только <strong>на клетку гриба</strong>. (3) Вторая птица — то же. (4) Лесные грибы — на клетку. Домой; в клетку с домиком — салют. Кнопка <strong>«Сначала»</strong> — заново.</p>
     </div>
   </div>
   <script>
@@ -419,6 +445,32 @@
           taken.add(p.x + ',' + p.y);
         }
 
+        const mushKeys = mushCells.map(p => p.x + ',' + p.y);
+        const manDistKey = (k, tx, ty) => {
+          const [x, y] = k.split(',').map(Number);
+          return Math.abs(x - tx) + Math.abs(y - ty);
+        };
+        let mushKeyCrow = mushKeys[0];
+        let bestCd = 999;
+        for (const k of mushKeys) {
+          const d = manDistKey(k, crowTree[0], crowTree[1]);
+          if (d < bestCd) {
+            bestCd = d;
+            mushKeyCrow = k;
+          }
+        }
+        const rest1 = mushKeys.filter(k => k !== mushKeyCrow);
+        let mushKeySquirrel = rest1[0];
+        let bestSd = 999;
+        for (const k of rest1) {
+          const d = manDistKey(k, squirrelTree[0], squirrelTree[1]);
+          if (d < bestSd) {
+            bestSd = d;
+            mushKeySquirrel = k;
+          }
+        }
+        const mushKeysFree = rest1.filter(k => k !== mushKeySquirrel);
+
         const placements = [
           { kind: 'house', gx: hx, gy: hy },
           { kind: 'kolobok', gx: hx, gy: hy },
@@ -437,11 +489,26 @@
           hareX0: zx,
           hareY0: zy,
           mushCells: mushCells.slice(),
+          mushKeyCrow,
+          mushKeySquirrel,
+          mushKeysFree,
         };
       }
 
       const level = makePlacements();
-      const { placements, crowTree, squirrelTree, homeX, homeY, hareX0, hareY0, mushCells } = level;
+      const {
+        placements,
+        crowTree,
+        squirrelTree,
+        homeX,
+        homeY,
+        hareX0,
+        hareY0,
+        mushCells,
+        mushKeyCrow,
+        mushKeySquirrel,
+        mushKeysFree,
+      } = level;
       const validTrees = FOREST_TREE_CELLS.filter(([x, y]) => x >= 0 && x < N && y >= 0 && y < N);
 
       /** Первая клетка у порога: колобок уже сделал шаг из дома, на домике его нет. */
@@ -520,6 +587,10 @@
       let crowFollowing = false;
       let squirrelFollowing = false;
       let mushroomsCollected = 0;
+      let bird1WasCrow = null;
+      let pickedCrowMush = false;
+      let pickedSquirrelMush = false;
+      let earlyKey = null;
       let won = false;
       const trail = [{ x: homeX, y: homeY }, { x: kGx, y: kGy }];
 
@@ -532,11 +603,116 @@
         return Math.abs(ax - bx) + Math.abs(ay - by) === 1;
       }
 
+      /** Колобок рядом с ёлкой птицы (саму клетку дерева не занимаем). */
+      function touchesTreeZone(kx, ky, tree) {
+        const [tx, ty] = tree;
+        return Math.abs(kx - tx) + Math.abs(ky - ty) === 1;
+      }
+
+      /** Гриб берётся только наступив на его клетку (не с соседней). */
+      function onMushroomCell(kx, ky, key) {
+        const [mx, my] = key.split(',').map(Number);
+        return mx === kx && my === ky;
+      }
+
       function occupiedByFollower(nx, ny) {
+        if (!hareFollowing && nx === hareGx && ny === hareGy) return false;
         if (hareFollowing && nx === hareGx && ny === hareGy) return true;
         if (crowFollowing && nx === crowGx && ny === crowGy) return true;
         if (squirrelFollowing && nx === squirrelGx && ny === squirrelGy) return true;
         return false;
+      }
+
+      /** Длина поезда: колобок и все идущие за ним (включая колобка). */
+      function trainLength() {
+        return (
+          1 +
+          (hareFollowing ? 1 : 0) +
+          (crowFollowing ? 1 : 0) +
+          (squirrelFollowing ? 1 : 0)
+        );
+      }
+
+      /** Свободные места: вагончики без гриба (грибы заполняют с колобка по порядку). */
+      function freeTrainSlots() {
+        return trainLength() - mushroomsCollected;
+      }
+
+      function applyMushroomFromBoard(key) {
+        mushroomOnBoard.delete(key);
+        mushroomsCollected++;
+        if (key === mushKeyCrow) pickedCrowMush = true;
+        if (key === mushKeySquirrel) pickedSquirrelMush = true;
+      }
+
+      /** До зайца: любой один гриб — только наступив на клетку гриба; нужно место в поезде. */
+      function tryEarlyMushroomBeforeHare() {
+        if (phase !== 'goto_hare' || hareFollowing || earlyKey !== null) return;
+        if (freeTrainSlots() <= 0) return;
+        for (const key of mushroomOnBoard) {
+          if (onMushroomCell(kGx, kGy, key)) {
+            applyMushroomFromBoard(key);
+            earlyKey = key;
+            return;
+          }
+        }
+      }
+
+      /** У ёлки до присоединения птицы: любой гриб с поля — только наступив на клетку. */
+      function tryVisitPhaseMushroomPickup() {
+        if (phase !== 'visit_bird_first' && phase !== 'visit_bird_second') return;
+        if (freeTrainSlots() <= 0) return;
+        for (const key of mushroomOnBoard) {
+          if (onMushroomCell(kGx, kGy, key)) {
+            applyMushroomFromBoard(key);
+            return;
+          }
+        }
+      }
+
+      function tryMushPickup() {
+        if (phase === 'pick_mush_1') {
+          const need = bird1WasCrow ? mushKeyCrow : mushKeySquirrel;
+          const have = bird1WasCrow ? pickedCrowMush : pickedSquirrelMush;
+          if (have && !mushroomOnBoard.has(need)) {
+            phase = 'visit_bird_second';
+            return;
+          }
+          if (freeTrainSlots() <= 0) return;
+          if (mushroomOnBoard.has(need) && onMushroomCell(kGx, kGy, need)) {
+            applyMushroomFromBoard(need);
+            phase = 'visit_bird_second';
+          }
+          return;
+        }
+        if (phase === 'pick_mush_2') {
+          const need = bird1WasCrow ? mushKeySquirrel : mushKeyCrow;
+          const have = need === mushKeyCrow ? pickedCrowMush : pickedSquirrelMush;
+          if (have && !mushroomOnBoard.has(need)) {
+            phase = 'pick_mush_free';
+            return;
+          }
+          if (freeTrainSlots() <= 0) return;
+          if (mushroomOnBoard.has(need) && onMushroomCell(kGx, kGy, need)) {
+            applyMushroomFromBoard(need);
+            phase = 'pick_mush_free';
+          }
+          return;
+        }
+        if (phase === 'pick_mush_free') {
+          if (freeTrainSlots() <= 0) return;
+          for (const fk of mushKeysFree) {
+            if (mushroomOnBoard.has(fk) && onMushroomCell(kGx, kGy, fk)) {
+              applyMushroomFromBoard(fk);
+              if (mushroomsCollected >= MUSH_TOTAL) {
+                phase = 'go_home';
+                crowFollowing = true;
+                squirrelFollowing = true;
+              }
+              return;
+            }
+          }
+        }
       }
 
       function tryMove(dx, dy) {
@@ -549,8 +725,6 @@
         if (occupiedByFollower(nx, ny)) return;
 
         const prevK = { x: kGx, y: kGy };
-        const prevH = hareFollowing ? { x: hareGx, y: hareGy } : null;
-        const prevC = crowFollowing ? { x: crowGx, y: crowGy } : null;
 
         kGx = nx;
         kGy = ny;
@@ -558,34 +732,79 @@
         const last = trail[trail.length - 1];
         if (!last || last.x !== kGx || last.y !== kGy) trail.push({ x: kGx, y: kGy });
 
-        if (phase === 'goto_hare' && adjacent(kGx, kGy, hareGx, hareGy)) {
-          phase = 'collect_mush';
-          hareFollowing = true;
-        }
+        tryEarlyMushroomBeforeHare();
 
-        if (hareFollowing) {
-          hareGx = prevK.x;
-          hareGy = prevK.y;
-        }
-        if (crowFollowing && prevH) {
-          crowGx = prevH.x;
-          crowGy = prevH.y;
-        }
-        if (squirrelFollowing && prevC) {
-          squirrelGx = prevC.x;
-          squirrelGy = prevC.y;
-        }
-
-        const key = kGx + ',' + kGy;
-        if ((phase === 'collect_mush' || phase === 'go_home') && mushroomOnBoard.has(key)) {
-          mushroomOnBoard.delete(key);
-          mushroomsCollected++;
-          if (mushroomsCollected >= MUSH_TOTAL) {
-            phase = 'go_home';
-            crowFollowing = true;
-            squirrelFollowing = true;
+        if (phase === 'goto_hare') {
+          const onHare = kGx === hareGx && kGy === hareGy;
+          const byHare = adjacent(kGx, kGy, hareGx, hareGy);
+          if (onHare || byHare) {
+            hareFollowing = true;
+            phase = 'visit_bird_first';
           }
         }
+
+        tryVisitPhaseMushroomPickup();
+
+        if (phase === 'visit_bird_first' && freeTrainSlots() === 0) {
+          const c = touchesTreeZone(kGx, kGy, crowTree);
+          const s = touchesTreeZone(kGx, kGy, squirrelTree);
+          if (c && s) {
+            crowFollowing = true;
+            bird1WasCrow = true;
+            phase = 'pick_mush_1';
+          } else if (c) {
+            crowFollowing = true;
+            bird1WasCrow = true;
+            phase = 'pick_mush_1';
+          } else if (s) {
+            squirrelFollowing = true;
+            bird1WasCrow = false;
+            phase = 'pick_mush_1';
+          }
+        }
+
+        if (phase === 'pick_mush_1') {
+          const need1 = bird1WasCrow ? mushKeyCrow : mushKeySquirrel;
+          if (earlyKey === need1) phase = 'visit_bird_second';
+        }
+
+        let chainPrev = prevK;
+        if (hareFollowing) {
+          const oh = { x: hareGx, y: hareGy };
+          hareGx = chainPrev.x;
+          hareGy = chainPrev.y;
+          chainPrev = oh;
+        }
+        if (crowFollowing) {
+          const oc = { x: crowGx, y: crowGy };
+          crowGx = chainPrev.x;
+          crowGy = chainPrev.y;
+          chainPrev = oc;
+        }
+        if (squirrelFollowing) {
+          squirrelGx = chainPrev.x;
+          squirrelGy = chainPrev.y;
+        }
+
+        tryMushPickup();
+
+        if (phase === 'visit_bird_second' && freeTrainSlots() === 0) {
+          const needCrow = !bird1WasCrow;
+          if (needCrow && touchesTreeZone(kGx, kGy, crowTree)) {
+            crowFollowing = true;
+            phase = 'pick_mush_2';
+          } else if (!needCrow && touchesTreeZone(kGx, kGy, squirrelTree)) {
+            squirrelFollowing = true;
+            phase = 'pick_mush_2';
+          }
+        }
+
+        if (phase === 'pick_mush_2') {
+          const need2 = bird1WasCrow ? mushKeySquirrel : mushKeyCrow;
+          if (earlyKey === need2) phase = 'pick_mush_free';
+        }
+
+        tryMushPickup();
 
         if (phase === 'go_home' && kGx === homeX && kGy === homeY) {
           won = true;
@@ -629,17 +848,56 @@
         const el = document.getElementById('game-hint');
         if (!el) return;
         if (won) {
-          el.textContent = 'Ура! Все дома. Салют!';
+          el.textContent = 'Победа! Все дома — салют!';
           return;
         }
         if (phase === 'goto_hare')
           el.textContent =
-            'Подведите колобка к зайцу на соседнюю клетку: стрелки на клавиатуре (↑↓←→) или кнопки на телефоне.';
-        else if (phase === 'collect_mush')
+            'Сначала заяц или любой гриб — наступите на клетку гриба (не с соседней). Нужно место в поезде (↑↓←→).';
+        else if (phase === 'visit_bird_first') {
+          if (freeTrainSlots() > 0)
+            el.textContent =
+              'Поезд: длина ' +
+              trainLength() +
+              ', свободно мест: ' +
+              freeTrainSlots() +
+              '. Сначала наступите на клетки грибов и заполните поезд, потом — к ёлке вороны или белки (соседняя клетка).';
+          else
+            el.textContent =
+              'Поезд полон. Подойдите к ёлке вороны или белки (соседняя клетка) — птица присоединится; порядок любой.';
+        } else if (phase === 'pick_mush_1')
           el.textContent =
-            'Собирайте грибы по следам: 1-й — у зайца, 2-й — ворона, 3-й — белка, 4-й — колобок. Осталось: ' +
-            (MUSH_TOTAL - mushroomsCollected);
-        else el.textContent = 'Все грибы разложены по друзьям. Ведите колобка домой — хвостом за ним заяц, ворона и белка.';
+            'Заберите гриб этой птицы (если есть место в поезде): наступите на клетку гриба. Осталось грибов: ' +
+            (MUSH_TOTAL - mushroomsCollected) +
+            '. Свободно мест: ' +
+            freeTrainSlots() +
+            '.';
+        else if (phase === 'visit_bird_second') {
+          if (freeTrainSlots() > 0)
+            el.textContent =
+              'Свободно мест в поезде: ' +
+              freeTrainSlots() +
+              '. Сначала наступите на клетки грибов и заполните поезд, потом — к ёлке второй птицы.';
+          else
+            el.textContent =
+              'Поезд полон. Подойдите к ёлке второй птицы (ворона или белки) — соседняя клетка.';
+        } else if (phase === 'pick_mush_2')
+          el.textContent =
+            'Второй «птичий» гриб — наступите на клетку гриба (нужно свободное место). Осталось: ' +
+            (MUSH_TOTAL - mushroomsCollected) +
+            ', свободно мест: ' +
+            freeTrainSlots() +
+            '.';
+        else if (phase === 'pick_mush_free')
+          el.textContent =
+            'Лесные грибы — наступите на клетку; без свободного места не взять. Осталось: ' +
+            (MUSH_TOTAL - mushroomsCollected) +
+            ', свободно мест: ' +
+            freeTrainSlots() +
+            '.';
+        else
+          el.textContent =
+            'Все грибы собраны. Ведите колобка домой — за ним заяц, ворона и белка.';
       }
 
       function bindArrows() {
@@ -1322,38 +1580,28 @@
           drawCellJob(ctx, job, cell);
         }
 
-        if (mushroomsCollected >= 2 && !crowFollowing) {
-          const p = cellCenter(crowTree[0], crowTree[1]);
-          drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.2, cell, 0.22);
-        }
-        if (mushroomsCollected >= 3 && !squirrelFollowing) {
-          const p = cellCenter(squirrelTree[0], squirrelTree[1]);
-          drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.2, cell, 0.22);
-        }
-
         if (squirrelFollowing) {
           const p = cellCenter(squirrelGx, squirrelGy);
           drawPiece(ctx, 'squirrel', p.cx, p.cy, cell, 0.78);
-          if (mushroomsCollected >= 3) {
-            drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.26, cell, 0.22);
-          }
         }
         if (crowFollowing) {
           const p = cellCenter(crowGx, crowGy);
           drawPiece(ctx, 'crow', p.cx, p.cy, cell, 0.82);
-          if (mushroomsCollected >= 2) {
-            drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.24, cell, 0.22);
-          }
         }
         const hCent = cellCenter(hareGx, hareGy);
         drawPiece(ctx, 'hare', hCent.cx, hCent.cy + cell * 0.07, cell, 1.05);
-        if (mushroomsCollected >= 1) {
-          drawPiece(ctx, 'mushroom', hCent.cx, hCent.cy - cell * 0.22, cell, 0.24);
-        }
         const kCent = cellCenter(kGx, kGy);
         drawPiece(ctx, 'kolobok', kCent.cx, kCent.cy, cell, 0.88);
-        if (mushroomsCollected >= 4) {
-          drawPiece(ctx, 'mushroom', kCent.cx, kCent.cy - cell * 0.26, cell, 0.22);
+
+        const headToTail = [];
+        headToTail.push({ gx: kGx, gy: kGy });
+        if (hareFollowing) headToTail.push({ gx: hareGx, gy: hareGy });
+        if (crowFollowing) headToTail.push({ gx: crowGx, gy: crowGy });
+        if (squirrelFollowing) headToTail.push({ gx: squirrelGx, gy: squirrelGy });
+        for (let i = 0; i < headToTail.length && i < mushroomsCollected; i++) {
+          const w = headToTail[i];
+          const p = cellCenter(w.gx, w.gy);
+          drawPiece(ctx, 'mushroom', p.cx, p.cy - cell * 0.26, cell, 0.2);
         }
 
         if (won && saluteParticles.length && performance.now() < saluteUntil) {
@@ -1374,6 +1622,8 @@
 
       updateHint();
       bindArrows();
+      const btnRestart = document.getElementById('btn-restart');
+      if (btnRestart) btnRestart.addEventListener('click', () => location.reload());
       draw();
       window.addEventListener('resize', draw);
     })();
