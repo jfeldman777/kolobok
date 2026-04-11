@@ -119,8 +119,8 @@
     .task-sheet {
       width: 100%;
       max-width: 520px;
-      /* Не на весь экран — сверху остаётся поле и кнопки */
-      max-height: min(52dvh, 340px);
+      /* Выше, чтобы весь текст можно было прокрутить; сверху остаётся полоска для закрытия */
+      max-height: min(82dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 44px));
       display: flex;
       flex-direction: column;
       padding: 0;
@@ -131,18 +131,21 @@
       transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
       outline: none;
       min-height: 0;
+      overflow: hidden;
     }
     .task-backdrop.is-open .task-sheet {
       transform: translateY(0);
     }
     .task-sheet-scroll {
-      flex: 1 1 auto;
+      flex: 1 1 0;
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
-      padding: 8px 18px 10px;
+      touch-action: pan-y;
+      padding: 8px 18px;
+      padding-bottom: max(28px, env(safe-area-inset-bottom));
     }
     .task-sheet-sticky-head {
       position: sticky;
@@ -1676,12 +1679,31 @@
       if (!backdrop || !openBtn || !closeBtn || !sheet) return;
 
       const DURATION_MS = 320;
+      let savedScrollY = 0;
+
+      function lockBodyForSheet() {
+        savedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${savedScrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+      }
+
+      function unlockBodyAfterSheet() {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        window.scrollTo(0, savedScrollY);
+      }
 
       function open() {
         backdrop.removeAttribute('hidden');
         backdrop.setAttribute('aria-hidden', 'false');
         openBtn.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden';
+        lockBodyForSheet();
         requestAnimationFrame(() => {
           backdrop.classList.add('is-open');
           sheet.focus();
@@ -1691,7 +1713,7 @@
       function close() {
         backdrop.classList.remove('is-open');
         openBtn.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
+        unlockBodyAfterSheet();
         window.setTimeout(() => {
           if (!backdrop.classList.contains('is-open')) {
             backdrop.setAttribute('hidden', '');
