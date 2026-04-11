@@ -778,13 +778,13 @@
 
       function tryMove(dx, dy) {
         if (won) return;
-        syncGoHomeWhenAllMushrooms();
         const nx = kGx + dx;
         const ny = kGy + dy;
         if (nx < 0 || nx >= N || ny < 0 || ny >= N) return;
         if (isTreeCell(nx, ny, validTrees)) return;
-        if (nx === homeX && ny === homeY && phase !== 'go_home') return;
         if (occupiedByFollower(nx, ny)) return;
+        if (nx === homeX && ny === homeY) syncGoHomeWhenAllMushrooms();
+        if (nx === homeX && ny === homeY && phase !== 'go_home') return;
 
         const prevK = { x: kGx, y: kGy };
 
