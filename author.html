@@ -57,14 +57,55 @@ h1 {
   margin: 0;
   line-height: 1.5;
 }
+.card-resources {
+  margin-top: 18px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.card-resources h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.resource-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.resource-list li { margin-bottom: 10px; }
+.resource-list li:last-child { margin-bottom: 0; }
+.resource-list a {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7eb8e8;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(126, 184, 232, 0.35);
+}
+.resource-list a:hover { color: #b8dcf8; }
+.resource-list a:active { opacity: 0.85; }
 </style>
 </head>
 <body>
   <p class="back-row"><a href="index.html">← На главную</a></p>
   <h1>Об авторе</h1>
   <article class="card card-author">
-    <h2>Скоро</h2>
-    <p class="card-placeholder">Здесь будет кратко об авторе игр. Раздел пока в заготовке.</p>
+    <h2>Игры «Колобок»</h2>
+    <p class="card-placeholder">Сборник браузерных игр и тренажёров: для детей, взрослых и совместной игры. Страницы — самодостаточные HTML-файлы, их можно открыть локально или выложить в сеть.</p>
+  </article>
+
+  <article class="card-resources" aria-labelledby="resources-heading">
+    <h2 id="resources-heading">Ресурсы</h2>
+    <ul class="resource-list">
+      <li><a href="mailto:jfeldman777@gmail.com">Электронная почта</a></li>
+      <li><a href="https://www.youtube.com/c/JacobFeldman" rel="noopener noreferrer">YouTube — ТУАИ</a></li>
+      <li><a href="https://www.facebook.com/jacob.feldman" rel="noopener noreferrer">Facebook</a></li>
+      <li><a href="https://t.me/+xvVDJYjhZQk0YmQy" rel="noopener noreferrer">ТУАИ-корпорация (Telegram)</a></li>
+      <li><a href="https://vk.com/jfeldman777" rel="noopener noreferrer">ВКонтакте</a></li>
+    </ul>
   </article>
 </body>
 </html>
