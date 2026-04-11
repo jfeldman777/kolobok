@@ -108,40 +108,65 @@
       align-items: flex-end;
       justify-content: center;
       padding: max(12px, env(safe-area-inset-bottom));
+      padding-top: max(48px, env(safe-area-inset-top));
       background: rgba(0, 0, 0, 0);
       transition: background 0.28s ease;
+      -webkit-tap-highlight-color: transparent;
     }
     .task-backdrop.is-open {
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.45);
     }
     .task-sheet {
       width: 100%;
       max-width: 520px;
-      max-height: min(72dvh, 420px);
-      padding: 12px 18px 22px;
+      /* Не на весь экран — сверху остаётся поле и кнопки */
+      max-height: min(52dvh, 340px);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
       border-radius: 16px 16px 0 0;
       background: linear-gradient(180deg, #2e4d2e 0%, #1a2e1a 100%);
       box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
       outline: none;
+      min-height: 0;
     }
     .task-backdrop.is-open .task-sheet {
       transform: translateY(0);
+    }
+    .task-sheet-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: 8px 18px 10px;
+    }
+    .task-sheet-sticky-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: -8px -18px 10px;
+      padding: 8px 18px 10px;
+      background: #2e4d2e;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .task-sheet-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 8px;
+      margin-bottom: 0;
     }
     .task-sheet-bar {
       width: 40px;
       height: 4px;
-      margin: 4px auto 12px;
+      margin: 0 auto 10px;
       border-radius: 2px;
       background: rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
     }
     .task-sheet h2 {
       margin: 0;
@@ -157,15 +182,38 @@
     }
     .task-sheet-close {
       flex-shrink: 0;
-      width: 40px;
-      height: 40px;
+      min-width: 44px;
+      min-height: 44px;
+      width: 44px;
+      height: 44px;
       border: none;
       border-radius: 10px;
       font-size: 1.5rem;
       line-height: 1;
       color: #c8e6c9;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.12);
       cursor: pointer;
+      touch-action: manipulation;
+    }
+    .task-sheet-done {
+      flex-shrink: 0;
+      width: calc(100% - 24px);
+      margin: 0 12px 12px;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 12px;
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #1a2e1a;
+      background: linear-gradient(180deg, #c5e1a5 0%, #8bc34a 100%);
+      box-shadow: 0 3px 0 #558b2f;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .task-sheet-done:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #558b2f;
     }
     .board-wrap {
       flex: 1;
@@ -312,17 +360,24 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="task-heading-sheet"
+      aria-describedby="task-sheet-desc"
       tabindex="-1"
     >
-      <div class="task-sheet-bar" aria-hidden="true"></div>
-      <div class="task-sheet-top">
-        <h2 id="task-heading-sheet">Как играть</h2>
-        <button type="button" class="task-sheet-close" id="task-close" aria-label="Закрыть описание">×</button>
+      <div class="task-sheet-scroll" id="task-sheet-desc">
+        <div class="task-sheet-sticky-head">
+          <div class="task-sheet-bar" aria-hidden="true"></div>
+          <div class="task-sheet-top">
+            <h2 id="task-heading-sheet">Как играть</h2>
+            <button type="button" class="task-sheet-close" id="task-close" aria-label="Закрыть">×</button>
+          </div>
+        </div>
+        <p>Колобок вышел из дома: он хочет привести друзей к себе домой и собрать лесные грибы в подарок.</p>
+        <p style="margin-top:12px"><strong>Управление:</strong> на компьютере — стрелки на клавиатуре (↑ ↓ ← →), на телефоне — кнопки под полем.</p>
+        <p style="margin-top:10px"><strong>Поезд:</strong> в поезд входят колобок и все, кто уже идёт за ним (заяц, ворона, белка). <strong>Длина поезда</strong> — сколько клеток занимает цепочка, <strong>включая колобка</strong>. <strong>Свободные места</strong> — вагончики без гриба. Грибы кладутся по порядку: сначала у колобка, потом у следующего и так далее. Гриб с поля берётся <strong>только наступив на клетку гриба</strong> (не с соседней). <strong>Новый гриб взять нельзя, если свободных мест нет.</strong></p>
+        <p style="margin-top:10px"><strong>Ход игры:</strong> Порядок в начале любой: <strong>любой один гриб</strong> — <strong>наступив на клетку гриба</strong> (если есть место в поезде), или сначала заяц. (1) Заяц — на клетку зайца или соседнюю. (2) Когда поезд полон грибами — к ёлке первой птицы (соседняя клетка); гриб — только <strong>на клетку гриба</strong>. (3) Вторая птица — то же. (4) Лесные грибы — на клетку. Домой; в клетку с домиком — салют. Кнопка <strong>«С начала»</strong> — заново.</p>
+        <p style="margin-top:12px;font-size:0.88rem;color:rgba(232,245,233,0.75)">Тап по затемнённой области сверху или «К полю» — вернуться к игре.</p>
       </div>
-      <p>Колобок вышел из дома: он хочет привести друзей к себе домой и собрать лесные грибы в подарок.</p>
-      <p style="margin-top:12px"><strong>Управление:</strong> на компьютере — стрелки на клавиатуре (↑ ↓ ← →), на телефоне — кнопки под полем.</p>
-      <p style="margin-top:10px"><strong>Поезд:</strong> в поезд входят колобок и все, кто уже идёт за ним (заяц, ворона, белка). <strong>Длина поезда</strong> — сколько клеток занимает цепочка, <strong>включая колобка</strong>. <strong>Свободные места</strong> — вагончики без гриба. Грибы кладутся по порядку: сначала у колобка, потом у следующего и так далее. Гриб с поля берётся <strong>только наступив на клетку гриба</strong> (не с соседней). <strong>Новый гриб взять нельзя, если свободных мест нет.</strong></p>
-      <p style="margin-top:10px"><strong>Ход игры:</strong> Порядок в начале любой: <strong>любой один гриб</strong> — <strong>наступив на клетку гриба</strong> (если есть место в поезде), или сначала заяц. (1) Заяц — на клетку зайца или соседнюю. (2) Когда поезд полон грибами — к ёлке первой птицы (соседняя клетка); гриб — только <strong>на клетку гриба</strong>. (3) Вторая птица — то же. (4) Лесные грибы — на клетку. Домой; в клетку с домиком — салют. Кнопка <strong>«С начала»</strong> — заново.</p>
+      <button type="button" class="task-sheet-done" id="task-close-bottom">К полю</button>
     </div>
   </div>
   <script>
@@ -1616,6 +1671,7 @@
       const backdrop = document.getElementById('task-backdrop');
       const openBtn = document.getElementById('task-open');
       const closeBtn = document.getElementById('task-close');
+      const closeBottomBtn = document.getElementById('task-close-bottom');
       const sheet = backdrop && backdrop.querySelector('.task-sheet');
       if (!backdrop || !openBtn || !closeBtn || !sheet) return;
 
@@ -1642,13 +1698,24 @@
             backdrop.setAttribute('aria-hidden', 'true');
           }
         }, DURATION_MS);
+        try {
+          openBtn.focus();
+        } catch (_e) {}
       }
 
       openBtn.addEventListener('click', open);
       closeBtn.addEventListener('click', close);
+      if (closeBottomBtn) closeBottomBtn.addEventListener('click', close);
       backdrop.addEventListener('click', e => {
         if (e.target === backdrop) close();
       });
+      backdrop.addEventListener(
+        'touchstart',
+        e => {
+          if (e.target === backdrop) close();
+        },
+        { passive: true }
+      );
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && backdrop.classList.contains('is-open')) close();
       });
