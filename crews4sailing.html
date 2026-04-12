@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c1624">
+<title>Собираем друзей</title>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+}
+html, body {
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: #111;
+  color: #eee;
+  font-family: system-ui, sans-serif;
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Узкий экран — как у «Два брата»: игра с клавиатуры на ПК */
+#too-narrow {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px;
+  background: #1a1a1a;
+  color: #ddd;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.55;
+}
+#too-narrow strong { color: #E8A020; }
+@media (max-width: 800px) {
+  #too-narrow { display: flex; }
+  #app { display: none !important; }
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+}
+/* Первая строка: На главную — Правила — заголовок — С начала */
+#game-title-bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 10px 14px;
+  padding: calc(6px + env(safe-area-inset-top, 0px)) 14px;
+  background: linear-gradient(180deg, #1f1a12 0%, #141414 100%);
+  border-bottom: 2px solid #E8A020;
+}
+.home-link {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9a86c;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(232, 160, 32, 0.45);
+  white-space: nowrap;
+}
+.home-link:hover { color: #E8A020; }
+.top-sep {
+  flex-shrink: 0;
+  color: #444;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.top-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(0.9rem, 2.2vw, 1.15rem);
+  font-weight: 900;
+  color: #E8A020;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#btn-new {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: 10px;
+  border: 1px solid #2e6bb8;
+  background: #1565c0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#btn-new:active { filter: brightness(1.1); }
+/* Вся оставшаяся площадь — под поле */
+#board-shell {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  background: #0a0a0a;
+}
+#board-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  min-width: 0;
+  min-height: 0;
+}
+#field {
+  display: block;
+  flex-shrink: 0;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  background: #0a0a0a;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(255,255,255,0.06);
+}
+#scores {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  justify-content: flex-end;
+  max-width: 70%;
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 1px 4px #000;
+  pointer-events: none;
+}
+#scores span.p0 { color: #c5cae9; }
+#scores span.p1 { color: #e1bee7; }
+#scores span.meta { color: #9e9e9e; font-weight: 700; }
+#hint {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+  text-align: center;
+  font-size: 10px;
+  color: #c4b59a;
+  line-height: 1.35;
+  text-shadow: 0 1px 5px #000;
+  pointer-events: none;
+}
+#hint.done { color: #a5d6a7; font-weight: 700; }
+/* Правила — в первой строке, панель открывается вниз */
+#game-title-bar .rules-float {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 200;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1px solid #2a3038;
+  background: rgba(21, 24, 32, 0.94);
+  font-size: 10px;
+  color: #7a8a98;
+}
+#game-title-bar .rules-float[open] {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+#game-title-bar .rules-float summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #a0b0c0;
+  list-style: none;
+}
+#game-title-bar .rules-float summary::-webkit-details-marker { display: none; }
+#game-title-bar .rules-float ul {
+  position: absolute;
+  top: 100%;
+  left: -1px;
+  margin: 0;
+  padding: 8px 10px 8px 1.25em;
+  min-width: min(400px, calc(100vw - 28px));
+  max-width: min(420px, calc(100vw - 28px));
+  max-height: min(40vh, 240px);
+  overflow-y: auto;
+  border: 1px solid #2a3038;
+  border-top: none;
+  background: rgba(21, 24, 32, 0.97);
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+#game-title-bar .rules-float li { margin-bottom: 4px; }
+#game-title-bar .rules-float strong { color: #a0b0c0; }
+</style>
+</head>
+<body>
+<div id="too-narrow" role="alert">
+  <p><strong>Собираем друзей</strong> — для компьютера с клавиатурой.</p>
+  <p>Откройте страницу на ПК (ширина окна больше <strong>800&nbsp;px</strong>), затем кликните по полю и играйте.</p>
+</div>
+
+<div id="app">
+  <header id="game-title-bar">
+    <a href="index.html" class="home-link">На главную</a>
+    <span class="top-sep" aria-hidden="true">────</span>
+    <details class="rules-float">
+      <summary>Правила</summary>
+      <ul>
+        <li><strong>Цель:</strong> каждый колобок собирает цепочку <strong>4321</strong> — полный набор фишек <strong>1–4</strong> (по две каждой), сцепленных по правилам <strong>4+3</strong>, <strong>2+1</strong> и цепи <strong>43+21</strong>, — и <strong>приводит</strong> её в <strong>свой нижний угол</strong> (FIN: <strong>А</strong> — слева внизу, <strong>В</strong> — справа внизу).</li>
+        <li><strong>1</strong> — неподвижен. <strong>2</strong> — красит «свою» территорию (на чужую не заходит), шаг раз в два тика. <strong>3</strong> — прямо до упора, отражается назад. <strong>4</strong> — прямо; у стены/края поворот на 90°.</li>
+        <li>Клетка <strong>35×35</strong> px; число колонок и рядов под размер окна. Стены, подсветка краёв; низ — «берег», <strong>FIN</strong> в нижнем левом и правом углу.</li>
+        <li>Равные по уровню проходят сквозь друг друга (обмен одиночек). Несоседние разного уровня не цепляются насквозь; при <strong>входе головы старшего</strong> в младшего младший <strong>пристраивается хвостом</strong> (цепочка тянется за головой старшего, как у «Мартина»), без «съедания».</li>
+        <li>Квадратики <strong>2+1</strong>, <strong>4+3</strong>, цепь <strong>43+21</strong> слипаются при соседстве как раньше.</li>
+        <li><strong>Колобки А и В</strong> — A: WASD, B: стрелки/IJKL. <strong>Салют</strong> при <strong>входе</strong> в свой FIN. Доставка цепочки <strong>4321</strong> засчитывается только в <strong>своём</strong> FIN; после доставки — новый колобок из верхнего угла своего края.</li>
+        <li>Победа при <strong>3</strong> командах, не более <strong>5</strong> доставок за партию.</li>
+      </ul>
+    </details>
+    <span class="top-sep" aria-hidden="true">────</span>
+    <h1 class="top-title">Собираем друзей</h1>
+    <span class="top-sep" aria-hidden="true">────</span>
+    <button type="button" id="btn-new">С начала</button>
+  </header>
+
+  <div id="board-shell">
+    <div id="scores" aria-live="polite"></div>
+    <div id="board-wrap">
+      <canvas id="field" width="400" height="400" tabindex="0" aria-label="Игровое поле: WASD — A, стрелки или IJKL — B"></canvas>
+    </div>
+    <div id="hint" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  /** Клетка строго 35×35 px; число колонок и рядов под размер окна (как kolobok2brata, но масштабируемо). */
+  const CELL = 35;
+  let CELL_W = CELL;
+  let CELL_H = CELL;
+  let GW = 10;
+  let GH = 8;
+  let canvasW = GW * CELL;
+  let canvasH = GH * CELL;
+  const wallPct = 14;
+  let grid = [];
+
+  function layoutCellSize() {
+    const wrap = document.getElementById('board-wrap');
+    let aw;
+    let ah;
+    if (wrap) {
+      aw = Math.floor(wrap.clientWidth) || 0;
+      ah = Math.floor(wrap.clientHeight) || 0;
+    } else {
+      aw = Math.floor(window.innerWidth - 24);
+      ah = Math.floor(window.innerHeight - 56);
+    }
+    aw = Math.max(CELL * 10, aw);
+    ah = Math.max(CELL * 8, ah);
+    GW = Math.max(10, Math.floor(aw / CELL));
+    GH = Math.max(8, Math.floor(ah / CELL));
+    canvasW = GW * CELL;
+    canvasH = GH * CELL;
+    CELL_W = CELL;
+    CELL_H = CELL;
+  }
+
+  function cellRef() {
+    return CELL;
+  }
+  /** Краска «двоек»: id группы или 0 */
+  let paint = [];
+  let globalTick = 0;
+  let simTimer = null;
+  const SIM_MS = 280;
+
+  const WIN_TEAMS = 3;
+  const MAX_TOTAL_DELIVERIES = 5;
+
+  const TOKEN_STYLE = {
+    1: { f: '#7F77DD', s: '#3C3489' },
+    2: { f: '#E24B4A', s: '#791F1F' },
+    3: { f: '#639922', s: '#27500A' },
+    4: { f: '#378ADD', s: '#0C447C' },
+  };
+
+  const canvas = document.getElementById('field');
+  const ctx = canvas.getContext('2d');
+  const hintEl = document.getElementById('hint');
+  const scoresEl = document.getElementById('scores');
+
+  let saluteGx = 0;
+  let saluteGy = 0;
+  let saluteParticles = [];
+  let saluteUntil = 0;
+  let saluteStartTime = 0;
+  let saluteRaf = 0;
+
+  let gid = 0;
+  function nk(x, y) { return x + ',' + y; }
+
+  /** Две клетки финиша: нижний левый и нижний правый угол. */
+  function isFinCell(x, y) {
+    return y === GH - 1 && (x === 0 || x === GW - 1);
+  }
+
+  /** Свой угол FIN: А (0) — слева внизу, В (1) — справа внизу. */
+  function isOwnFinCorner(pid, x, y) {
+    if (!isFinCell(x, y)) return false;
+    return pid === 0 ? x === 0 : x === GW - 1;
+  }
+
+  function gridWallAt(x, y) {
+    if (x < 0 || x >= GW || y < 0 || y >= GH) return true;
+    return grid[y][x] === 1;
+  }
+
+  function isProtectedCell(x, y) {
+    if ((x === 0 && y === 0) || (x === GW - 1 && y === 0)) return true;
+    if (y === GH - 1) return true;
+    return false;
+  }
+
+  function pOK(sx, sy, ex, ey) {
+    const v = Array.from({ length: GH }, () => new Array(GW).fill(false));
+    const q = [[sx, sy]];
+    v[sy][sx] = true;
+    while (q.length) {
+      const [x, y] = q.shift();
+      if (x === ex && y === ey) return true;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < GW && ny >= 0 && ny < GH && !v[ny][nx] && grid[ny][nx] === 0) {
+          v[ny][nx] = true;
+          q.push([nx, ny]);
+        }
+      }
+    }
+    return false;
+  }
+
+  function allFloorConnectedFrom(sx, sy) {
+    if (grid[sy][sx] !== 0) return false;
+    const v = Array.from({ length: GH }, () => new Array(GW).fill(false));
+    const q = [[sx, sy]];
+    v[sy][sx] = true;
+    let seen = 0;
+    while (q.length) {
+      const [x, y] = q.shift();
+      seen++;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+        if (grid[ny][nx] !== 0 || v[ny][nx]) continue;
+        v[ny][nx] = true;
+        q.push([nx, ny]);
+      }
+    }
+    let floorCells = 0;
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) if (grid[y][x] === 0) floorCells++;
+    return seen === floorCells;
+  }
+
+  function gridReachabilityOk() {
+    const fy = GH - 1;
+    if (grid[0][0] !== 0 || grid[0][GW - 1] !== 0) return false;
+    if (grid[fy][0] !== 0 || grid[fy][GW - 1] !== 0) return false;
+    if (!pOK(0, 0, 0, fy)) return false;
+    if (!pOK(0, 0, GW - 1, fy)) return false;
+    if (!pOK(GW - 1, 0, 0, fy)) return false;
+    if (!pOK(GW - 1, 0, GW - 1, fy)) return false;
+    if (!allFloorConnectedFrom(0, 0)) return false;
+    return true;
+  }
+
+  function genGridValidForTryPct(tryPct) {
+    grid = Array.from({ length: GH }, () => new Array(GW).fill(0));
+    const cells = GW * GH;
+    const wc = (cells * tryPct / 100) | 0;
+    let p = 0;
+    let t = 0;
+    while (p < wc && t++ < 12000) {
+      const rx = (Math.random() * GW) | 0;
+      const ry = (Math.random() * GH) | 0;
+      if (isProtectedCell(rx, ry)) continue;
+      if (grid[ry][rx] === 0) {
+        grid[ry][rx] = 1;
+        p++;
+      }
+    }
+    return gridReachabilityOk();
+  }
+
+  function genGridWallsOnly() {
+    let tryPct = wallPct;
+    for (let down = 0; down < 50; down++) {
+      for (let att = 0; att < 320; att++) {
+        if (genGridValidForTryPct(tryPct)) return true;
+      }
+      if (tryPct <= 0) break;
+      tryPct = Math.max(0, tryPct - 2);
+    }
+    grid = Array.from({ length: GH }, () => new Array(GW).fill(0));
+    return true;
+  }
+
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const ORTH = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+
+  function randomDir() {
+    const o = ORTH[(Math.random() * 4) | 0];
+    return { dx: o[0], dy: o[1] };
+  }
+
+  function rotateDirCW(d) {
+    return { dx: -d.dy, dy: d.dx };
+  }
+
+  function reverseDir(d) {
+    return { dx: -d.dx, dy: -d.dy };
+  }
+
+  /** Группа: cells[0] — голова; dir — для автономного движения (2–4) */
+  function makeGroup(cells, dirHint) {
+    const head = cells[0];
+    let dir = dirHint;
+    if (dir == null && head && head.v >= 2 && head.v <= 4) dir = randomDir();
+    if (dir == null) dir = { dx: 0, dy: 0 };
+    return { id: ++gid, cells: cells.slice(), dir: { dx: dir.dx, dy: dir.dy } };
+  }
+
+  function resetPaintGrid() {
+    paint = Array.from({ length: GH }, () => new Array(GW).fill(0));
+  }
+
+  function seedPaintForTwos() {
+    for (const g of groups) {
+      const h = g.cells[0];
+      if (h.v === 2) paint[h.y][h.x] = g.id;
+    }
+  }
+
+  function moveChainHead(g, nx, ny) {
+    if (g.cells.length === 1) {
+      g.cells[0].x = nx;
+      g.cells[0].y = ny;
+      return;
+    }
+    const old = g.cells.map((c) => ({ x: c.x, y: c.y }));
+    g.cells[0].x = nx;
+    g.cells[0].y = ny;
+    for (let i = 1; i < g.cells.length; i++) {
+      g.cells[i].x = old[i - 1].x;
+      g.cells[i].y = old[i - 1].y;
+    }
+  }
+
+  function groupAtCell(x, y) {
+    for (const g of groups) {
+      const idx = g.cells.findIndex((c) => c.x === x && c.y === y);
+      if (idx >= 0) return { g, idx };
+    }
+    return null;
+  }
+
+  function playerBlocksCell(x, y) {
+    for (let pid = 0; pid < 2; pid++) {
+      const p = players[pid];
+      if (p.kx === x && p.ky === y) return true;
+      for (let i = 0; i < p.segs.length; i++) {
+        const pos = segPos(p, i);
+        if (pos && pos.x === x && pos.y === y) return true;
+      }
+    }
+    return false;
+  }
+
+  function ownBodyBlocks(g, nx, ny) {
+    for (let i = 1; i < g.cells.length; i++) {
+      const c = g.cells[i];
+      if (c.x === nx && c.y === ny) return true;
+    }
+    return false;
+  }
+
+  function enemyPaintBlocks(g, nx, ny) {
+    const h = g.cells[0];
+    if (h.v !== 2) return false;
+    const pid = paint[ny][nx];
+    return pid !== 0 && pid !== g.id;
+  }
+
+  function pickDirForTwo(g) {
+    const h = g.cells[0];
+    const tries = shuffle([0, 1, 2, 3]);
+    for (const ti of tries) {
+      const [dx, dy] = ORTH[ti];
+      const nx = h.x + dx;
+      const ny = h.y + dy;
+      if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+      if (grid[ny][nx] !== 0) continue;
+      if (ownBodyBlocks(g, nx, ny)) continue;
+      if (playerBlocksCell(nx, ny)) continue;
+      if (paint[ny][nx] !== 0 && paint[ny][nx] !== g.id) continue;
+      return { dx, dy };
+    }
+    return null;
+  }
+
+  function bounceFromObstacle(g, v) {
+    if (v === 3) g.dir = reverseDir(g.dir);
+    else if (v === 4) g.dir = rotateDirCW(g.dir);
+    else if (v === 2) {
+      const nd = pickDirForTwo(g);
+      if (nd) g.dir = nd;
+    }
+  }
+
+  /** Запасной вариант: склейка массивов клеток (если хвост вдоль линии движения невозможен). */
+  function mergeGroupsCompactFallback(mover, victim, nx, ny) {
+    const headV = mover.cells[0].v;
+    const mTail = mover.cells.slice(1);
+    const idx = victim.cells.findIndex((c) => c.x === nx && c.y === ny);
+    if (idx < 0) return false;
+    const before = victim.cells.slice(0, idx);
+    const after = victim.cells.slice(idx + 1);
+    mover.cells = [{ x: nx, y: ny, v: headV }].concat(before).concat(after).concat(mTail);
+    removeGroup(victim);
+    return true;
+  }
+
+  /**
+   * Младший пристраивается хвостом: клетки выстраиваются за головой старшего против шага (dx,dy),
+   * порядок значений — хвост старшего, затем тело младшего без съеденной клетки (как поезд у «Мартина»).
+   */
+  function attachVictimAsTailToMover(mover, victim, nx, ny, dx, dy) {
+    const headV = mover.cells[0].v;
+    const idx = victim.cells.findIndex((c) => c.x === nx && c.y === ny);
+    if (idx < 0) return false;
+
+    const mTail = mover.cells.slice(1);
+    const victimRest = victim.cells.filter((_, i) => i !== idx);
+    const newLen = 1 + mTail.length + victimRest.length;
+    const newCells = [{ x: nx, y: ny, v: headV }];
+
+    for (let i = 1; i < newLen; i++) {
+      const x = nx - dx * i;
+      const y = ny - dy * i;
+      if (x < 0 || x >= GW || y < 0 || y >= GH || grid[y][x] !== 0) {
+        mergeGroupsCompactFallback(mover, victim, nx, ny);
+        return true;
+      }
+      const v = i <= mTail.length ? mTail[i - 1].v : victimRest[i - 1 - mTail.length].v;
+      newCells.push({ x, y, v });
+    }
+    mover.cells = newCells;
+    removeGroup(victim);
+    return true;
+  }
+
+  function autonomousTryMoveGroup(g) {
+    if (!groups.some((x) => x.id === g.id)) return;
+    const h = g.cells[0];
+    const v = h.v;
+    if (v === 1) return;
+    if (v === 2 && globalTick % 2 !== 0) return;
+
+    const nx = h.x + g.dir.dx;
+    const ny = h.y + g.dir.dy;
+
+    if (nx < 0 || nx >= GW || ny < 0 || ny >= GH || grid[ny][nx] !== 0) {
+      bounceFromObstacle(g, v);
+      return;
+    }
+    if (ownBodyBlocks(g, nx, ny)) {
+      bounceFromObstacle(g, v);
+      return;
+    }
+    if (playerBlocksCell(nx, ny)) {
+      bounceFromObstacle(g, v);
+      return;
+    }
+    if (enemyPaintBlocks(g, nx, ny)) {
+      bounceFromObstacle(g, v);
+      return;
+    }
+
+    const occ = groupAtCell(nx, ny);
+    if (occ && occ.g.id !== g.id) {
+      const og = occ.g;
+      const ov = og.cells[occ.idx].v;
+      if (g.cells.length === 1 && og.cells.length === 1 && v === ov) {
+        const a = g.cells[0];
+        const b = og.cells[0];
+        const tx = a.x;
+        const ty = a.y;
+        const tdx = g.dir.dx;
+        const tdy = g.dir.dy;
+        a.x = b.x;
+        a.y = b.y;
+        b.x = tx;
+        b.y = ty;
+        g.dir = { dx: og.dir.dx, dy: og.dir.dy };
+        og.dir = { dx: tdx, dy: tdy };
+        return;
+      }
+      if (v > ov) {
+        attachVictimAsTailToMover(g, og, nx, ny, g.dir.dx, g.dir.dy);
+        if (g.cells[0].v === 2) paint[g.cells[0].y][g.cells[0].x] = g.id;
+        return;
+      }
+      if (v < ov) {
+        bounceFromObstacle(g, v);
+        return;
+      }
+      bounceFromObstacle(g, v);
+      return;
+    }
+
+    moveChainHead(g, nx, ny);
+    if (g.cells[0].v === 2) paint[g.cells[0].y][g.cells[0].x] = g.id;
+  }
+
+  function autonomousSimStep() {
+    if (gameOver) return;
+    globalTick++;
+    const snapshot = shuffle([...groups]);
+    for (const g of snapshot) {
+      if (!groups.some((x) => x.id === g.id)) continue;
+      autonomousTryMoveGroup(g);
+    }
+    runMerges();
+  }
+
+  function simFrame() {
+    if (gameOver) return;
+    autonomousSimStep();
+    draw();
+    updateHud();
+  }
+
+  function groupValues(g) {
+    return g.cells.map((c) => c.v);
+  }
+
+  function frontCell(g) {
+    return g.cells[0];
+  }
+
+  function tailCell(g) {
+    return g.cells[g.cells.length - 1];
+  }
+
+  function adjacent(a, b) {
+    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+  }
+
+  function touchesKolobok(kx, ky, g) {
+    const f = frontCell(g);
+    const on = kx === f.x && ky === f.y;
+    const by = adjacent({ x: kx, y: ky }, f);
+    return on || by;
+  }
+
+  let groups = [];
+  let players = [];
+  let scores = [0, 0];
+  let totalDeliveries = 0;
+  let deliveriesPerPlayer = [0, 0];
+  let gameOver = false;
+  let winner = null;
+
+  function cellTakenByBoard(x, y, skipG) {
+    for (const g of groups) {
+      if (g === skipG) continue;
+      if (g.cells.some((c) => c.x === x && c.y === y)) return true;
+    }
+    return false;
+  }
+
+  function cellTakenByPlayers(x, y, skipPid) {
+    for (let pid = 0; pid < 2; pid++) {
+      if (pid === skipPid) continue;
+      const p = players[pid];
+      if (p.kx === x && p.ky === y) return true;
+      for (let i = 0; i < p.segs.length; i++) {
+        const pos = segPos(p, i);
+        if (pos && pos.x === x && pos.y === y) return true;
+      }
+    }
+    return false;
+  }
+
+  function cellTakenByOtherPlayers(x, y, pid) {
+    return cellTakenByPlayers(x, y, pid);
+  }
+
+  function segPos(p, i) {
+    const t = p.trail;
+    if (t.length < 2 + i) return null;
+    return t[t.length - 2 - i];
+  }
+
+  function ensureTrail(p) {
+    const need = p.segs.length + 1;
+    while (p.trail.length < need) {
+      const last = p.trail.length ? p.trail[0] : { x: p.kx, y: p.ky };
+      p.trail.unshift({ x: last.x, y: last.y });
+    }
+    if (p.trail.length > 220) p.trail.splice(0, p.trail.length - 220);
+  }
+
+  function multisetOk(segs) {
+    const c = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const v of segs) {
+      if (c[v] === undefined) return false;
+      c[v]++;
+    }
+    return c[1] === 2 && c[2] === 2 && c[3] === 2 && c[4] === 2;
+  }
+
+  function freeCellsForDigits(exclude) {
+    const ex = new Set(exclude);
+    const out = [];
+    for (let y = 0; y < GH; y++) {
+      for (let x = 0; x < GW; x++) {
+        const k = nk(x, y);
+        if (grid[y][x] !== 0) continue;
+        if (ex.has(k)) continue;
+        out.push({ x, y });
+      }
+    }
+    return out;
+  }
+
+  function placeEightDigits() {
+    resetPaintGrid();
+    const ex = new Set();
+    for (const p of players) {
+      ex.add(nk(p.kx, p.ky));
+      for (let i = 0; i < p.segs.length; i++) {
+        const pos = segPos(p, i);
+        if (pos) ex.add(nk(pos.x, pos.y));
+      }
+    }
+    let pool = freeCellsForDigits(ex).filter((c) => c.y !== GH - 1);
+    shuffle(pool);
+    const digits = [1, 1, 2, 2, 3, 3, 4, 4];
+    shuffle(digits);
+    groups = [];
+    for (let i = 0; i < 8; i++) {
+      if (!pool.length) break;
+      const { x, y } = pool.pop();
+      groups.push(makeGroup([{ x, y, v: digits[i] }]));
+    }
+  }
+
+  function spawnCorner(pid, left) {
+    const x = left ? 0 : GW - 1;
+    const y = 0;
+    if (grid[y][x] === 0 && !cellTakenByBoard(x, y, null) && !cellTakenByPlayers(x, y, pid)) {
+      players[pid].kx = x;
+      players[pid].ky = y;
+    } else {
+      const pool = freeCellsForDigits(new Set()).filter((cell) => cell.y !== GH - 1);
+      shuffle(pool);
+      const c = pool.find(
+        (cell) =>
+          !cellTakenByPlayers(cell.x, cell.y, pid) &&
+          !cellTakenByBoard(cell.x, cell.y, null)
+      );
+      if (c) {
+        players[pid].kx = c.x;
+        players[pid].ky = c.y;
+      }
+    }
+    players[pid].segs = [];
+    players[pid].trail = [{ x: players[pid].kx, y: players[pid].ky }];
+  }
+
+  function initGame() {
+    layoutCellSize();
+    gid = 0;
+    scores = [0, 0];
+    totalDeliveries = 0;
+    deliveriesPerPlayer = [0, 0];
+    gameOver = false;
+    winner = null;
+    if (saluteRaf) {
+      cancelAnimationFrame(saluteRaf);
+      saluteRaf = 0;
+    }
+    saluteParticles = [];
+    saluteUntil = 0;
+    genGridWallsOnly();
+    resetPaintGrid();
+    globalTick = 0;
+    if (simTimer != null) {
+      clearInterval(simTimer);
+      simTimer = null;
+    }
+    players = [
+      { kx: 0, ky: 0, segs: [], trail: [{ x: 0, y: 0 }] },
+      { kx: GW - 1, ky: 0, segs: [], trail: [{ x: GW - 1, y: 0 }] }
+    ];
+    if (grid[0][0] !== 0) spawnCorner(0, true);
+    if (grid[0][GW - 1] !== 0) spawnCorner(1, false);
+    placeEightDigits();
+    runMerges();
+    seedPaintForTwos();
+    draw();
+    updateHud();
+    simTimer = setInterval(simFrame, SIM_MS);
+    requestAnimationFrame(() => {
+      draw();
+      updateHud();
+    });
+  }
+
+  function removeGroup(g) {
+    groups = groups.filter((x) => x.id !== g.id);
+  }
+
+  /** Слияние одиночек 4+3 и 2+1; цепей 43+21 (хвост 3 — сосед с головой 2). */
+  function runMerges() {
+    let changed = true;
+    let guard = 0;
+    while (changed && guard++ < 40) {
+      changed = false;
+      for (let i = 0; i < groups.length; i++) {
+        for (let j = i + 1; j < groups.length; j++) {
+          const A = groups[i];
+          const B = groups[j];
+          if (!A || !B) continue;
+
+          if (A.cells.length === 1 && B.cells.length === 1) {
+            const a = A.cells[0];
+            const b = B.cells[0];
+            if (!adjacent(a, b)) continue;
+            if ((a.v === 4 && b.v === 3) || (a.v === 3 && b.v === 4)) {
+              const head = a.v === 4 ? a : b;
+              const tail = a.v === 3 ? a : b;
+              const dirFrom = a.v === 4 ? A.dir : B.dir;
+              groups[i] = makeGroup(
+                [{ x: head.x, y: head.y, v: 4 }, { x: tail.x, y: tail.y, v: 3 }],
+                dirFrom
+              );
+              groups.splice(j, 1);
+              changed = true;
+              break;
+            }
+            if ((a.v === 2 && b.v === 1) || (a.v === 1 && b.v === 2)) {
+              const head = a.v === 2 ? a : b;
+              const tail = a.v === 1 ? a : b;
+              const dirFrom = a.v === 2 ? A.dir : B.dir;
+              groups[i] = makeGroup(
+                [{ x: head.x, y: head.y, v: 2 }, { x: tail.x, y: tail.y, v: 1 }],
+                dirFrom
+              );
+              groups.splice(j, 1);
+              changed = true;
+              break;
+            }
+          }
+        }
+        if (changed) break;
+      }
+      if (changed) continue;
+
+      for (let i = 0; i < groups.length; i++) {
+        for (let j = 0; j < groups.length; j++) {
+          if (i === j) continue;
+          const A = groups[i];
+          const B = groups[j];
+          if (A.cells.length < 2 || B.cells.length < 2) continue;
+          const tA = tailCell(A);
+          const fB = frontCell(B);
+          if (tA.v !== 3 || fB.v !== 2) continue;
+          if (!adjacent(tA, fB)) continue;
+          const mergedCells = A.cells.concat(B.cells);
+          groups[i] = makeGroup(mergedCells, A.dir);
+          groups.splice(j, 1);
+          changed = true;
+          break;
+        }
+        if (changed) break;
+      }
+    }
+  }
+
+  function canEnterCell(pid, x, y) {
+    if (x < 0 || x >= GW || y < 0 || y >= GH) return false;
+    if (grid[y][x] !== 0) return false;
+    const p = players[pid];
+    if (cellTakenByOtherPlayers(x, y, pid)) return false;
+    let tailPos = null;
+    if (p.segs.length > 0) tailPos = segPos(p, p.segs.length - 1);
+    for (let i = 0; i < p.segs.length; i++) {
+      const pos = segPos(p, i);
+      if (!pos) continue;
+      if (pos.x === x && pos.y === y) {
+        if (tailPos && pos.x === tailPos.x && pos.y === tailPos.y) continue;
+        return false;
+      }
+    }
+    if (cellTakenByBoard(x, y, null)) {
+      const g = groups.find((gr) => gr.cells.some((c) => c.x === x && c.y === y));
+      if (g) {
+        const f = frontCell(g);
+        if (x === f.x && y === f.y) return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  function tryMove(pid, dx, dy) {
+    if (gameOver) return;
+    const p = players[pid];
+    const nx = p.kx + dx;
+    const ny = p.ky + dy;
+    const prevK = { x: p.kx, y: p.ky };
+    if (!canEnterCell(pid, nx, ny)) return;
+
+    p.kx = nx;
+    p.ky = ny;
+    p.trail.push({ x: p.kx, y: p.ky });
+    ensureTrail(p);
+
+    runMerges();
+
+    tryPickup(pid, prevK, { dx, dy });
+
+    runMerges();
+
+    if (isOwnFinCorner(pid, p.kx, p.ky) && !isOwnFinCorner(pid, prevK.x, prevK.y)) {
+      saluteGx = pid === 0 ? 0 : GW - 1;
+      saluteGy = GH - 1;
+      startSalute();
+    }
+
+    if (multisetOk(p.segs) && isOwnFinCorner(pid, p.kx, p.ky)) {
+      scores[pid]++;
+      totalDeliveries++;
+      deliveriesPerPlayer[pid]++;
+      const left = deliveriesPerPlayer[pid] % 2 === 1;
+      spawnCorner(pid, left);
+      if (scores[pid] >= WIN_TEAMS) {
+        gameOver = true;
+        winner = pid;
+      } else if (totalDeliveries >= MAX_TOTAL_DELIVERIES) {
+        gameOver = true;
+        if (scores[0] > scores[1]) winner = 0;
+        else if (scores[1] > scores[0]) winner = 1;
+        else winner = 'draw';
+      } else {
+        placeEightDigits();
+        runMerges();
+        seedPaintForTwos();
+      }
+    }
+
+    stopSimIfOver();
+    draw();
+    updateHud();
+  }
+
+  function stopSimIfOver() {
+    if (gameOver && simTimer != null) {
+      clearInterval(simTimer);
+      simTimer = null;
+    }
+  }
+
+  function tryPickup(pid, prevK, move) {
+    const p = players[pid];
+    const attachable = [];
+    for (const g of groups) {
+      if (!touchesKolobok(p.kx, p.ky, g)) continue;
+      attachable.push(g);
+    }
+    if (!attachable.length) return;
+    attachable.sort((a, b) => b.cells.length - a.cells.length);
+    const g = attachable[0];
+    const vals = groupValues(g);
+    const invDx = -move.dx;
+    const invDy = -move.dy;
+    const testPos = [];
+    for (let i = 0; i < vals.length; i++) {
+      const x = prevK.x + invDx * i;
+      const y = prevK.y + invDy * i;
+      testPos.push({ x, y });
+    }
+    for (const pos of testPos) {
+      if (pos.x < 0 || pos.x >= GW || pos.y < 0 || pos.y >= GH) return;
+      if (grid[pos.y][pos.x] !== 0) return;
+      if (cellTakenByOtherPlayers(pos.x, pos.y, pid)) return;
+      if (cellTakenByBoard(pos.x, pos.y, g)) return;
+    }
+    removeGroup(g);
+    p.segs = vals.concat(p.segs);
+    const t = p.trail;
+    const prefix = t.length >= 2 ? t.slice(0, t.length - 2) : [];
+    const newK = { x: p.kx, y: p.ky };
+    const exp = [];
+    for (let i = vals.length - 1; i >= 0; i--) {
+      exp.push({ x: prevK.x + invDx * i, y: prevK.y + invDy * i });
+    }
+    p.trail = prefix.concat(exp).concat([newK]);
+    ensureTrail(p);
+  }
+
+  function updateHud() {
+    scoresEl.innerHTML =
+      '<span class="p0">A: ' +
+      scores[0] +
+      ' / ' +
+      WIN_TEAMS +
+      '</span>' +
+      '<span class="p1">B: ' +
+      scores[1] +
+      ' / ' +
+      WIN_TEAMS +
+      '</span>' +
+      '<span class="meta">' +
+      GW +
+      '×' +
+      GH +
+      ' · ' +
+      CELL +
+      'px · доставок ' +
+      totalDeliveries +
+      '/' +
+      MAX_TOTAL_DELIVERIES +
+      '</span>';
+
+    if (gameOver) {
+      hintEl.className = 'done';
+      if (winner === 'draw') hintEl.textContent = 'Партия окончена: ничья по командам.';
+      else hintEl.textContent = 'Победа ' + (winner === 0 ? 'A' : 'B') + '! Первым набрано ' + WIN_TEAMS + ' команд.';
+      return;
+    }
+    hintEl.className = '';
+    const okA = multisetOk(players[0].segs);
+    const okB = multisetOk(players[1].segs);
+    hintEl.textContent =
+      'Собрать цепочку 4321 и привести в свой нижний угол. А — WASD, В — стрелки/IJKL. Команда готова: A ' +
+      (okA ? 'да' : 'нет') +
+      ', B ' +
+      (okB ? 'да' : 'нет') +
+      ' → FIN: A слева внизу, B справа (салют при входе; доставка — полная цепочка в своём FIN).';
+  }
+
+  function drawDigitOnFloor(ctx, cx, cy, v, alpha) {
+    const st = TOKEN_STYLE[v] || TOKEN_STYLE[1];
+    const ref = cellRef();
+    const edge = Math.max(0.65, ref * 0.018);
+    const r = Math.max(4, ref * 0.5 - edge);
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(cx + CELL_W / 2, cy + CELL_H / 2, r * 0.92, 0, Math.PI * 2);
+    ctx.fillStyle = st.f;
+    ctx.fill();
+    ctx.strokeStyle = st.s;
+    ctx.lineWidth = Math.max(0.85, ref * 0.026);
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const d = 2 * r * 0.92;
+    let fontPx = Math.max(8, Math.min(d * 0.96, ref * 0.95));
+    ctx.font = `800 ${fontPx}px system-ui,sans-serif`;
+    ctx.fillText(String(v), cx + CELL_W / 2, cy + CELL_H / 2 + 0.5);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHeroBall(ctx, mx, my, r, fill, stroke, label, active) {
+    const edgeLw = Math.max(0.85, cellRef() * 0.026);
+    ctx.beginPath();
+    ctx.arc(mx, my, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = active ? '#E8A020' : stroke;
+    ctx.lineWidth = active ? Math.max(3, edgeLw * 1.65) : edgeLw;
+    ctx.stroke();
+    const d = 2 * r;
+    let fontPx = Math.max(6, Math.min(d * 0.72, d * 0.78));
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.font = `800 ${fontPx}px system-ui,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, mx, my + 0.5);
+  }
+
+  function draw() {
+    layoutCellSize();
+    if (grid.length && (grid.length !== GH || grid[0].length !== GW)) {
+      initGame();
+      return;
+    }
+    const pw = canvasW;
+    const ph = canvasH;
+    canvas.width = pw;
+    canvas.height = ph;
+    canvas.setAttribute('aria-label', 'Поле ' + GW + '×' + GH + ', клетка ' + CELL + 'px: WASD — A, стрелки или IJKL — B');
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, pw, ph);
+
+    function groupCellAt(x, y) {
+      for (const g of groups) {
+        if (g.cells.some((c) => c.x === x && c.y === y)) return true;
+      }
+      return false;
+    }
+
+    for (let y = 0; y < GH; y++) {
+      for (let x = 0; x < GW; x++) {
+        const cx = x * CELL_W;
+        const cy = y * CELL_H;
+        if (grid[y][x] === 1) {
+          ctx.fillStyle = '#8B3A1A';
+          ctx.fillRect(cx, cy, CELL_W, CELL_H);
+          ctx.fillStyle = '#A04520';
+          ctx.fillRect(cx + 1, cy + 1, CELL_W - 2, CELL_H - 2);
+          continue;
+        }
+        const isFin = isFinCell(x, y);
+        if (isFin) {
+          ctx.fillStyle = '#0d2e12';
+          ctx.fillRect(cx, cy, CELL_W, CELL_H);
+          ctx.strokeStyle = '#4caf50';
+          ctx.lineWidth = Math.max(1, cellRef() * 0.08);
+          ctx.strokeRect(cx + 1, cy + 1, CELL_W - 2, CELL_H - 2);
+        } else {
+          ctx.fillStyle = (x + y) % 2 === 0 ? '#1a1a1a' : '#161616';
+          ctx.fillRect(cx, cy, CELL_W, CELL_H);
+          if (x === 0) {
+            ctx.fillStyle = 'rgba(26,35,126,0.14)';
+            ctx.fillRect(cx, cy, CELL_W, CELL_H);
+          } else if (x === GW - 1) {
+            ctx.fillStyle = 'rgba(74,20,140,0.14)';
+            ctx.fillRect(cx, cy, CELL_W, CELL_H);
+          }
+          if (y === GH - 1) {
+            ctx.fillStyle = 'rgba(76, 175, 80, 0.08)';
+            ctx.fillRect(cx, cy, CELL_W, CELL_H);
+          }
+          ctx.strokeStyle = '#2a2a2a';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(cx + 0.25, cy + 0.25, CELL_W - 0.5, CELL_H - 0.5);
+        }
+        if (isFin && !groupCellAt(x, y)) {
+          ctx.fillStyle = '#4caf50';
+          ctx.font = `600 ${Math.max(6, cellRef() * 0.26)}px system-ui,sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('FIN', cx + CELL_W / 2, cy + CELL_H / 2);
+        }
+      }
+    }
+
+    for (let y = 0; y < GH; y++) {
+      for (let x = 0; x < GW; x++) {
+        const pid = paint[y][x];
+        if (!pid) continue;
+        const cx = x * CELL_W;
+        const cy = y * CELL_H;
+        const hue = (Math.abs(pid) * 47) % 360;
+        ctx.fillStyle = `hsla(${hue}, 55%, 42%, 0.28)`;
+        ctx.fillRect(cx + 0.5, cy + 0.5, CELL_W - 1, CELL_H - 1);
+      }
+    }
+
+    for (const g of groups) {
+      for (const c of g.cells) {
+        drawDigitOnFloor(ctx, c.x * CELL_W, c.y * CELL_H, c.v, 1);
+      }
+    }
+
+    const rBall = Math.max(4, cellRef() * 0.5 - Math.max(0.65, cellRef() * 0.018));
+    for (let pid = 0; pid < 2; pid++) {
+      const p = players[pid];
+      for (let i = 0; i < p.segs.length; i++) {
+        const pos = segPos(p, i);
+        if (!pos) continue;
+        const tcx = pos.x * CELL_W;
+        const tcy = pos.y * CELL_H;
+        drawDigitOnFloor(ctx, tcx, tcy, p.segs[i], 0.88);
+      }
+      const kx = p.kx * CELL_W + CELL_W / 2;
+      const ky = p.ky * CELL_H + CELL_H / 2;
+      const fill = pid === 0 ? '#1a237e' : '#4a148c';
+      const stroke = pid === 0 ? '#7986cb' : '#e1bee7';
+      drawHeroBall(ctx, kx, ky, rBall * 0.98, fill, stroke, pid === 0 ? 'А' : 'В', false);
+    }
+
+    drawSaluteOverlay();
+  }
+
+  /** Тот же салют, что в kolobok_martina.html: разлёт частиц с «гравитацией». */
+  function startSalute() {
+    const now = performance.now();
+    saluteStartTime = now;
+    saluteUntil = now + 6200;
+    saluteParticles = [];
+    const n = 110;
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n + Math.random() * 0.45;
+      const sp = 2.4 + Math.random() * 3.6;
+      saluteParticles.push({
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 1.45,
+        life: 15 + Math.random() * 7,
+        hue: 35 + ((Math.random() * 80) | 0),
+      });
+    }
+    if (!saluteRaf) saluteLoop();
+  }
+
+  function saluteLoop() {
+    draw();
+    if (performance.now() < saluteUntil) {
+      saluteRaf = requestAnimationFrame(saluteLoop);
+    } else {
+      saluteRaf = 0;
+      saluteParticles = [];
+    }
+  }
+
+  function drawSaluteOverlay() {
+    if (!saluteParticles.length || performance.now() >= saluteUntil) return;
+    const ox = (saluteGx + 0.5) * CELL_W;
+    const oy = (saluteGy + 0.5) * CELL_H;
+    const cell = cellRef();
+    const t = (performance.now() - saluteStartTime) / 380;
+    for (const p of saluteParticles) {
+      const px = ox + p.vx * t * cell * 0.62;
+      const py = oy + p.vy * t * cell * 0.62 + t * t * cell * 0.2;
+      const al = Math.max(0, 1 - t / p.life);
+      ctx.fillStyle = 'hsla(' + p.hue + ', 82%, 56%, ' + al + ')';
+      ctx.beginPath();
+      ctx.arc(px, py, Math.max(2.5, cell * 0.095 * (1 - t * 0.08)), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  document.getElementById('btn-new').addEventListener('click', initGame);
+
+  window.addEventListener('keydown', (e) => {
+    if (gameOver) return;
+    const code = e.code;
+    const k = e.key;
+    let handled = false;
+    if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'ArrowLeft' || code === 'ArrowRight') {
+      handled = true;
+      if (code === 'ArrowUp') tryMove(1, 0, -1);
+      else if (code === 'ArrowDown') tryMove(1, 0, 1);
+      else if (code === 'ArrowLeft') tryMove(1, -1, 0);
+      else tryMove(1, 1, 0);
+    } else if (code === 'KeyI' || code === 'KeyJ' || code === 'KeyK' || code === 'KeyL') {
+      handled = true;
+      if (code === 'KeyI') tryMove(1, 0, -1);
+      else if (code === 'KeyK') tryMove(1, 0, 1);
+      else if (code === 'KeyJ') tryMove(1, -1, 0);
+      else tryMove(1, 1, 0);
+    } else if (code === 'KeyW' || code === 'KeyA' || code === 'KeyS' || code === 'KeyD') {
+      handled = true;
+      if (code === 'KeyW') tryMove(0, 0, -1);
+      else if (code === 'KeyS') tryMove(0, 0, 1);
+      else if (code === 'KeyA') tryMove(0, -1, 0);
+      else tryMove(0, 1, 0);
+    } else if (/^[ijkl]$/i.test(k)) {
+      handled = true;
+      const c = k.toLowerCase();
+      if (c === 'i') tryMove(1, 0, -1);
+      else if (c === 'k') tryMove(1, 0, 1);
+      else if (c === 'j') tryMove(1, -1, 0);
+      else tryMove(1, 1, 0);
+    } else if (/^[wasd]$/i.test(k)) {
+      handled = true;
+      const c = k.toLowerCase();
+      if (c === 'w') tryMove(0, 0, -1);
+      else if (c === 's') tryMove(0, 0, 1);
+      else if (c === 'a') tryMove(0, -1, 0);
+      else tryMove(0, 1, 0);
+    }
+    if (handled) e.preventDefault();
+  });
+
+  window.addEventListener('resize', () => {
+    draw();
+  });
+
+  initGame();
+})();
+</script>
+</body>
+</html>
