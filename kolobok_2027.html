@@ -5135,23 +5135,6 @@ function drawHero(ctx,dk){
   ctx.beginPath(); ctx.arc(cx+rr*0.3, cy-rr*0.15, rr*0.06, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(cx, cy+rr*0.08, rr*0.35, 0.25, Math.PI-0.25);
   ctx.strokeStyle='#1a0a00'; ctx.lineWidth=rr*0.11; ctx.stroke();
-  if(stage>=1&&stage<=8&&hero){
-    const cap=penaltyUIFullText(hero);
-    if(cap){
-      const seq=digitsFromPenaltyUIText(cap);
-      const tHero=performance.now()+(hero.x||0)*41+(hero.y||0)*19;
-      const show=seq.length>1
-        ? seq[Math.floor(tHero/PENALTY_DIGIT_FLASH_MS)%seq.length]
-        :(seq.length===1?seq[0]:cap);
-      const fs=show.length>1
-        ? Math.max(5,Math.min(0|CELL*0.16,112/Math.max(show.length,3)))
-        : Math.max(8,Math.min(0|CELL*0.22,52));
-      ctx.fillStyle=dk?'rgba(255,255,255,0.92)':'rgba(30,30,30,0.95)';
-      ctx.font=`700 ${0|fs}px system-ui,sans-serif`;
-      ctx.textAlign='center'; ctx.textBaseline='bottom';
-      ctx.fillText(show,x+s/2,y+s-2);
-    }
-  }
 }
 
 /** Длительность салюта (мс); по истечении — переход на следующий этап (или только конец игры для этапа 9). */

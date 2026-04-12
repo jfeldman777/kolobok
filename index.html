@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#111111">
-<title>Колобок — игры</title>
+<title>Колобок — игры и тренажёры</title>
 <link rel="icon" href="favicon.ico" type="image/x-icon">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,6 +26,15 @@ h1 {
   color: #E8A020;
   letter-spacing: 0.04em;
   margin-bottom: 6px;
+}
+/* Вся строка заголовка одним начертанием и цветом (вложенные теги не «ломают» вид). */
+h1 * {
+  color: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  letter-spacing: inherit;
+  font-style: normal;
 }
 .lead {
   font-size: 14px;
@@ -67,9 +76,12 @@ h1 {
   text-transform: uppercase;
   color: #6a6a6a;
   margin: 0 0 10px 2px;
+  text-decoration: none;
 }
 .section-heading:first-child { margin-top: 0; }
 #games .section-heading { color: #8a7848; }
+/* Чтобы линия под навигацией не сливалась с заголовком раздела. */
+#games.page-section { padding-top: 10px; }
 .category-block { margin-bottom: 22px; }
 .category-block:last-of-type { margin-bottom: 0; }
 .category-heading {
@@ -368,7 +380,7 @@ a.req-val:active { opacity: 0.85; }
 </style>
 </head>
 <body>
-  <h1>Колобок — игры</h1>
+  <h1 spellcheck="false">Колобок — игры и тренажёры</h1>
   <p class="lead">Игры для детей, тренажёры для взрослых и коллективные режимы. Откройте в браузере или сохраните HTML на устройство.</p>
 
   <nav class="page-nav" aria-label="Быстрые ссылки">
@@ -379,7 +391,7 @@ a.req-val:active { opacity: 0.85; }
   </nav>
 
   <section id="games" class="page-section" aria-labelledby="games-heading">
-    <h2 class="section-heading" id="games-heading">Каталог игр</h2>
+    <h2 class="section-heading" id="games-heading" spellcheck="false">Каталог игр</h2>
 
   <div class="category-block">
     <h3 class="category-heading">Игры для детей</h3>
@@ -507,7 +519,7 @@ a.req-val:active { opacity: 0.85; }
   </section>
 
   <section id="video" class="page-section" aria-labelledby="video-heading">
-    <h2 class="section-heading" id="video-heading">Видео</h2>
+    <h2 class="section-heading" id="video-heading" spellcheck="false">Видео</h2>
   <article class="card card-video">
     <h2>Колобок и его команда</h2>
     <p>Рассказывает автор.</p>
