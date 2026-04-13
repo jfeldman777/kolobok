@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>Цивилизация</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: hidden;
+      background: #0b1220;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    #field {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at 50% 20%, #17233f 0%, #0b1220 60%, #090f1c 100%);
+    }
+    .hud {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 2;
+      padding: 6px 10px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: rgba(11, 18, 32, 0.72);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      font-size: 14px;
+      color: #cbd5e1;
+      -webkit-user-select: none;
+      user-select: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="field" aria-label="Поле Цивилизация"></canvas>
+  <div class="hud">Цивилизация: шестиугольная сетка, ширина клетки ~40px</div>
+  <script>
+    (function () {
+      const canvas = document.getElementById('field');
+      const ctx = canvas.getContext('2d');
+      const hud = document.querySelector('.hud');
+
+      const HEX_W = 36;
+      const SIZE = HEX_W / 2;
+      const HEX_H = Math.sqrt(3) * SIZE;
+      const STEP_X = 1.5 * SIZE;
+      const STEP_Y = HEX_H;
+      const TICK_MS = 520;
+
+      const terrain = {
+        lake: { fill: 'rgba(109, 213, 223, 0.52)', stroke: 'rgba(109, 213, 223, 0.92)' },
+        river: { fill: 'rgba(29, 171, 214, 0.56)', stroke: 'rgba(29, 171, 214, 0.92)' },
+        mountain: { fill: 'rgba(196, 176, 79, 0.58)', stroke: 'rgba(196, 176, 79, 0.95)' },
+        ice: { fill: 'rgba(230, 230, 220, 0.56)', stroke: 'rgba(230, 230, 220, 0.95)' }
+      };
+      const sideStyle = {
+        A: { fill: '#1d4ed8', stroke: '#bfdbfe' },
+        B: { fill: '#7c3aed', stroke: '#e9d5ff' },
+        N: { fill: '#334155', stroke: '#cbd5e1' }
+      };
+
+      let viewW = 0;
+      let viewH = 0;
+      let cols = 0;
+      let rows = 0;
+      let boardMinC = 0;
+      let boardMaxC = 0;
+      let boardMinR = 0;
+      let boardMaxR = 0;
+      let terrainState = null;
+
+      let ones = [];
+      let twos = [];
+      let leaders = [];
+      const paint = new Map();
+      let scoreA = 0;
+      let scoreB = 0;
+      let lastTick = performance.now();
+      let controlledLeaderAId = 'A3-0';
+      let controlledLeaderId = 'B3-0';
+
+      function key(c, r) {
+        return c + ',' + r;
+      }
+      function parseKey(k) {
+        const [c, r] = k.split(',').map(Number);
+        return { c, r };
+      }
+
+      function oddQToCube(c, r) {
+        const x = c;
+        const z = r - (c - (c & 1)) / 2;
+        const y = -x - z;
+        return { x, y, z };
+      }
+      function cubeToOddQ(x, y, z) {
+        return { c: x, r: z + (x - (x & 1)) / 2 };
+      }
+      function cubeRound(x, y, z) {
+        let rx = Math.round(x);
+        let ry = Math.round(y);
+        let rz = Math.round(z);
+        const dx = Math.abs(rx - x);
+        const dy = Math.abs(ry - y);
+        const dz = Math.abs(rz - z);
+        if (dx > dy && dx > dz) rx = -ry - rz;
+        else if (dy > dz) ry = -rx - rz;
+        else rz = -rx - ry;
+        return { x: rx, y: ry, z: rz };
+      }
+      function cubeDistance(a, b) {
+        return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y), Math.abs(a.z - b.z));
+      }
+      function pathBetween(a, b) {
+        const ac = oddQToCube(a.c, a.r);
+        const bc = oddQToCube(b.c, b.r);
+        const n = Math.max(1, cubeDistance(ac, bc));
+        const out = [];
+        for (let i = 0; i <= n; i++) {
+          const t = i / n;
+          const p = cubeRound(ac.x + (bc.x - ac.x) * t, ac.y + (bc.y - ac.y) * t, ac.z + (bc.z - ac.z) * t);
+          const h = cubeToOddQ(p.x, p.y, p.z);
+          if (!out.length || out[out.length - 1].c !== h.c || out[out.length - 1].r !== h.r) out.push(h);
+        }
+        return out;
+      }
+
+      function getNeighbors(c, r) {
+        const even = (c & 1) === 0;
+        const dirsEven = [{ dc: 1, dr: 0 }, { dc: 1, dr: -1 }, { dc: 0, dr: -1 }, { dc: -1, dr: -1 }, { dc: -1, dr: 0 }, { dc: 0, dr: 1 }];
+        const dirsOdd = [{ dc: 1, dr: 1 }, { dc: 1, dr: 0 }, { dc: 0, dr: -1 }, { dc: -1, dr: 0 }, { dc: -1, dr: 1 }, { dc: 0, dr: 1 }];
+        const base = even ? dirsEven : dirsOdd;
+        return base.map(d => ({ c: c + d.dc, r: r + d.dr }));
+      }
+
+      function inBoard(c, r) {
+        return c >= boardMinC && c <= boardMaxC && r >= boardMinR && r <= boardMaxR;
+      }
+      function isLakeCell(side, c, r) {
+        return terrainState[side === 'A' ? 'leftLakeCells' : 'rightLakeCells'].has(key(c, r));
+      }
+      function isWaterCell(c, r) {
+        return terrainState.leftLakeCells.has(key(c, r)) ||
+          terrainState.rightLakeCells.has(key(c, r)) ||
+          terrainState.riverCells.has(key(c, r));
+      }
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function hexCenter(c, r) {
+        const x = c * STEP_X + SIZE;
+        const y = r * STEP_Y + ((c & 1) ? STEP_Y / 2 : 0) + SIZE;
+        return { x, y };
+      }
+      function pixelToHex(x, y) {
+        const c = Math.round((x - SIZE) / STEP_X);
+        const ro = (c & 1) ? STEP_Y / 2 : 0;
+        const r = Math.round((y - ro - SIZE) / STEP_Y);
+        return { c, r };
+      }
+      function drawHex(cx, cy, fill, stroke, lw) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (Math.PI / 180) * (60 * i);
+          const x = cx + SIZE * Math.cos(a);
+          const y = cy + SIZE * Math.sin(a);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = lw || 1;
+          ctx.stroke();
+        }
+      }
+      function paintCell(c, r, style) {
+        const cc = hexCenter(c, r);
+        drawHex(cc.x, cc.y, style.fill, style.stroke, 1.25);
+      }
+      function paintPath(points, style) {
+        for (const p of points) paintCell(p.c, p.r, style);
+      }
+      function paintBlob(centerC, centerR, radius, style, collector) {
+        for (let dc = -radius; dc <= radius; dc++) {
+          for (let dr = -radius; dr <= radius; dr++) {
+            if (Math.abs(dc) + Math.abs(dr) > radius + 1) continue;
+            const c = centerC + dc;
+            const r = centerR + dr;
+            paintCell(c, r, style);
+            if (collector) collector.add(key(c, r));
+          }
+        }
+      }
+      function drawLabel(text, c, r, color) {
+        const p = hexCenter(c, r);
+        ctx.fillStyle = color || 'rgba(230,236,246,0.95)';
+        ctx.font = '600 28px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, p.x, p.y);
+      }
+
+      function pickFreeCell(side) {
+        for (let tries = 0; tries < 300; tries++) {
+          const cMin = side === 'A' ? boardMinC + 3 : Math.floor((boardMinC + boardMaxC) / 2) + 2;
+          const cMax = side === 'A' ? Math.floor((boardMinC + boardMaxC) / 2) - 2 : boardMaxC - 3;
+          const c = randomInt(cMin, cMax);
+          const r = randomInt(boardMinR + 4, boardMaxR - 4);
+          if (!isOccupied(c, r)) return { c, r };
+        }
+        return { c: side === 'A' ? boardMinC + 4 : boardMaxC - 4, r: Math.floor((boardMinR + boardMaxR) / 2) };
+      }
+      function isOccupied(c, r) {
+        for (const o of ones) if (o.c === c && o.r === r) return true;
+        for (const t of twos) {
+          for (const s of t.segs) if (s.c === c && s.r === r) return true;
+        }
+        for (const l of leaders) if (l.c === c && l.r === r) return true;
+        return false;
+      }
+
+      function initGame() {
+        viewW = canvas.clientWidth || window.innerWidth;
+        viewH = canvas.clientHeight || window.innerHeight;
+        cols = Math.ceil((viewW + HEX_W) / STEP_X) + 1;
+        rows = Math.ceil((viewH + HEX_H) / STEP_Y) + 2;
+        boardMinC = 0;
+        boardMaxC = cols - 2;
+        boardMinR = 0;
+        boardMaxR = rows - 2;
+        computeTerrain();
+
+        ones = [];
+        twos = [];
+        leaders = [];
+        paint.clear();
+        scoreA = 0;
+        scoreB = 0;
+
+        const leftRiver = terrainState.leftRiver;
+        const rightRiver = terrainState.rightRiver;
+        const leftLake = terrainState.leftLake;
+        const rightLake = terrainState.rightLake;
+        const used = new Set();
+
+        function putNearRiver(river, side, i, level) {
+          const idx = Math.max(1, Math.min(river.length - 2, Math.floor((i + 1) * river.length / 5)));
+          const base = river[idx];
+          const nbs = getNeighbors(base.c, base.r).filter(n => inBoard(n.c, n.r));
+          const prefer = nbs.filter(n => (side === 'A' ? n.c < base.c : n.c > base.c));
+          const list = prefer.length ? prefer : nbs;
+          for (const n of list) {
+            const k = key(n.c, n.r);
+            if (!used.has(k)) {
+              used.add(k);
+              if (level === 1) ones.push({ id: '1-' + ones.length, c: n.c, r: n.r });
+              else twos.push({ id: '2-' + twos.length, side, segs: [{ c: n.c, r: n.r }] });
+              return;
+            }
+          }
+        }
+
+        // 1 1 1 1 по берегам рек
+        putNearRiver(leftRiver, 'A', 0, 1);
+        putNearRiver(leftRiver, 'A', 1, 1);
+        putNearRiver(rightRiver, 'B', 0, 1);
+        putNearRiver(rightRiver, 'B', 1, 1);
+
+        // 2 2 2 2 по берегам рек
+        putNearRiver(leftRiver, 'A', 2, 2);
+        putNearRiver(leftRiver, 'A', 3, 2);
+        putNearRiver(rightRiver, 'B', 2, 2);
+        putNearRiver(rightRiver, 'B', 3, 2);
+
+        // Запасной вариант, если где-то не хватило места.
+        while (ones.length < 4) {
+          const p = pickFreeCell(ones.length < 2 ? 'A' : 'B');
+          ones.push({ id: '1-' + ones.length, c: p.c, r: p.r });
+        }
+        while (twos.length < 4) {
+          const side = twos.length < 2 ? 'A' : 'B';
+          const p = pickFreeCell(side);
+          twos.push({ id: '2-' + twos.length, side, segs: [{ c: p.c, r: p.r }] });
+        }
+
+        function shoreNearLake(lake, side) {
+          const ring = [];
+          for (let dc = -4; dc <= 4; dc++) {
+            for (let dr = -4; dr <= 4; dr++) {
+              const c = lake.c + dc;
+              const r = lake.r + dr;
+              if (!inBoard(c, r)) continue;
+              const k = key(c, r);
+              if (terrainState.leftLakeCells.has(k) || terrainState.rightLakeCells.has(k) || terrainState.riverCells.has(k)) continue;
+              const nbs = getNeighbors(c, r);
+              const nearLake = nbs.some(n => terrainState.leftLakeCells.has(key(n.c, n.r)) || terrainState.rightLakeCells.has(key(n.c, n.r)));
+              if (!nearLake) continue;
+              ring.push({ c, r });
+            }
+          }
+          ring.sort((a, b) => (side === 'A' ? a.c - b.c : b.c - a.c));
+          return ring[0] || (side === 'A' ? { c: lake.c - 3, r: lake.r } : { c: lake.c + 3, r: lake.r });
+        }
+
+        // 3 3 на берегу озер (не в воде)
+        const aShore = shoreNearLake(leftLake, 'A');
+        const bShore = shoreNearLake(rightLake, 'B');
+        leaders.push({ id: 'A3-0', side: 'A', c: aShore.c, r: aShore.r, cargoTrain: [], frozen: false, frozenFrameKeys: null });
+        leaders.push({ id: 'B3-0', side: 'B', c: bShore.c, r: bShore.r, cargoTrain: [], frozen: false, frozenFrameKeys: null });
+        controlledLeaderAId = 'A3-0';
+        controlledLeaderId = 'B3-0';
+      }
+
+      function moveTrain(train, target) {
+        const prev = train.segs.map(s => ({ c: s.c, r: s.r }));
+        train.segs[0] = target;
+        for (let i = 1; i < train.segs.length; i++) train.segs[i] = prev[i - 1];
+      }
+      function maybeAttachOne(train) {
+        const head = train.segs[0];
+        for (let i = 0; i < ones.length; i++) {
+          const o = ones[i];
+          if (Math.abs(o.c - head.c) + Math.abs(o.r - head.r) <= 1) {
+            if (train.segs.length < 3) {
+              const tail = train.segs[train.segs.length - 1];
+              train.segs.push({ c: tail.c, r: tail.r });
+              ones.splice(i, 1);
+            }
+            return;
+          }
+        }
+      }
+      function paintByTrain(train) {
+        for (const s of train.segs) paint.set(key(s.c, s.r), train.side);
+      }
+      function randomMoveTwo(train) {
+        const head = train.segs[0];
+        const opts = getNeighbors(head.c, head.r).filter(n => inBoard(n.c, n.r) && !isWaterCell(n.c, n.r));
+        const free = opts.filter(n => !leaders.some(l => l.c === n.c && l.r === n.r));
+        if (!free.length) return;
+        const enemy = train.side === 'A' ? 'B' : 'A';
+        let allowed = free;
+        if (train.segs.length > 1) allowed = free.filter(n => paint.get(key(n.c, n.r)) !== enemy);
+        const next = (allowed.length ? allowed : free)[randomInt(0, (allowed.length ? allowed : free).length - 1)];
+        moveTrain(train, next);
+        if (train.segs.length === 1) maybeAttachOne(train);
+        if (train.segs.length > 1) paintByTrain(train);
+      }
+      function tickTwos() {
+        for (const t of twos) randomMoveTwo(t);
+      }
+      function catchByLeaders() {
+        for (const l of leaders) {
+          const near = new Set(getNeighbors(l.c, l.r).map(n => key(n.c, n.r)));
+          for (let i = twos.length - 1; i >= 0; i--) {
+            const t = twos[i];
+            if (t.side !== l.side) continue;
+            const hk = key(t.segs[0].c, t.segs[0].r);
+            if (hk === key(l.c, l.r) || near.has(hk)) {
+              const grabbed = t.segs.map((s, idx) => ({ c: s.c, r: s.r, level: idx === 0 ? 2 : 1 }));
+              if (!l.cargoTrain || !l.cargoTrain.length) l.cargoTrain = grabbed;
+              else l.cargoTrain = l.cargoTrain.concat(grabbed);
+              twos.splice(i, 1);
+            }
+          }
+        }
+      }
+      function maybeAttachOneToLeaderCargo(l) {
+        if (!l.cargoTrain || !l.cargoTrain.length) return;
+        if (l.cargoTrain[0].level !== 2) return; // сначала обязательно захваченная 2
+        const two = l.cargoTrain[0];
+        const near = new Set(getNeighbors(two.c, two.r).map(n => key(n.c, n.r)));
+        for (let i = 0; i < ones.length; i++) {
+          const o = ones[i];
+          const ok = key(o.c, o.r);
+          if (ok === key(two.c, two.r) || near.has(ok)) {
+            l.cargoTrain.push({ c: two.c, r: two.r, level: 1 });
+            ones.splice(i, 1);
+            return;
+          }
+        }
+      }
+      function deliverLeaders() {
+        for (const l of leaders) {
+          if (!l.cargoTrain || !l.cargoTrain.length) continue;
+          if (isLakeCell(l.side, l.c, l.r)) {
+            if (l.side === 'A') scoreA++; else scoreB++;
+            l.cargoTrain = [];
+          }
+        }
+      }
+      /** Клетка «у воды» для стороны: своя река или своё озеро (на воде или в соседе с водой). */
+      function isNearRiverOrLake(side, c, r) {
+        const river = side === 'A' ? terrainState.leftRiver : terrainState.rightRiver;
+        const rk = new Set(river.map(p => key(p.c, p.r)));
+        if (rk.has(key(c, r))) return true;
+        if (getNeighbors(c, r).some(n => rk.has(key(n.c, n.r)))) return true;
+        const lakeCells = side === 'A' ? terrainState.leftLakeCells : terrainState.rightLakeCells;
+        if (lakeCells.has(key(c, r))) return true;
+        return getNeighbors(c, r).some(n => lakeCells.has(key(n.c, n.r)));
+      }
+      function riverProximityIndex(side, c, r) {
+        const river = side === 'A' ? terrainState.leftRiver : terrainState.rightRiver;
+        const p = oddQToCube(c, r);
+        let best = Infinity;
+        let bestIdx = 0;
+        for (let i = 0; i < river.length; i++) {
+          const q = oddQToCube(river[i].c, river[i].r);
+          const d = cubeDistance(p, q);
+          if (d < best) {
+            best = d;
+            bestIdx = i;
+          }
+        }
+        return bestIdx;
+      }
+
+      function claimRiverBankTerritory(l) {
+        if (l.frozen) return;
+        if (!l.cargoTrain || !l.cargoTrain.length) return;
+        const chain = [{ c: l.c, r: l.r, level: 3 }, ...l.cargoTrain.map(s => ({ c: s.c, r: s.r, level: s.level }))];
+        if (chain.length !== 5) return;
+
+        let nearCount = 0;
+        for (const s of chain) {
+          if (isNearRiverOrLake(l.side, s.c, s.r)) nearCount++;
+        }
+        if (nearCount !== chain.length) return; // весь поезд вдоль реки или озера
+
+        const along = chain
+          .map((s) => ({ s, idx: riverProximityIndex(l.side, s.c, s.r) }))
+          .sort((a, b) => a.idx - b.idx || a.s.c - b.s.c || a.s.r - b.s.r);
+        const levelsAlong = along.map((x) => x.s.level);
+        const patterns = [
+          [3, 2, 2, 1, 1],
+          [1, 1, 2, 2, 3],
+          [3, 2, 1, 2, 1],
+          [1, 2, 1, 2, 3]
+        ];
+        const ok = patterns.some((p) => p.every((v, i) => levelsAlong[i] === v));
+        if (!ok) return;
+
+        // Поезд вдоль реки/озера: обводим только клетки самого состава.
+        for (const s of chain) {
+          paint.set(key(s.c, s.r), l.side);
+        }
+        l.frozenFrameKeys = new Set(chain.map((s) => key(s.c, s.r)));
+        l.frozen = true;
+      }
+
+      function applyLeaderMoveById(leaderId, dirIdx) {
+        const dirsEven = [{ dc: 1, dr: 0 }, { dc: 1, dr: -1 }, { dc: 0, dr: -1 }, { dc: -1, dr: -1 }, { dc: -1, dr: 0 }, { dc: 0, dr: 1 }];
+        const dirsOdd = [{ dc: 1, dr: 1 }, { dc: 1, dr: 0 }, { dc: 0, dr: -1 }, { dc: -1, dr: 0 }, { dc: -1, dr: 1 }, { dc: 0, dr: 1 }];
+        const l = leaders.find(x => x.id === leaderId);
+        if (!l) return;
+        if (l.frozen) return;
+        const d = (l.c & 1) ? dirsOdd[dirIdx] : dirsEven[dirIdx];
+        const nc = l.c + d.dc;
+        const nr = l.r + d.dr;
+        if (!inBoard(nc, nr) || isWaterCell(nc, nr)) return;
+        const prevHead = { c: l.c, r: l.r };
+        const prevCargo = l.cargoTrain ? l.cargoTrain.map(s => ({ c: s.c, r: s.r, level: s.level })) : [];
+        l.c = nc;
+        l.r = nr;
+        if (prevCargo.length) {
+          l.cargoTrain[0] = { c: prevHead.c, r: prevHead.r, level: prevCargo[0].level };
+          for (let i = 1; i < prevCargo.length; i++) {
+            l.cargoTrain[i] = { c: prevCargo[i - 1].c, r: prevCargo[i - 1].r, level: prevCargo[i].level };
+          }
+        }
+        maybeAttachOneToLeaderCargo(l);
+        catchByLeaders();
+        claimRiverBankTerritory(l);
+        deliverLeaders();
+      }
+
+      function onKey(e) {
+        const k = e.key.toLowerCase();
+        const code = e.code;
+        const mapLeftByKey = { x: 0, d: 0, e: 1, w: 2, a: 3, z: 4, s: 5 };
+        const mapRightByKey = { m: 0, i: 1, u: 2, h: 3, n: 4, k: 5 };
+        const mapLeftByCode = { KeyX: 0, KeyD: 0, KeyE: 1, KeyW: 2, KeyA: 3, KeyZ: 4, KeyS: 5 };
+        const mapRightByCode = { KeyM: 0, KeyI: 1, KeyU: 2, KeyH: 3, KeyN: 4, KeyK: 5 };
+        const leftDir = mapLeftByCode[code] != null ? mapLeftByCode[code] : mapLeftByKey[k];
+        const rightDir = mapRightByCode[code] != null ? mapRightByCode[code] : mapRightByKey[k];
+        if (leftDir != null) {
+          e.preventDefault();
+          applyLeaderMoveById(controlledLeaderAId, leftDir);
+          draw();
+        } else if (rightDir != null) {
+          e.preventDefault();
+          applyLeaderMoveById(controlledLeaderId, rightDir);
+          draw();
+        } else if (k === 'j' || code === 'KeyJ') {
+          e.preventDefault();
+          draw();
+        }
+      }
+
+      function drawToken(c, r, level, side, isLeader, hasCargo) {
+        const p = hexCenter(c, r);
+        const style = sideStyle[side || 'N'];
+        const rr = Math.max(8, HEX_W * (isLeader ? 0.34 : 0.28));
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+        ctx.fillStyle = style.fill;
+        ctx.fill();
+        ctx.strokeStyle = style.stroke;
+        ctx.lineWidth = isLeader ? 3 : 2;
+        ctx.stroke();
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = `700 ${isLeader ? 20 : 17}px system-ui,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(level), p.x, p.y + 0.5);
+        if (hasCargo) {
+          ctx.fillStyle = '#fde68a';
+          ctx.beginPath();
+          ctx.arc(p.x + rr * 0.75, p.y - rr * 0.75, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function computeTerrain() {
+        const mountain = pixelToHex(viewW * 0.50, viewH * 0.24);
+        const leftLake = pixelToHex(viewW * 0.20, viewH * 0.77);
+        const rightLake = pixelToHex(viewW * 0.76, viewH * 0.77);
+        const leftLakeCells = new Set();
+        const rightLakeCells = new Set();
+        const riverCells = new Set();
+        const leftRiver = pathBetween({ c: mountain.c - 1, r: mountain.r + 1 }, { c: leftLake.c + 1, r: leftLake.r - 1 });
+        const rightRiver = pathBetween({ c: mountain.c + 1, r: mountain.r + 1 }, { c: rightLake.c - 1, r: rightLake.r - 1 });
+        for (let dc = -2; dc <= 2; dc++) {
+          for (let dr = -2; dr <= 2; dr++) {
+            if (Math.abs(dc) + Math.abs(dr) > 3) continue;
+            leftLakeCells.add(key(leftLake.c + dc, leftLake.r + dr));
+            rightLakeCells.add(key(rightLake.c + dc, rightLake.r + dr));
+          }
+        }
+        for (const p of leftRiver) riverCells.add(key(p.c, p.r));
+        for (const p of rightRiver) riverCells.add(key(p.c, p.r));
+        terrainState = { mountain, leftLake, rightLake, leftLakeCells, rightLakeCells, riverCells, leftRiver, rightRiver };
+      }
+
+      function drawTerrain() {
+        const { mountain, leftLake, rightLake, leftLakeCells, rightLakeCells } = terrainState;
+        paintBlob(leftLake.c, leftLake.r, 2, terrain.lake, leftLakeCells);
+        paintBlob(rightLake.c, rightLake.r, 2, terrain.lake, rightLakeCells);
+        paintBlob(mountain.c, mountain.r, 3, terrain.mountain);
+        paintBlob(mountain.c, mountain.r + 1, 1, terrain.ice);
+        const leftRiver = terrainState.leftRiver;
+        const rightRiver = terrainState.rightRiver;
+        paintPath(leftRiver, terrain.river);
+        paintPath(rightRiver, terrain.river);
+        drawLabel('река', leftRiver[Math.floor(leftRiver.length * 0.45)].c - 1, leftRiver[Math.floor(leftRiver.length * 0.45)].r);
+        drawLabel('река', rightRiver[Math.floor(rightRiver.length * 0.55)].c + 1, rightRiver[Math.floor(rightRiver.length * 0.55)].r);
+        drawLabel('озеро', leftLake.c, leftLake.r);
+        drawLabel('озеро', rightLake.c, rightLake.r);
+        drawLabel('гора', mountain.c, mountain.r - 1, 'rgba(33,33,33,0.95)');
+        drawLabel('лед', mountain.c, mountain.r + 1);
+      }
+
+      function getHexVertices(c, r) {
+        const p = hexCenter(c, r);
+        const out = [];
+        for (let i = 0; i < 6; i++) {
+          const a = (Math.PI / 180) * (60 * i);
+          out.push({ x: p.x + SIZE * Math.cos(a), y: p.y + SIZE * Math.sin(a) });
+        }
+        return out;
+      }
+
+      function pointKeyHex(pt) {
+        return pt.x.toFixed(2) + ',' + pt.y.toFixed(2);
+      }
+      function segKeyHex(a, b) {
+        const ak = pointKeyHex(a);
+        const bk = pointKeyHex(b);
+        return ak < bk ? ak + '|' + bk : bk + '|' + ak;
+      }
+
+      function segmentCountsForCellKeys(cellKeySet) {
+        const segCount = new Map();
+        for (const k of cellKeySet) {
+          const cell = parseKey(k);
+          const verts = getHexVertices(cell.c, cell.r);
+          for (let i = 0; i < 6; i++) {
+            const a = verts[i];
+            const b = verts[(i + 1) % 6];
+            const sk = segKeyHex(a, b);
+            segCount.set(sk, (segCount.get(sk) || 0) + 1);
+          }
+        }
+        return segCount;
+      }
+
+      function strokeHexOutlineSegments(segCount, strokeStyle, lineWidth) {
+        ctx.save();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        for (const [sk, cnt] of segCount.entries()) {
+          if (cnt !== 1) continue;
+          const [pa, pb] = sk.split('|');
+          const [ax, ay] = pa.split(',').map(Number);
+          const [bx, by] = pb.split(',').map(Number);
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function dilateCellKeysOnLand(cellKeys) {
+        const out = new Set(cellKeys);
+        for (const k of cellKeys) {
+          const { c, r } = parseKey(k);
+          for (const n of getNeighbors(c, r)) {
+            if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+            out.add(key(n.c, n.r));
+          }
+        }
+        return out;
+      }
+
+      function drawTerritoryBorders(side) {
+        const keys = new Set();
+        for (const [k, owner] of paint.entries()) {
+          if (owner === side) keys.add(k);
+        }
+        if (!keys.size) return;
+        const segCount = segmentCountsForCellKeys(keys);
+        strokeHexOutlineSegments(
+          segCount,
+          side === 'A' ? 'rgba(34,197,94,0.95)' : 'rgba(245,158,11,0.95)',
+          Math.max(3, SIZE * 0.34)
+        );
+      }
+
+      /** Вторая рамка снаружи (как на картинке): контур расширенного на кольцо соседей участка 32211. */
+      function drawFrozenSecondFrame(l) {
+        if (!l.frozen || !l.frozenFrameKeys || !l.frozenFrameKeys.size) return;
+        const dilated = dilateCellKeysOnLand(l.frozenFrameKeys);
+        const segCount = segmentCountsForCellKeys(dilated);
+        strokeHexOutlineSegments(
+          segCount,
+          l.side === 'A' ? 'rgba(52,211,153,0.88)' : 'rgba(253,224,71,0.88)',
+          Math.max(4.2, SIZE * 0.44)
+        );
+      }
+
+      function draw() {
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        viewW = canvas.clientWidth || window.innerWidth;
+        viewH = canvas.clientHeight || window.innerHeight;
+        canvas.width = Math.floor(viewW * dpr);
+        canvas.height = Math.floor(viewH * dpr);
+        canvas.style.width = viewW + 'px';
+        canvas.style.height = viewH + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, viewW, viewH);
+
+        cols = Math.ceil((viewW + HEX_W) / STEP_X) + 1;
+        rows = Math.ceil((viewH + HEX_H) / STEP_Y) + 2;
+        boardMinC = 0;
+        boardMaxC = cols - 2;
+        boardMinR = 0;
+        boardMaxR = rows - 2;
+
+        for (let c = -1; c < cols; c++) {
+          for (let r = -1; r < rows; r++) {
+            const p = hexCenter(c, r);
+            if (p.x < -HEX_W || p.x > viewW + HEX_W || p.y < -HEX_H || p.y > viewH + HEX_H) continue;
+            const alt = (c + r) & 1;
+            let fill = alt ? 'rgba(37,99,235,0.07)' : 'rgba(30,41,59,0.26)';
+            drawHex(p.x, p.y, fill, 'rgba(148,163,184,0.35)', 1);
+          }
+        }
+
+        computeTerrain();
+        drawTerrain();
+        for (const l of leaders) claimRiverBankTerritory(l);
+        drawTerritoryBorders('A');
+        drawTerritoryBorders('B');
+        for (const l of leaders) drawFrozenSecondFrame(l);
+
+        for (const o of ones) drawToken(o.c, o.r, 1, 'N', false, false);
+        for (const t of twos) {
+          for (let i = t.segs.length - 1; i >= 1; i--) drawToken(t.segs[i].c, t.segs[i].r, 1, t.side, false, false);
+          drawToken(t.segs[0].c, t.segs[0].r, 2, t.side, false, false);
+        }
+        for (const l of leaders) {
+          if (l.cargoTrain && l.cargoTrain.length) {
+            for (const s of l.cargoTrain) drawToken(s.c, s.r, s.level, l.side, false, false);
+          }
+          drawToken(l.c, l.r, 3, l.side, true, l.cargoTrain && l.cargoTrain.length > 0);
+        }
+
+        hud.textContent =
+          '3 слева: WEASDZX, 3 справа: UIHJKNM (J - пауза) | 1 ждет, 2 ловит 1 и ограждает территорию | В реку и озеро ходить нельзя | Счёт A ' +
+          scoreA +
+          ' : ' +
+          scoreB +
+          ' B';
+      }
+
+      function loop(now) {
+        if (now - lastTick >= TICK_MS) {
+          tickTwos();
+          catchByLeaders();
+          deliverLeaders();
+          lastTick = now;
+        }
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      function reset() {
+        draw();
+        initGame();
+        draw();
+      }
+
+      window.addEventListener('keydown', onKey);
+      window.addEventListener('resize', reset);
+      initGame();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
