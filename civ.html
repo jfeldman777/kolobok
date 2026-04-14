@@ -135,8 +135,8 @@
       transform: translateX(-50%);
       z-index: 4;
       display: none;
-      grid-template-columns: repeat(5, 52px);
-      grid-template-rows: repeat(3, 44px);
+      grid-template-columns: repeat(3, 64px);
+      grid-template-rows: repeat(2, 44px);
       gap: 6px;
       padding: 8px;
       border: 1px solid #334155;
@@ -146,38 +146,16 @@
       backdrop-filter: blur(2px);
     }
     .mobile-controls button {
-      width: 52px;
+      width: 64px;
       height: 44px;
       border-radius: 10px;
       border: 1px solid #475569;
       background: #1f2937;
       color: #e2e8f0;
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 800;
       cursor: pointer;
       touch-action: manipulation;
-    }
-    .mobile-controls .mc-dir-2 { grid-column: 2; grid-row: 1; } /* ↖ */
-    .mobile-controls .mc-dir-1 { grid-column: 4; grid-row: 1; } /* ↗ */
-    .mobile-controls .mc-dir-3 { grid-column: 1; grid-row: 2; } /* ← */
-    .mobile-controls .mc-dir-0 { grid-column: 5; grid-row: 2; } /* → */
-    .mobile-controls .mc-dir-4 { grid-column: 2; grid-row: 3; } /* ↙ */
-    .mobile-controls .mc-dir-5 { grid-column: 4; grid-row: 3; } /* ↘ */
-    .mobile-controls .mc-center {
-      grid-column: 3;
-      grid-row: 2;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #93c5fd;
-      font-size: 16px;
-      font-weight: 800;
-      border: 1px dashed #475569;
-      border-radius: 10px;
-      background: rgba(31, 41, 55, 0.38);
-      -webkit-user-select: none;
-      user-select: none;
-      pointer-events: none;
     }
     .mobile-controls button:active { filter: brightness(1.15); }
     @media (max-width: 900px) {
@@ -216,13 +194,12 @@
     </div>
   </div>
   <div class="mobile-controls" id="mobileControls" aria-label="Мобильное управление">
-    <button type="button" class="mc-dir-2" data-dir="2">↖</button>
-    <button type="button" class="mc-dir-1" data-dir="1">↗</button>
-    <button type="button" class="mc-dir-3" data-dir="3">←</button>
-    <div class="mc-center" aria-hidden="true">⬢</div>
-    <button type="button" class="mc-dir-0" data-dir="0">→</button>
-    <button type="button" class="mc-dir-4" data-dir="4">↙</button>
-    <button type="button" class="mc-dir-5" data-dir="5">↘</button>
+    <button type="button" data-dir="3">СЗ</button>
+    <button type="button" data-dir="2">С</button>
+    <button type="button" data-dir="1">СВ</button>
+    <button type="button" data-dir="4">ЮЗ</button>
+    <button type="button" data-dir="5">Ю</button>
+    <button type="button" data-dir="0">ЮВ</button>
   </div>
   <script>
     (function () {
@@ -998,18 +975,23 @@
 
       function computeTerrain() {
         const cfg = fieldVariants[ACTIVE_FIELD_VARIANT] || fieldVariants.A;
+        const isMobile = window.matchMedia('(max-width: 900px)').matches;
         const mountain = pixelToHex(viewW * cfg.mountainX, viewH * cfg.mountainY);
         const leftLake = pixelToHex(viewW * cfg.leftLakeX, viewH * cfg.lakeY);
         const rightLake = pixelToHex(viewW * cfg.rightLakeX, viewH * cfg.lakeY);
         const leftLakeCells = new Set();
         const rightLakeCells = new Set();
         const riverCells = new Set();
-        // Одна река: от горы к левому озеру.
-        const leftRiver = pathBetween({ c: mountain.c - 1, r: mountain.r + 3 }, { c: leftLake.c + 1, r: leftLake.r - 1 });
+        // Одна река: на телефоне немного длиннее.
+        const leftRiver = isMobile
+          ? pathBetween({ c: mountain.c - 1, r: mountain.r + 2 }, { c: leftLake.c + 1, r: leftLake.r - 1 })
+          : pathBetween({ c: mountain.c - 1, r: mountain.r + 3 }, { c: leftLake.c + 1, r: leftLake.r - 1 });
         const rightRiver = [];
-        for (let dc = -2; dc <= 2; dc++) {
-          for (let dr = -2; dr <= 2; dr++) {
-            if (Math.abs(dc) + Math.abs(dr) > 3) continue;
+        const lakeRadius = isMobile ? 1 : 2;
+        const lakeLimit = isMobile ? 2 : 3;
+        for (let dc = -lakeRadius; dc <= lakeRadius; dc++) {
+          for (let dr = -lakeRadius; dr <= lakeRadius; dr++) {
+            if (Math.abs(dc) + Math.abs(dr) > lakeLimit) continue;
             leftLakeCells.add(key(leftLake.c + dc, leftLake.r + dr));
           }
         }
@@ -1019,9 +1001,10 @@
       }
 
       function drawTerrain() {
+        const isMobile = window.matchMedia('(max-width: 900px)').matches;
         const { mountain, leftLake, rightLake, leftLakeCells, rightLakeCells } = terrainState;
-        paintBlob(leftLake.c, leftLake.r, 2, terrain.lake, leftLakeCells);
-        paintBlob(mountain.c, mountain.r, 3, terrain.mountain);
+        paintBlob(leftLake.c, leftLake.r, isMobile ? 1 : 2, terrain.lake, leftLakeCells);
+        paintBlob(mountain.c, mountain.r, isMobile ? 2 : 3, terrain.mountain);
         paintBlob(mountain.c, mountain.r + 1, 1, terrain.ice);
         const leftRiver = terrainState.leftRiver;
         paintPath(leftRiver, terrain.river);
