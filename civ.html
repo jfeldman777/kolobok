@@ -232,6 +232,8 @@
       const mobileControls = document.getElementById('mobileControls');
       const rotateLock = document.getElementById('rotateLock');
       const RULES_STORAGE_KEY = 'agrarian-epoch-rules-seen-v1';
+      const DEMO_STATE_STORAGE_KEY = 'agrarian-epoch-demo-state-v1';
+      const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
 
       let HEX_W = 34;
       let SIZE = HEX_W / 2;
@@ -503,21 +505,45 @@
         return false;
       }
       function hasPotentialSettlementSpace(side) {
+        // Для нового поселения нужен непрерывный участок из 5 береговых сухих клеток.
+        const candidate = new Set();
         for (let c = boardMinC; c <= boardMaxC; c++) {
           for (let r = boardMinR; r <= boardMaxR; r++) {
             if (isWaterCell(c, r)) continue;
-            if (blockedBySettlements.has(key(c, r))) continue;
+            const k = key(c, r);
+            if (blockedBySettlements.has(k)) continue;
             if (!isNearRiverOrLake(side, c, r)) continue;
-            const nbs = getNeighbors(c, r);
-            const hasFreeNeighbor = nbs.some((n) =>
-              inBoard(n.c, n.r) &&
-              !isWaterCell(n.c, n.r) &&
-              !blockedBySettlements.has(key(n.c, n.r))
-            );
-            if (hasFreeNeighbor) return true;
+            candidate.add(k);
+          }
+        }
+        if (candidate.size < 5) return false;
+        const visited = new Set();
+        for (const start of candidate) {
+          if (visited.has(start)) continue;
+          const queue = [start];
+          visited.add(start);
+          let compSize = 0;
+          while (queue.length) {
+            const cur = queue.shift();
+            compSize++;
+            if (compSize >= 5) return true;
+            const { c, r } = parseKey(cur);
+            for (const n of getNeighbors(c, r)) {
+              const nk = key(n.c, n.r);
+              if (!candidate.has(nk) || visited.has(nk)) continue;
+              visited.add(nk);
+              queue.push(nk);
+            }
           }
         }
         return false;
+      }
+      function maybeFinishEpochIfNoSpace() {
+        if (epochFinished) return;
+        if (!hasPotentialSettlementSpace('A')) {
+          epochFinished = true;
+          phaseNotice = 'Эпоха завершена: больше негде собрать новое поселение. Ходов игрока: ' + playerMoves;
+        }
       }
       function shoreNearLakeForSide(side) {
         const lake = side === 'A' ? terrainState.leftLake : terrainState.rightLake;
@@ -707,6 +733,86 @@
           controlledLeaderId = bId;
         } else {
           controlledLeaderId = null;
+        }
+      }
+      function getGameStateSnapshot() {
+        const leaderState = leaders.map((l) => ({
+          id: l.id,
+          side: l.side,
+          c: l.c,
+          r: l.r,
+          frozen: !!l.frozen,
+          cargoTrain: Array.isArray(l.cargoTrain)
+            ? l.cargoTrain.map((s) => ({ c: s.c, r: s.r, level: s.level }))
+            : [],
+          frozenFrameKeys: l.frozenFrameKeys instanceof Set ? Array.from(l.frozenFrameKeys) : []
+        }));
+        return {
+          ones: ones.map((o) => ({ id: o.id, c: o.c, r: o.r })),
+          twos: twos.map((t) => ({
+            id: t.id,
+            side: t.side,
+            segs: Array.isArray(t.segs) ? t.segs.map((s) => ({ c: s.c, r: s.r })) : []
+          })),
+          leaders: leaderState,
+          scoreA,
+          scoreB,
+          playerMoves,
+          epochFinished,
+          phaseNotice,
+          controlledLeaderAId,
+          controlledLeaderId,
+          leaderSpawnSeqA,
+          leaderSpawnSeqB
+        };
+      }
+      function applyGameStateSnapshot(state) {
+        if (!state || typeof state !== 'object') return false;
+        if (!Array.isArray(state.ones) || !Array.isArray(state.twos) || !Array.isArray(state.leaders)) return false;
+        ones = state.ones.map((o) => ({ id: o.id, c: o.c, r: o.r }));
+        twos = state.twos.map((t) => ({
+          id: t.id,
+          side: t.side,
+          segs: Array.isArray(t.segs) ? t.segs.map((s) => ({ c: s.c, r: s.r })) : []
+        }));
+        leaders = state.leaders.map((l) => ({
+          id: l.id,
+          side: l.side,
+          c: l.c,
+          r: l.r,
+          frozen: !!l.frozen,
+          cargoTrain: Array.isArray(l.cargoTrain)
+            ? l.cargoTrain.map((s) => ({ c: s.c, r: s.r, level: s.level }))
+            : [],
+          frozenFrameKeys: Array.isArray(l.frozenFrameKeys) ? new Set(l.frozenFrameKeys) : null
+        }));
+        scoreA = Number(state.scoreA) || 0;
+        scoreB = Number(state.scoreB) || 0;
+        playerMoves = Number(state.playerMoves) || 0;
+        epochFinished = Boolean(state.epochFinished);
+        phaseNotice = typeof state.phaseNotice === 'string' ? state.phaseNotice : '';
+        controlledLeaderAId = state.controlledLeaderAId || null;
+        controlledLeaderId = state.controlledLeaderId || null;
+        leaderSpawnSeqA = Number(state.leaderSpawnSeqA) || 0;
+        leaderSpawnSeqB = Number(state.leaderSpawnSeqB) || 0;
+        rebuildSettlementPaint();
+        return true;
+      }
+      function saveStateForDemoToggle() {
+        try {
+          const snapshot = getGameStateSnapshot();
+          sessionStorage.setItem(DEMO_STATE_STORAGE_KEY, JSON.stringify(snapshot));
+        } catch (_) {}
+      }
+      function tryRestoreStateAfterDemoToggle() {
+        try {
+          const raw = sessionStorage.getItem(DEMO_STATE_STORAGE_KEY);
+          if (!raw) return false;
+          sessionStorage.removeItem(DEMO_STATE_STORAGE_KEY);
+          const state = JSON.parse(raw);
+          return applyGameStateSnapshot(state);
+        } catch (_) {
+          return false;
         }
       }
 
@@ -909,6 +1015,87 @@
         deliverLeaders();
         return true;
       }
+      function legalLeaderMoves(l) {
+        if (!l || l.frozen) return [];
+        const dirsEven = [{ dc: 1, dr: 0 }, { dc: 1, dr: -1 }, { dc: 0, dr: -1 }, { dc: -1, dr: -1 }, { dc: -1, dr: 0 }, { dc: 0, dr: 1 }];
+        const dirsOdd = [{ dc: 1, dr: 1 }, { dc: 1, dr: 0 }, { dc: 0, dr: -1 }, { dc: -1, dr: 0 }, { dc: -1, dr: 1 }, { dc: 0, dr: 1 }];
+        const dirs = (l.c & 1) ? dirsOdd : dirsEven;
+        const out = [];
+        for (let dirIdx = 0; dirIdx < 6; dirIdx++) {
+          const d = dirs[dirIdx];
+          const nc = l.c + d.dc;
+          const nr = l.r + d.dr;
+          if (!inBoard(nc, nr) || isWaterCell(nc, nr)) continue;
+          if (blockedBySettlements.has(key(nc, nr))) continue;
+          if (isOccupied(nc, nr)) continue;
+          out.push({ dirIdx, nc, nr });
+        }
+        return out;
+      }
+      function cargoAfterMove(l, nc, nr) {
+        const prevHead = { c: l.c, r: l.r };
+        const prevCargo = l.cargoTrain ? l.cargoTrain.map(s => ({ c: s.c, r: s.r, level: s.level })) : [];
+        const moved = [];
+        if (prevCargo.length) {
+          moved[0] = { c: prevHead.c, r: prevHead.r, level: prevCargo[0].level };
+          for (let i = 1; i < prevCargo.length; i++) {
+            moved[i] = { c: prevCargo[i - 1].c, r: prevCargo[i - 1].r, level: prevCargo[i].level };
+          }
+        }
+        return [{ c: nc, r: nr, level: 3 }].concat(moved);
+      }
+      function nearestDistanceFromCell(c, r, cells) {
+        if (!cells || !cells.length) return Infinity;
+        const from = oddQToCube(c, r);
+        let best = Infinity;
+        for (const cell of cells) {
+          const to = oddQToCube(cell.c, cell.r);
+          const d = cubeDistance(from, to);
+          if (d < best) best = d;
+        }
+        return best;
+      }
+      function pickDemoDirForLeader(l) {
+        const options = legalLeaderMoves(l);
+        if (!options.length) return null;
+        const hasTwo = l.cargoTrain && l.cargoTrain.some(s => s.level === 2);
+        const needCargo = !l.cargoTrain || l.cargoTrain.length < 4;
+        const twoTargets = twos.filter(t => t.side === l.side).map(t => ({ c: t.segs[0].c, r: t.segs[0].r }));
+        const oneTargets = ones.map(o => ({ c: o.c, r: o.r }));
+        let best = options[0];
+        let bestScore = -Infinity;
+        for (const option of options) {
+          let score = Math.random() * 0.25;
+          const chainAfterMove = cargoAfterMove(l, option.nc, option.nr);
+          const nearWaterCount = chainAfterMove.reduce((acc, s) => acc + (isNearRiverOrLake(l.side, s.c, s.r) ? 1 : 0), 0);
+          score += nearWaterCount * 4;
+          if (needCargo) {
+            const targetCells = hasTwo ? oneTargets : twoTargets;
+            const dist = nearestDistanceFromCell(option.nc, option.nr, targetCells);
+            if (Number.isFinite(dist)) score += 80 - dist * 11;
+          } else {
+            // Полный поезд тянем вдоль воды, чтобы быстрее образовывались поселения.
+            if (nearWaterCount === chainAfterMove.length) score += 90;
+            score += 55 - nearestDistanceFromCell(option.nc, option.nr, [{ c: terrainState.leftLake.c, r: terrainState.leftLake.r }]) * 4;
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            best = option;
+          }
+        }
+        return best.dirIdx;
+      }
+      function runDemoBotStep() {
+        if (!DEMO_MODE || epochFinished) return;
+        const id = ensureActiveControlledLeader('A');
+        if (!id) return;
+        const leader = leaders.find((x) => x.id === id);
+        if (!leader) return;
+        const dir = pickDemoDirForLeader(leader);
+        if (dir == null) return;
+        const moved = applyLeaderMoveById(id, dir);
+        if (moved) playerMoves++;
+      }
       function ensureActiveControlledLeader(side) {
         if (epochFinished) return null;
         const currentId = side === 'A' ? controlledLeaderAId : controlledLeaderId;
@@ -932,6 +1119,7 @@
       }
 
       function onKey(e) {
+        if (DEMO_MODE) return;
         const k = e.key.toLowerCase();
         const code = e.code;
         const mapLeftByKey = { x: 0, d: 0, e: 1, w: 2, a: 3, z: 4, s: 5 };
@@ -1189,15 +1377,18 @@
         drawOverlapMarkers();
 
         hud.textContent =
-          '3: WEASDZX (J - пауза) | 3 + 2 2 1 1 | В реку и озеро ходить нельзя | Ходы ' + playerMoves + ' | Счёт A ' + scoreA +
+          (DEMO_MODE ? 'ДЕМО: бот играет за A | наблюдение | ' : '3: WEASDZX (J - пауза) | ') +
+          '3 + 2 2 1 1 | В реку и озеро ходить нельзя | Ходы ' + playerMoves + ' | Счёт A ' + scoreA +
           (phaseNotice ? ' | ' + phaseNotice : '');
       }
 
       function loop(now) {
         if (now - lastTick >= TICK_MS) {
           tickTwos();
+          runDemoBotStep();
           catchByLeaders();
           deliverLeaders();
+          maybeFinishEpochIfNoSpace();
           lastTick = now;
         }
         draw();
@@ -1230,6 +1421,7 @@
       window.addEventListener('orientationchange', () => { refreshRotateLock(); draw(); });
       if (mobileControls) {
         mobileControls.addEventListener('click', (e) => {
+          if (DEMO_MODE) return;
           const btn = e.target.closest('button[data-dir]');
           if (!btn) return;
           const dir = Number(btn.getAttribute('data-dir'));
@@ -1245,6 +1437,7 @@
         });
       }
       initGame();
+      tryRestoreStateAfterDemoToggle();
       refreshRotateLock();
       try {
         if (screen.orientation && typeof screen.orientation.lock === 'function') {
