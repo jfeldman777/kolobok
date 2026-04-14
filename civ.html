@@ -42,23 +42,144 @@
       user-select: none;
       pointer-events: none;
     }
+    .rules-btn {
+      position: fixed;
+      top: 10px;
+      right: 12px;
+      z-index: 3;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: rgba(11, 18, 32, 0.78);
+      color: #e2e8f0;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .home-btn {
+      position: fixed;
+      top: 10px;
+      right: 54px;
+      z-index: 3;
+      width: 38px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: rgba(11, 18, 32, 0.78);
+      color: #e2e8f0;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .home-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: #e2e8f0;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .rules-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.66);
+      padding: 16px;
+    }
+    .rules-modal.open {
+      display: flex;
+    }
+    .rules-card {
+      width: min(680px, 95vw);
+      max-height: 88vh;
+      overflow: auto;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      background: #0b1220;
+      color: #dbeafe;
+      padding: 14px 16px;
+      line-height: 1.35;
+    }
+    .rules-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+    }
+    .rules-card p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+    .rules-card .rules-actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .rules-card button {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 7px 11px;
+      background: #111827;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <canvas id="field" aria-label="Поле Цивилизация"></canvas>
   <div class="hud">Цивилизация: шестиугольная сетка, ширина клетки ~40px</div>
+  <a class="home-btn" href="index.html" aria-label="Вернуться на главную" title="На главную">
+    <svg viewbox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M3 10.5 12 3l9 7.5"></path>
+      <path d="M5.5 9.8V21h13V9.8"></path>
+      <path d="M10 21v-6h4v6"></path>
+    </svg>
+  </a>
+  <button class="rules-btn" id="rulesBtn" aria-label="Показать правила">?</button>
+  <div class="rules-modal" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <div class="rules-card">
+      <h3 id="rulesTitle">Аграрная эпоха — правила</h3>
+      <p>1) На карте: гора, река и озеро. В каждом цикле фишки: <b>3 2 2 1 1</b>.</p>
+      <p>2) <b>1</b> неподвижны, <b>2</b> блуждают. Игрок управляет <b>3</b> (клавиши WEASDZX).</p>
+      <p>3) Сначала зацепите <b>2</b>, затем соберите поезд до состава <b>3-2-2-1-1</b>.</p>
+      <p>4) Вытяните поезд вдоль береговой линии (река/озеро) — система огораживает поселение.</p>
+      <p>5) Появляется новый цикл из пяти фишек. Старые поселения остаются и блокируют проход.</p>
+      <p>6) В клетки воды и на территорию старых поселений заходить нельзя.</p>
+      <p>7) Эпоха заканчивается, когда береговая линия застроена. Считаются ходы игрока.</p>
+      <div class="rules-actions">
+        <button id="rulesCloseBtn" type="button">Понятно</button>
+      </div>
+    </div>
+  </div>
   <script>
     (function () {
       const canvas = document.getElementById('field');
       const ctx = canvas.getContext('2d');
       const hud = document.querySelector('.hud');
+      const rulesBtn = document.getElementById('rulesBtn');
+      const rulesModal = document.getElementById('rulesModal');
+      const rulesCloseBtn = document.getElementById('rulesCloseBtn');
+      const RULES_STORAGE_KEY = 'agrarian-epoch-rules-seen-v1';
 
-      const HEX_W = 36;
-      const SIZE = HEX_W / 2;
-      const HEX_H = Math.sqrt(3) * SIZE;
-      const STEP_X = 1.5 * SIZE;
-      const STEP_Y = HEX_H;
+      let HEX_W = 34;
+      let SIZE = HEX_W / 2;
+      let HEX_H = Math.sqrt(3) * SIZE;
+      let STEP_X = 1.5 * SIZE;
+      let STEP_Y = HEX_H;
       const TICK_MS = 520;
+      const ENABLE_SIDE_B = false; // временно только A
+      const ACTIVE_FIELD_VARIANT = 'A';
+      const fieldVariants = {
+        // Исходный вариант поля (сохраняем как B).
+        B: { mountainX: 0.50, mountainY: 0.24, leftLakeX: 0.20, rightLakeX: 0.76, lakeY: 0.77 },
+        // Новый компактный вариант для телефона/компьютера.
+        A: { mountainX: 0.50, mountainY: 0.34, leftLakeX: 0.36, rightLakeX: 0.64, lakeY: 0.74 }
+      };
 
       const terrain = {
         lake: { fill: 'rgba(109, 213, 223, 0.52)', stroke: 'rgba(109, 213, 223, 0.92)' },
@@ -86,11 +207,17 @@
       let twos = [];
       let leaders = [];
       const paint = new Map();
+      const blockedBySettlements = new Set();
       let scoreA = 0;
       let scoreB = 0;
       let lastTick = performance.now();
-      let controlledLeaderAId = 'A3-0';
-      let controlledLeaderId = 'B3-0';
+      let phaseNotice = '';
+      let playerMoves = 0;
+      let epochFinished = false;
+      let controlledLeaderAId = null;
+      let controlledLeaderId = null;
+      let leaderSpawnSeqA = 0;
+      let leaderSpawnSeqB = 0;
 
       function key(c, r) {
         return c + ',' + r;
@@ -160,6 +287,14 @@
       function randomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
       }
+      function updateScaleByViewport() {
+        const minSide = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+        HEX_W = minSide < 560 ? 30 : 34;
+        SIZE = HEX_W / 2;
+        HEX_H = Math.sqrt(3) * SIZE;
+        STEP_X = 1.5 * SIZE;
+        STEP_Y = HEX_H;
+      }
 
       function hexCenter(c, r) {
         const x = c * STEP_X + SIZE;
@@ -215,14 +350,69 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(text, p.x, p.y);
       }
+      function collectOverlapCellKeys() {
+        const counts = new Map();
+        function addCell(c, r) {
+          const k = key(c, r);
+          counts.set(k, (counts.get(k) || 0) + 1);
+        }
+        for (const o of ones) addCell(o.c, o.r);
+        for (const t of twos) {
+          for (const s of t.segs) addCell(s.c, s.r);
+        }
+        for (const l of leaders) {
+          addCell(l.c, l.r);
+          if (l.cargoTrain && l.cargoTrain.length) {
+            for (const s of l.cargoTrain) addCell(s.c, s.r);
+          }
+        }
+        const out = [];
+        for (const [k, cnt] of counts.entries()) {
+          if (cnt > 1) out.push(k);
+        }
+        return out;
+      }
+      function drawOverlapMarkers() {
+        const overlaps = collectOverlapCellKeys();
+        if (!overlaps.length) return;
+        ctx.save();
+        for (const k of overlaps) {
+          const { c, r } = parseKey(k);
+          const p = hexCenter(c, r);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, Math.max(3.5, SIZE * 0.17), 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.95)';
+          ctx.fill();
+        }
+        ctx.restore();
+      }
 
       function pickFreeCell(side) {
+        const singleSideA = !ENABLE_SIDE_B && side === 'A';
         for (let tries = 0; tries < 300; tries++) {
-          const cMin = side === 'A' ? boardMinC + 3 : Math.floor((boardMinC + boardMaxC) / 2) + 2;
-          const cMax = side === 'A' ? Math.floor((boardMinC + boardMaxC) / 2) - 2 : boardMaxC - 3;
+          const cMin = singleSideA
+            ? boardMinC + 3
+            : (side === 'A' ? boardMinC + 3 : Math.floor((boardMinC + boardMaxC) / 2) + 2);
+          const cMax = singleSideA
+            ? boardMaxC - 3
+            : (side === 'A' ? Math.floor((boardMinC + boardMaxC) / 2) - 2 : boardMaxC - 3);
           const c = randomInt(cMin, cMax);
           const r = randomInt(boardMinR + 4, boardMaxR - 4);
-          if (!isOccupied(c, r)) return { c, r };
+          if (!isOccupied(c, r) && !isWaterCell(c, r) && !blockedBySettlements.has(key(c, r))) return { c, r };
+        }
+        // Надежный fallback: ищем любую свободную сухую клетку на своей стороне вне поселений.
+        const mid = Math.floor((boardMinC + boardMaxC) / 2);
+        for (let c = boardMinC; c <= boardMaxC; c++) {
+          if (!singleSideA) {
+            if (side === 'A' && c > mid) continue;
+            if (side === 'B' && c < mid) continue;
+          }
+          for (let r = boardMinR; r <= boardMaxR; r++) {
+            if (isWaterCell(c, r)) continue;
+            if (blockedBySettlements.has(key(c, r))) continue;
+            if (isOccupied(c, r)) continue;
+            return { c, r };
+          }
         }
         return { c: side === 'A' ? boardMinC + 4 : boardMaxC - 4, r: Math.floor((boardMinR + boardMaxR) / 2) };
       }
@@ -234,8 +424,112 @@
         for (const l of leaders) if (l.c === c && l.r === r) return true;
         return false;
       }
+      function hasLegalLeaderStep(l) {
+        if (!l || l.frozen) return false;
+        const nbs = getNeighbors(l.c, l.r);
+        for (const n of nbs) {
+          if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+          if (blockedBySettlements.has(key(n.c, n.r))) continue;
+          if (isOccupied(n.c, n.r)) continue;
+          return true;
+        }
+        return false;
+      }
+      function hasPotentialSettlementSpace(side) {
+        for (let c = boardMinC; c <= boardMaxC; c++) {
+          for (let r = boardMinR; r <= boardMaxR; r++) {
+            if (isWaterCell(c, r)) continue;
+            if (blockedBySettlements.has(key(c, r))) continue;
+            if (!isNearRiverOrLake(side, c, r)) continue;
+            const nbs = getNeighbors(c, r);
+            const hasFreeNeighbor = nbs.some((n) =>
+              inBoard(n.c, n.r) &&
+              !isWaterCell(n.c, n.r) &&
+              !blockedBySettlements.has(key(n.c, n.r))
+            );
+            if (hasFreeNeighbor) return true;
+          }
+        }
+        return false;
+      }
+      function shoreNearLakeForSide(side) {
+        const lake = side === 'A' ? terrainState.leftLake : terrainState.rightLake;
+        const ring = [];
+        function hasFreeStep(c, r) {
+          const nbs = getNeighbors(c, r);
+          return nbs.some((n) => inBoard(n.c, n.r) && !isWaterCell(n.c, n.r) && !blockedBySettlements.has(key(n.c, n.r)) && !isOccupied(n.c, n.r));
+        }
+        for (let dc = -4; dc <= 4; dc++) {
+          for (let dr = -4; dr <= 4; dr++) {
+            const c = lake.c + dc;
+            const r = lake.r + dr;
+            if (!inBoard(c, r)) continue;
+            const k = key(c, r);
+            if (terrainState.leftLakeCells.has(k) || terrainState.rightLakeCells.has(k) || terrainState.riverCells.has(k)) continue;
+            if (blockedBySettlements.has(k) || isOccupied(c, r)) continue;
+            const nbs = getNeighbors(c, r);
+            const nearLake = nbs.some(n => terrainState.leftLakeCells.has(key(n.c, n.r)) || terrainState.rightLakeCells.has(key(n.c, n.r)));
+            if (!nearLake) continue;
+            if (!hasFreeStep(c, r)) continue;
+            ring.push({ c, r });
+          }
+        }
+        ring.sort((a, b) => (side === 'A' ? a.c - b.c : b.c - a.c));
+        if (ring[0]) return ring[0];
+
+        // Если у озера нет хорошего места, ставим на любую свободную береговую клетку.
+        return pickFreeBankCell(side);
+      }
+      function pickFreeBankCell(side) {
+        const mid = Math.floor((boardMinC + boardMaxC) / 2);
+        const rivers = (!ENABLE_SIDE_B && side === 'A')
+          ? [terrainState.leftRiver, terrainState.rightRiver]
+          : [side === 'A' ? terrainState.leftRiver : terrainState.rightRiver];
+        const candidates = [];
+        for (const river of rivers) {
+          for (const p of river) {
+            for (const n of getNeighbors(p.c, p.r)) {
+              if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+              if (ENABLE_SIDE_B) {
+                if (side === 'A' && n.c > mid) continue;
+                if (side === 'B' && n.c < mid) continue;
+              }
+              // Новый сбор запускаем на свободном берегу, не в уже захваченной территории.
+            if (blockedBySettlements.has(key(n.c, n.r))) continue;
+              if (isOccupied(n.c, n.r)) continue;
+              candidates.push(n);
+            }
+          }
+        }
+        if (candidates.length) return candidates[randomInt(0, candidates.length - 1)];
+        return pickFreeCell(side);
+      }
+      function spawnSideUnits(side) {
+        if (epochFinished) return;
+        if (side === 'B' && !ENABLE_SIDE_B) return;
+        // Готовые поезда/поселки/фишки не трогаем: добавляем только новый набор.
+
+        for (let i = 0; i < 2; i++) {
+          const p = pickFreeBankCell(side);
+          ones.push({ id: '1-' + ones.length, c: p.c, r: p.r });
+        }
+        for (let i = 0; i < 2; i++) {
+          const p = pickFreeBankCell(side);
+          twos.push({ id: '2-' + twos.length, side, segs: [{ c: p.c, r: p.r }] });
+        }
+
+        const shore = shoreNearLakeForSide(side);
+        const leaderId = side === 'A' ? ('A3-' + (leaderSpawnSeqA++)) : ('B3-' + (leaderSpawnSeqB++));
+        leaders.push({ id: leaderId, side, c: shore.c, r: shore.r, cargoTrain: [], frozen: false, frozenFrameKeys: null });
+        if (side === 'A') controlledLeaderAId = leaderId;
+        else controlledLeaderId = leaderId;
+        const newLeader = leaders.find((x) => x.id === leaderId);
+        if (!hasLegalLeaderStep(newLeader)) phaseNotice = 'Новая 3 зажата: нет свободного хода рядом.';
+        else phaseNotice = '';
+      }
 
       function initGame() {
+        updateScaleByViewport();
         viewW = canvas.clientWidth || window.innerWidth;
         viewH = canvas.clientHeight || window.innerHeight;
         cols = Math.ceil((viewW + HEX_W) / STEP_X) + 1;
@@ -252,6 +546,11 @@
         paint.clear();
         scoreA = 0;
         scoreB = 0;
+        playerMoves = 0;
+        epochFinished = false;
+        phaseNotice = '';
+        leaderSpawnSeqA = 0;
+        leaderSpawnSeqB = 0;
 
         const leftRiver = terrainState.leftRiver;
         const rightRiver = terrainState.rightRiver;
@@ -259,13 +558,38 @@
         const rightLake = terrainState.rightLake;
         const used = new Set();
 
-        function putNearRiver(river, side, i, level) {
+        function putNearWater(side, i, level) {
+          const river = side === 'A' ? leftRiver : rightRiver;
+          const lake = side === 'A' ? leftLake : rightLake;
+          const lakeCells = side === 'A' ? terrainState.leftLakeCells : terrainState.rightLakeCells;
+          const candidates = [];
+
+          // Точки у реки.
           const idx = Math.max(1, Math.min(river.length - 2, Math.floor((i + 1) * river.length / 5)));
           const base = river[idx];
-          const nbs = getNeighbors(base.c, base.r).filter(n => inBoard(n.c, n.r));
-          const prefer = nbs.filter(n => (side === 'A' ? n.c < base.c : n.c > base.c));
-          const list = prefer.length ? prefer : nbs;
-          for (const n of list) {
+          for (const n of getNeighbors(base.c, base.r)) {
+            if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+            candidates.push(n);
+          }
+
+          // Точки у озера.
+          for (let dc = -4; dc <= 4; dc++) {
+            for (let dr = -4; dr <= 4; dr++) {
+              const c = lake.c + dc;
+              const r = lake.r + dr;
+              if (!inBoard(c, r) || isWaterCell(c, r)) continue;
+              const nbs = getNeighbors(c, r);
+              const nearLake = nbs.some(n => lakeCells.has(key(n.c, n.r)));
+              if (nearLake) candidates.push({ c, r });
+            }
+          }
+
+          const preferred = candidates
+            .filter(n => (side === 'A' ? n.c <= base.c : n.c >= base.c))
+            .sort((a, b) => side === 'A' ? a.c - b.c || a.r - b.r : b.c - a.c || b.r - a.r);
+          const pool = preferred.length ? preferred : candidates;
+
+          for (const n of pool) {
             const k = key(n.c, n.r);
             if (!used.has(k)) {
               used.add(k);
@@ -276,55 +600,47 @@
           }
         }
 
-        // 1 1 1 1 по берегам рек
-        putNearRiver(leftRiver, 'A', 0, 1);
-        putNearRiver(leftRiver, 'A', 1, 1);
-        putNearRiver(rightRiver, 'B', 0, 1);
-        putNearRiver(rightRiver, 'B', 1, 1);
+        // 1 1 на берегах водоемов (A).
+        putNearWater('A', 0, 1);
+        putNearWater('A', 1, 1);
+        if (ENABLE_SIDE_B) {
+          putNearWater('B', 0, 1);
+          putNearWater('B', 1, 1);
+        }
 
-        // 2 2 2 2 по берегам рек
-        putNearRiver(leftRiver, 'A', 2, 2);
-        putNearRiver(leftRiver, 'A', 3, 2);
-        putNearRiver(rightRiver, 'B', 2, 2);
-        putNearRiver(rightRiver, 'B', 3, 2);
+        // 2 2 на берегах водоемов (A).
+        putNearWater('A', 2, 2);
+        putNearWater('A', 3, 2);
+        if (ENABLE_SIDE_B) {
+          putNearWater('B', 2, 2);
+          putNearWater('B', 3, 2);
+        }
 
         // Запасной вариант, если где-то не хватило места.
-        while (ones.length < 4) {
-          const p = pickFreeCell(ones.length < 2 ? 'A' : 'B');
+        const targetOnes = ENABLE_SIDE_B ? 4 : 2;
+        while (ones.length < targetOnes) {
+          const p = pickFreeCell('A');
           ones.push({ id: '1-' + ones.length, c: p.c, r: p.r });
         }
-        while (twos.length < 4) {
-          const side = twos.length < 2 ? 'A' : 'B';
-          const p = pickFreeCell(side);
-          twos.push({ id: '2-' + twos.length, side, segs: [{ c: p.c, r: p.r }] });
+        const targetTwos = ENABLE_SIDE_B ? 4 : 2;
+        while (twos.length < targetTwos) {
+          const p = pickFreeCell('A');
+          twos.push({ id: '2-' + twos.length, side: 'A', segs: [{ c: p.c, r: p.r }] });
         }
 
-        function shoreNearLake(lake, side) {
-          const ring = [];
-          for (let dc = -4; dc <= 4; dc++) {
-            for (let dr = -4; dr <= 4; dr++) {
-              const c = lake.c + dc;
-              const r = lake.r + dr;
-              if (!inBoard(c, r)) continue;
-              const k = key(c, r);
-              if (terrainState.leftLakeCells.has(k) || terrainState.rightLakeCells.has(k) || terrainState.riverCells.has(k)) continue;
-              const nbs = getNeighbors(c, r);
-              const nearLake = nbs.some(n => terrainState.leftLakeCells.has(key(n.c, n.r)) || terrainState.rightLakeCells.has(key(n.c, n.r)));
-              if (!nearLake) continue;
-              ring.push({ c, r });
-            }
-          }
-          ring.sort((a, b) => (side === 'A' ? a.c - b.c : b.c - a.c));
-          return ring[0] || (side === 'A' ? { c: lake.c - 3, r: lake.r } : { c: lake.c + 3, r: lake.r });
+        // Лидер A на берегу озера (не в воде).
+        const aShore = shoreNearLakeForSide('A');
+        const aId = 'A3-' + (leaderSpawnSeqA++);
+        leaders.push({ id: aId, side: 'A', c: aShore.c, r: aShore.r, cargoTrain: [], frozen: false, frozenFrameKeys: null });
+        controlledLeaderAId = aId;
+        if (ENABLE_SIDE_B) {
+          const bShore = shoreNearLakeForSide('B');
+          const bId = 'B3-' + (leaderSpawnSeqB++);
+          leaders.push({ id: bId, side: 'B', c: bShore.c, r: bShore.r, cargoTrain: [], frozen: false, frozenFrameKeys: null });
+          controlledLeaderId = bId;
+        } else {
+          controlledLeaderId = null;
         }
-
-        // 3 3 на берегу озер (не в воде)
-        const aShore = shoreNearLake(leftLake, 'A');
-        const bShore = shoreNearLake(rightLake, 'B');
-        leaders.push({ id: 'A3-0', side: 'A', c: aShore.c, r: aShore.r, cargoTrain: [], frozen: false, frozenFrameKeys: null });
-        leaders.push({ id: 'B3-0', side: 'B', c: bShore.c, r: bShore.r, cargoTrain: [], frozen: false, frozenFrameKeys: null });
-        controlledLeaderAId = 'A3-0';
-        controlledLeaderId = 'B3-0';
       }
 
       function moveTrain(train, target) {
@@ -349,33 +665,46 @@
       function paintByTrain(train) {
         for (const s of train.segs) paint.set(key(s.c, s.r), train.side);
       }
+      function rebuildSettlementPaint() {
+        paint.clear();
+        blockedBySettlements.clear();
+        for (const l of leaders) {
+          if (!l.frozen || !l.frozenFrameKeys || !l.frozenFrameKeys.size) continue;
+          for (const k of l.frozenFrameKeys) paint.set(k, l.side);
+          const blockedArea = dilateCellKeysOnLand(l.frozenFrameKeys);
+          for (const k of blockedArea) blockedBySettlements.add(k);
+        }
+      }
       function randomMoveTwo(train) {
         const head = train.segs[0];
         const opts = getNeighbors(head.c, head.r).filter(n => inBoard(n.c, n.r) && !isWaterCell(n.c, n.r));
         const free = opts.filter(n => !leaders.some(l => l.c === n.c && l.r === n.r));
         if (!free.length) return;
-        const enemy = train.side === 'A' ? 'B' : 'A';
-        let allowed = free;
-        if (train.segs.length > 1) allowed = free.filter(n => paint.get(key(n.c, n.r)) !== enemy);
-        const next = (allowed.length ? allowed : free)[randomInt(0, (allowed.length ? allowed : free).length - 1)];
+        const allowed = free.filter(n => !blockedBySettlements.has(key(n.c, n.r)));
+        if (!allowed.length) return;
+        const next = allowed[randomInt(0, allowed.length - 1)];
         moveTrain(train, next);
         if (train.segs.length === 1) maybeAttachOne(train);
-        if (train.segs.length > 1) paintByTrain(train);
       }
       function tickTwos() {
         for (const t of twos) randomMoveTwo(t);
       }
       function catchByLeaders() {
         for (const l of leaders) {
+          if (l.frozen) continue;
+          if (l.cargoTrain && l.cargoTrain.length >= 4) continue; // 3 + 4 = длина 5 (максимум)
           const near = new Set(getNeighbors(l.c, l.r).map(n => key(n.c, n.r)));
           for (let i = twos.length - 1; i >= 0; i--) {
+            if (l.cargoTrain && l.cargoTrain.length >= 4) break;
             const t = twos[i];
             if (t.side !== l.side) continue;
             const hk = key(t.segs[0].c, t.segs[0].r);
             if (hk === key(l.c, l.r) || near.has(hk)) {
               const grabbed = t.segs.map((s, idx) => ({ c: s.c, r: s.r, level: idx === 0 ? 2 : 1 }));
-              if (!l.cargoTrain || !l.cargoTrain.length) l.cargoTrain = grabbed;
-              else l.cargoTrain = l.cargoTrain.concat(grabbed);
+              const current = l.cargoTrain ? l.cargoTrain : [];
+              const freeSlots = 4 - current.length;
+              if (freeSlots <= 0) break;
+              l.cargoTrain = current.concat(grabbed.slice(0, freeSlots));
               twos.splice(i, 1);
             }
           }
@@ -383,6 +712,7 @@
       }
       function maybeAttachOneToLeaderCargo(l) {
         if (!l.cargoTrain || !l.cargoTrain.length) return;
+        if (l.cargoTrain.length >= 4) return; // 3 + 4 = длина 5 (максимум)
         if (l.cargoTrain[0].level !== 2) return; // сначала обязательно захваченная 2
         const two = l.cargoTrain[0];
         const near = new Set(getNeighbors(two.c, two.r).map(n => key(n.c, n.r)));
@@ -398,6 +728,7 @@
       }
       function deliverLeaders() {
         for (const l of leaders) {
+          if (l.frozen) continue;
           if (!l.cargoTrain || !l.cargoTrain.length) continue;
           if (isLakeCell(l.side, l.c, l.r)) {
             if (l.side === 'A') scoreA++; else scoreB++;
@@ -407,13 +738,23 @@
       }
       /** Клетка «у воды» для стороны: своя река или своё озеро (на воде или в соседе с водой). */
       function isNearRiverOrLake(side, c, r) {
-        const river = side === 'A' ? terrainState.leftRiver : terrainState.rightRiver;
-        const rk = new Set(river.map(p => key(p.c, p.r)));
+        const rivers = (!ENABLE_SIDE_B && side === 'A')
+          ? [terrainState.leftRiver, terrainState.rightRiver]
+          : [side === 'A' ? terrainState.leftRiver : terrainState.rightRiver];
+        const rk = new Set();
+        for (const river of rivers) {
+          for (const p of river) rk.add(key(p.c, p.r));
+        }
         if (rk.has(key(c, r))) return true;
         if (getNeighbors(c, r).some(n => rk.has(key(n.c, n.r)))) return true;
-        const lakeCells = side === 'A' ? terrainState.leftLakeCells : terrainState.rightLakeCells;
-        if (lakeCells.has(key(c, r))) return true;
-        return getNeighbors(c, r).some(n => lakeCells.has(key(n.c, n.r)));
+        const lakeSets = (!ENABLE_SIDE_B && side === 'A')
+          ? [terrainState.leftLakeCells, terrainState.rightLakeCells]
+          : [side === 'A' ? terrainState.leftLakeCells : terrainState.rightLakeCells];
+        for (const lakeCells of lakeSets) {
+          if (lakeCells.has(key(c, r))) return true;
+          if (getNeighbors(c, r).some(n => lakeCells.has(key(n.c, n.r)))) return true;
+        }
+        return false;
       }
       function riverProximityIndex(side, c, r) {
         const river = side === 'A' ? terrainState.leftRiver : terrainState.rightRiver;
@@ -432,10 +773,12 @@
       }
 
       function claimRiverBankTerritory(l) {
+        if (epochFinished) return;
         if (l.frozen) return;
         if (!l.cargoTrain || !l.cargoTrain.length) return;
         const chain = [{ c: l.c, r: l.r, level: 3 }, ...l.cargoTrain.map(s => ({ c: s.c, r: s.r, level: s.level }))];
         if (chain.length !== 5) return;
+        if (new Set(chain.map((s) => key(s.c, s.r))).size !== 5) return; // при наложении фишек поселок не создаем
 
         let nearCount = 0;
         for (const s of chain) {
@@ -443,18 +786,15 @@
         }
         if (nearCount !== chain.length) return; // весь поезд вдоль реки или озера
 
-        const along = chain
-          .map((s) => ({ s, idx: riverProximityIndex(l.side, s.c, s.r) }))
-          .sort((a, b) => a.idx - b.idx || a.s.c - b.s.c || a.s.r - b.s.r);
-        const levelsAlong = along.map((x) => x.s.level);
-        const patterns = [
-          [3, 2, 2, 1, 1],
-          [1, 1, 2, 2, 3],
-          [3, 2, 1, 2, 1],
-          [1, 2, 1, 2, 3]
-        ];
-        const ok = patterns.some((p) => p.every((v, i) => levelsAlong[i] === v));
-        if (!ok) return;
+        // Цепочка должна начинаться с 3 и содержать 22 и 11 в любом порядке.
+        if (chain[0].level !== 3) return;
+        let twosCount = 0;
+        let onesCount = 0;
+        for (let i = 1; i < chain.length; i++) {
+          if (chain[i].level === 2) twosCount++;
+          else if (chain[i].level === 1) onesCount++;
+        }
+        if (twosCount !== 2 || onesCount !== 2) return;
 
         // Поезд вдоль реки/озера: обводим только клетки самого состава.
         for (const s of chain) {
@@ -462,18 +802,30 @@
         }
         l.frozenFrameKeys = new Set(chain.map((s) => key(s.c, s.r)));
         l.frozen = true;
+        // Сразу блокируем внутреннюю и внешнюю зоны нового поселения,
+        // чтобы новые фишки не рождались на его территории.
+        const blockedArea = dilateCellKeysOnLand(l.frozenFrameKeys);
+        for (const k of blockedArea) blockedBySettlements.add(k);
+        if (!hasPotentialSettlementSpace(l.side)) {
+          epochFinished = true;
+          phaseNotice = 'Эпоха завершена: вся береговая линия застроена. Ходов игрока: ' + playerMoves;
+          return;
+        }
+        spawnSideUnits(l.side);
       }
 
       function applyLeaderMoveById(leaderId, dirIdx) {
         const dirsEven = [{ dc: 1, dr: 0 }, { dc: 1, dr: -1 }, { dc: 0, dr: -1 }, { dc: -1, dr: -1 }, { dc: -1, dr: 0 }, { dc: 0, dr: 1 }];
         const dirsOdd = [{ dc: 1, dr: 1 }, { dc: 1, dr: 0 }, { dc: 0, dr: -1 }, { dc: -1, dr: 0 }, { dc: -1, dr: 1 }, { dc: 0, dr: 1 }];
         const l = leaders.find(x => x.id === leaderId);
-        if (!l) return;
-        if (l.frozen) return;
+        if (!l) return false;
+        if (l.frozen) return false;
         const d = (l.c & 1) ? dirsOdd[dirIdx] : dirsEven[dirIdx];
         const nc = l.c + d.dc;
         const nr = l.r + d.dr;
-        if (!inBoard(nc, nr) || isWaterCell(nc, nr)) return;
+        if (!inBoard(nc, nr) || isWaterCell(nc, nr)) return false;
+        if (blockedBySettlements.has(key(nc, nr))) return false;
+        if (isOccupied(nc, nr)) return false;
         const prevHead = { c: l.c, r: l.r };
         const prevCargo = l.cargoTrain ? l.cargoTrain.map(s => ({ c: s.c, r: s.r, level: s.level })) : [];
         l.c = nc;
@@ -488,6 +840,28 @@
         catchByLeaders();
         claimRiverBankTerritory(l);
         deliverLeaders();
+        return true;
+      }
+      function ensureActiveControlledLeader(side) {
+        if (epochFinished) return null;
+        const currentId = side === 'A' ? controlledLeaderAId : controlledLeaderId;
+        const current = leaders.find((x) => x.id === currentId);
+        if (current && !current.frozen) return current.id;
+        // Берем последнего созданного незамороженного лидера своей стороны.
+        for (let i = leaders.length - 1; i >= 0; i--) {
+          const l = leaders[i];
+          if (l.side === side && !l.frozen) {
+            if (side === 'A') controlledLeaderAId = l.id;
+            else controlledLeaderId = l.id;
+            return l.id;
+          }
+        }
+        // Если активного лидера не осталось, создаем новый набор для стороны.
+        spawnSideUnits(side);
+        const fallbackId = side === 'A' ? controlledLeaderAId : controlledLeaderId;
+        const fallback = leaders.find((x) => x.id === fallbackId);
+        if (fallback && !fallback.frozen) return fallback.id;
+        return null;
       }
 
       function onKey(e) {
@@ -501,11 +875,19 @@
         const rightDir = mapRightByCode[code] != null ? mapRightByCode[code] : mapRightByKey[k];
         if (leftDir != null) {
           e.preventDefault();
-          applyLeaderMoveById(controlledLeaderAId, leftDir);
+          const id = ensureActiveControlledLeader('A');
+          if (id) {
+            const moved = applyLeaderMoveById(id, leftDir);
+            if (moved) playerMoves++;
+          }
           draw();
-        } else if (rightDir != null) {
+        } else if (ENABLE_SIDE_B && rightDir != null) {
           e.preventDefault();
-          applyLeaderMoveById(controlledLeaderId, rightDir);
+          const id = ensureActiveControlledLeader('B');
+          if (id) {
+            const moved = applyLeaderMoveById(id, rightDir);
+            if (moved) playerMoves++;
+          }
           draw();
         } else if (k === 'j' || code === 'KeyJ') {
           e.preventDefault();
@@ -513,7 +895,7 @@
         }
       }
 
-      function drawToken(c, r, level, side, isLeader, hasCargo) {
+      function drawToken(c, r, level, side, isLeader, hasCargo, labelOverride) {
         const p = hexCenter(c, r);
         const style = sideStyle[side || 'N'];
         const rr = Math.max(8, HEX_W * (isLeader ? 0.34 : 0.28));
@@ -528,7 +910,7 @@
         ctx.font = `700 ${isLeader ? 20 : 17}px system-ui,sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(String(level), p.x, p.y + 0.5);
+        ctx.fillText(labelOverride != null ? String(labelOverride) : String(level), p.x, p.y + 0.5);
         if (hasCargo) {
           ctx.fillStyle = '#fde68a';
           ctx.beginPath();
@@ -538,19 +920,20 @@
       }
 
       function computeTerrain() {
-        const mountain = pixelToHex(viewW * 0.50, viewH * 0.24);
-        const leftLake = pixelToHex(viewW * 0.20, viewH * 0.77);
-        const rightLake = pixelToHex(viewW * 0.76, viewH * 0.77);
+        const cfg = fieldVariants[ACTIVE_FIELD_VARIANT] || fieldVariants.A;
+        const mountain = pixelToHex(viewW * cfg.mountainX, viewH * cfg.mountainY);
+        const leftLake = pixelToHex(viewW * cfg.leftLakeX, viewH * cfg.lakeY);
+        const rightLake = pixelToHex(viewW * cfg.rightLakeX, viewH * cfg.lakeY);
         const leftLakeCells = new Set();
         const rightLakeCells = new Set();
         const riverCells = new Set();
-        const leftRiver = pathBetween({ c: mountain.c - 1, r: mountain.r + 1 }, { c: leftLake.c + 1, r: leftLake.r - 1 });
-        const rightRiver = pathBetween({ c: mountain.c + 1, r: mountain.r + 1 }, { c: rightLake.c - 1, r: rightLake.r - 1 });
+        // Одна река: от горы к левому озеру.
+        const leftRiver = pathBetween({ c: mountain.c - 1, r: mountain.r + 3 }, { c: leftLake.c + 1, r: leftLake.r - 1 });
+        const rightRiver = [];
         for (let dc = -2; dc <= 2; dc++) {
           for (let dr = -2; dr <= 2; dr++) {
             if (Math.abs(dc) + Math.abs(dr) > 3) continue;
             leftLakeCells.add(key(leftLake.c + dc, leftLake.r + dr));
-            rightLakeCells.add(key(rightLake.c + dc, rightLake.r + dr));
           }
         }
         for (const p of leftRiver) riverCells.add(key(p.c, p.r));
@@ -561,17 +944,14 @@
       function drawTerrain() {
         const { mountain, leftLake, rightLake, leftLakeCells, rightLakeCells } = terrainState;
         paintBlob(leftLake.c, leftLake.r, 2, terrain.lake, leftLakeCells);
-        paintBlob(rightLake.c, rightLake.r, 2, terrain.lake, rightLakeCells);
         paintBlob(mountain.c, mountain.r, 3, terrain.mountain);
         paintBlob(mountain.c, mountain.r + 1, 1, terrain.ice);
         const leftRiver = terrainState.leftRiver;
-        const rightRiver = terrainState.rightRiver;
         paintPath(leftRiver, terrain.river);
-        paintPath(rightRiver, terrain.river);
-        drawLabel('река', leftRiver[Math.floor(leftRiver.length * 0.45)].c - 1, leftRiver[Math.floor(leftRiver.length * 0.45)].r);
-        drawLabel('река', rightRiver[Math.floor(rightRiver.length * 0.55)].c + 1, rightRiver[Math.floor(rightRiver.length * 0.55)].r);
+        if (leftRiver.length) {
+          drawLabel('река', leftRiver[Math.floor(leftRiver.length * 0.45)].c - 1, leftRiver[Math.floor(leftRiver.length * 0.45)].r);
+        }
         drawLabel('озеро', leftLake.c, leftLake.r);
-        drawLabel('озеро', rightLake.c, rightLake.r);
         drawLabel('гора', mountain.c, mountain.r - 1, 'rgba(33,33,33,0.95)');
         drawLabel('лед', mountain.c, mountain.r + 1);
       }
@@ -643,8 +1023,10 @@
 
       function drawTerritoryBorders(side) {
         const keys = new Set();
-        for (const [k, owner] of paint.entries()) {
-          if (owner === side) keys.add(k);
+        for (const l of leaders) {
+          if (l.side !== side) continue;
+          if (!l.frozen || !l.frozenFrameKeys || !l.frozenFrameKeys.size) continue;
+          for (const k of l.frozenFrameKeys) keys.add(k);
         }
         if (!keys.size) return;
         const segCount = segmentCountsForCellKeys(keys);
@@ -671,6 +1053,7 @@
         const dpr = Math.max(1, window.devicePixelRatio || 1);
         viewW = canvas.clientWidth || window.innerWidth;
         viewH = canvas.clientHeight || window.innerHeight;
+        updateScaleByViewport();
         canvas.width = Math.floor(viewW * dpr);
         canvas.height = Math.floor(viewH * dpr);
         canvas.style.width = viewW + 'px';
@@ -697,9 +1080,11 @@
 
         computeTerrain();
         drawTerrain();
+        rebuildSettlementPaint();
         for (const l of leaders) claimRiverBankTerritory(l);
+        rebuildSettlementPaint();
         drawTerritoryBorders('A');
-        drawTerritoryBorders('B');
+        if (ENABLE_SIDE_B) drawTerritoryBorders('B');
         for (const l of leaders) drawFrozenSecondFrame(l);
 
         for (const o of ones) drawToken(o.c, o.r, 1, 'N', false, false);
@@ -711,15 +1096,13 @@
           if (l.cargoTrain && l.cargoTrain.length) {
             for (const s of l.cargoTrain) drawToken(s.c, s.r, s.level, l.side, false, false);
           }
-          drawToken(l.c, l.r, 3, l.side, true, l.cargoTrain && l.cargoTrain.length > 0);
+          drawToken(l.c, l.r, 3, l.side, true, l.cargoTrain && l.cargoTrain.length > 0, '3');
         }
+        drawOverlapMarkers();
 
         hud.textContent =
-          '3 слева: WEASDZX, 3 справа: UIHJKNM (J - пауза) | 1 ждет, 2 ловит 1 и ограждает территорию | В реку и озеро ходить нельзя | Счёт A ' +
-          scoreA +
-          ' : ' +
-          scoreB +
-          ' B';
+          '3: WEASDZX (J - пауза) | 3 + 2 2 1 1 | В реку и озеро ходить нельзя | Ходы ' + playerMoves + ' | Счёт A ' + scoreA +
+          (phaseNotice ? ' | ' + phaseNotice : '');
       }
 
       function loop(now) {
@@ -738,10 +1121,34 @@
         initGame();
         draw();
       }
+      function showRules(markSeen) {
+        if (!rulesModal) return;
+        rulesModal.classList.add('open');
+        if (markSeen) {
+          try { localStorage.setItem(RULES_STORAGE_KEY, '1'); } catch (_) {}
+        }
+      }
+      function hideRules() {
+        if (!rulesModal) return;
+        rulesModal.classList.remove('open');
+      }
 
       window.addEventListener('keydown', onKey);
       window.addEventListener('resize', reset);
+      if (rulesBtn) rulesBtn.addEventListener('click', () => showRules(false));
+      if (rulesCloseBtn) rulesCloseBtn.addEventListener('click', hideRules);
+      if (rulesModal) {
+        rulesModal.addEventListener('click', (e) => {
+          if (e.target === rulesModal) hideRules();
+        });
+      }
       initGame();
+      try {
+        const seen = localStorage.getItem(RULES_STORAGE_KEY) === '1';
+        if (!seen) showRules(true);
+      } catch (_) {
+        showRules(false);
+      }
       requestAnimationFrame(loop);
     })();
   </script>
