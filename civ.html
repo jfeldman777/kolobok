@@ -135,8 +135,9 @@
       transform: translateX(-50%);
       z-index: 4;
       display: none;
-      grid-template-columns: repeat(3, 56px);
-      gap: 8px;
+      grid-template-columns: repeat(5, 52px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 6px;
       padding: 8px;
       border: 1px solid #334155;
       border-radius: 12px;
@@ -145,8 +146,8 @@
       backdrop-filter: blur(2px);
     }
     .mobile-controls button {
-      width: 56px;
-      height: 46px;
+      width: 52px;
+      height: 44px;
       border-radius: 10px;
       border: 1px solid #475569;
       background: #1f2937;
@@ -155,6 +156,28 @@
       font-weight: 800;
       cursor: pointer;
       touch-action: manipulation;
+    }
+    .mobile-controls .mc-dir-2 { grid-column: 2; grid-row: 1; } /* ↖ */
+    .mobile-controls .mc-dir-1 { grid-column: 4; grid-row: 1; } /* ↗ */
+    .mobile-controls .mc-dir-3 { grid-column: 1; grid-row: 2; } /* ← */
+    .mobile-controls .mc-dir-0 { grid-column: 5; grid-row: 2; } /* → */
+    .mobile-controls .mc-dir-4 { grid-column: 2; grid-row: 3; } /* ↙ */
+    .mobile-controls .mc-dir-5 { grid-column: 4; grid-row: 3; } /* ↘ */
+    .mobile-controls .mc-center {
+      grid-column: 3;
+      grid-row: 2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #93c5fd;
+      font-size: 16px;
+      font-weight: 800;
+      border: 1px dashed #475569;
+      border-radius: 10px;
+      background: rgba(31, 41, 55, 0.38);
+      -webkit-user-select: none;
+      user-select: none;
+      pointer-events: none;
     }
     .mobile-controls button:active { filter: brightness(1.15); }
     @media (max-width: 900px) {
@@ -193,12 +216,13 @@
     </div>
   </div>
   <div class="mobile-controls" id="mobileControls" aria-label="Мобильное управление">
-    <button type="button" data-dir="2">↖</button>
-    <button type="button" data-dir="1">↗</button>
-    <button type="button" data-dir="0">→</button>
-    <button type="button" data-dir="3">←</button>
-    <button type="button" data-dir="4">↙</button>
-    <button type="button" data-dir="5">↘</button>
+    <button type="button" class="mc-dir-2" data-dir="2">↖</button>
+    <button type="button" class="mc-dir-1" data-dir="1">↗</button>
+    <button type="button" class="mc-dir-3" data-dir="3">←</button>
+    <div class="mc-center" aria-hidden="true">⬢</div>
+    <button type="button" class="mc-dir-0" data-dir="0">→</button>
+    <button type="button" class="mc-dir-4" data-dir="4">↙</button>
+    <button type="button" class="mc-dir-5" data-dir="5">↘</button>
   </div>
   <script>
     (function () {
