@@ -650,7 +650,7 @@ const CLR={
 const KING_DIRS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
 /** Сколько стараться поставить юнитов каждого вида (меню «Дополнительно»). */
 const NPC_COUNT_KEYS=['n1','n2','n3','p4','n5','n6','n7'];
-const DEFAULT_NPC_COUNTS={n1:2,n2:2,n3:2,p4:1,n5:2,n6:2,n7:2};
+const DEFAULT_NPC_COUNTS={n1:8,n2:8,n3:8,p4:4,n5:8,n6:8,n7:8};
 let npcCounts={...DEFAULT_NPC_COUNTS};
 function loadNpcCounts(){
   npcCounts={...DEFAULT_NPC_COUNTS};
@@ -770,6 +770,7 @@ const FOREST_HARE_FIELDS_BASE=[
 let forestMiniGameIndex=FOREST_START_N;
 let forestCampaignSpec='';
 let forestPhase='home'; // 'home' | 'mush' | 'mole' | 'boar' | 'horse' | 'hare' | 'snake' | 's7'
+let forestLeftHome=false;
 /** Выбранный на экране настроек стартовый сериал (1…7), кнопками. */
 let forestSetupStartSeries=1;
 /** Просмотр заставки из настроек: по закрытию не запускать кампанию и не сбрасывать серию. */
@@ -793,7 +794,7 @@ function forestIsHorse(){ return forestPhase==='horse'; }
 function forestIsHare(){ return forestPhase==='hare'; }
 function forestIsSnake(){ return forestPhase==='snake'; }
 function forestIsS7(){ return forestPhase==='s7'; }
-function forestUsesMushrooms(){ return forestIsMush()||forestIsMole()||forestIsBoar()||forestIsHorse(); }
+function forestUsesMushrooms(){ return FOREST_CAMPAIGN_2027 && stage===1; }
 function forestSeriesToPhase(series){
   const s=series|0;
   if(s===2) return 'mush';
@@ -1107,20 +1108,11 @@ function applyForestMiniGameParams(idx){
   N=FIXED_BOARD_N;
   wallPct=forestWallPctForIndex(n);
   npcCounts={...DEFAULT_NPC_COUNTS};
-  // Серия 3: только кроты и грибы.
-  if(forestIsMole()){
-    stage=3; // без кабана
-  } else if(forestIsBoar()){
-    stage=4;
-  } else if(forestIsHorse()){
-    stage=5; // колобок выше всех (до 9-го этапа)
-  } else if(forestIsHare()){
-    stage=6; // к‑5 заяц (королевский ход, можно на ёлки), герой уровня 6
-  } else if(forestIsSnake()){
-    stage=7; // к‑6 змеи по ёлкам, герой уровня 7
-  } else {
-    stage=1; // серии 1 и 2 — без NPC
-  }
+  const series=forestPhaseToSeries(forestPhase);
+  const startN=forestSeriesStartN(series);
+  const gameNo=Math.max(1,(n-startN+1)|0);
+  // Игры 1..8 внутри серии: 1 грибы, 2 кроты, 3 кабаны, 4 лошади, 5 зайцы, 6..8 без фишек.
+  stage=Math.min(8, gameNo);
   startStage=stage;
 }
 
@@ -2639,11 +2631,11 @@ function useTorus(){
 }
 /** Финиш: этапы 1–8 — правый нижний угол; этап 9 — центр поля (превью доски). */
 function finishGX(){
-  if(FOREST_CAMPAIGN_2027) return N-1;
+  if(FOREST_CAMPAIGN_2027) return 0;
   return stage===9?(N-1)>>1:N-1;
 }
 function finishGY(){
-  if(FOREST_CAMPAIGN_2027) return N-1;
+  if(FOREST_CAMPAIGN_2027) return 0;
   return stage===9?(N-1)>>1:N-1;
 }
 
@@ -3151,7 +3143,13 @@ function startReplayFromJson(data){
   replayApplyUiAfterFrame();
   updateReplayMenuButtons();
 }
-function showL(id,ci,ti,c,t){ const e=gel(id),ec=gel(ci),et=gel(ti); if(e)e.style.display='block'; if(ec)ec.textContent=c; if(et)et.textContent=t; }
+function showL(id,ci,ti,c,t){
+  if(id==='line2') return;
+  const e=gel(id),ec=gel(ci),et=gel(ti);
+  if(e) e.style.display='block';
+  if(ec) ec.textContent=c;
+  if(et) et.textContent=t;
+}
 function hideL(){ ['line2','line3','line4','line5','line6','line7','line8','line9'].forEach(id=>{const e=gel(id);if(e)e.style.display='none';}); }
 function kxy(m){ return m.x+','+m.y; }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];} }
@@ -3524,6 +3522,14 @@ function meet(A,B){
   const aOk=A.isHero?A.alive:!A.collected;
   const bOk=B.isHero?B.alive:!B.collected;
   if(!aOk||!bOk) return null;
+  // Режим как в 2026: при встрече с фишкой герой не гибнет, а всегда цепляет её в поезд.
+  if((A.isHero&&!B.isHero)||(!A.isHero&&B.isHero)){
+    const hr=A.isHero?A:B;
+    const npc=A.isHero?B:A;
+    absorbSetIntoSenior(hr, penaltyDigitsSet(npc));
+    npc.collected=true;
+    return null;
+  }
 
   const setA=penaltyDigitsSet(A), setB=penaltyDigitsSet(B);
   const maxA=maxOfSet(setA), maxB=maxOfSet(setB);
@@ -3922,7 +3928,41 @@ function loadStage(){
   const hp=gel('hero-panel'); if(hp&&hp!==_stub) hp.textContent='';
   hideL(); setMsg('');
 
-  if(stage===1){ genGrid(); }
+  if(FOREST_CAMPAIGN_2027){
+    forestLeftHome=false;
+    const forestLastLvl=stage===2?2:(stage===3?3:(stage===4?4:(stage===5?5:0)));
+    let ok=false,a=0;
+    while(!ok&&a++<900){
+      M1=[]; M2=[]; M3=[]; P4=[]; M5=[]; M6=[]; M7=[];
+      genGrid();
+      if(forestLastLvl===2){
+        plM2();
+        ok=M2.length>=requiredNpcCount(2)&&allNpcSpawnCellsUnique();
+      } else if(forestLastLvl===3){
+        plM3();
+        ok=M3.length>=requiredNpcCount(3)&&allNpcSpawnCellsUnique();
+      } else if(forestLastLvl===4){
+        plP4();
+        ok=P4.length>=requiredP4PairsCount()&&allNpcSpawnCellsUnique();
+      } else if(forestLastLvl===5){
+        plM5();
+        ok=M5.length>=requiredNpcCount(5)&&allNpcSpawnCellsUnique();
+      } else if(forestLastLvl===6){
+        plM6();
+        ok=M6.length>=requiredNpcCount(6)&&allNpcSpawnCellsUnique();
+      } else {
+        ok=true;
+      }
+    }
+    hideL();
+    if(forestLastLvl===2) showL('line3','c2-cnt','c2-tot',0,M2.length);
+    else if(forestLastLvl===3) showL('line4','c3-cnt','c3-tot',0,M3.length);
+    else if(forestLastLvl===4) showL('line5','c4-cnt','c4-tot',0,P4.length*2);
+    else if(forestLastLvl===5) showL('line6','c5-cnt','c5-tot',0,M5.length);
+    else if(forestLastLvl===6) showL('line7','c6-cnt','c6-tot',0,M6.length);
+    setMsg('Выйди из дома, собери все фишки и вернись домой.');
+  }
+  else if(stage===1){ genGrid(); }
   else if(stage===2){
     let ok=false,a=0;
     while(!ok&&a++<200){ genGrid(); plM1(); ok=M1.length>=requiredNpcCount(1)&&allM1Reachable(); }
@@ -4004,11 +4044,7 @@ function loadStage(){
       shuffle(pool);
       // В серии 3 «Кроты и грибы» грибов столько же, сколько кротов.
       const maxAvail=pool.length;
-      const need=forestIsHorse()
-        ? Math.min(maxAvail, 1)
-        : (forestIsMole()||forestIsBoar())
-        ? Math.min(maxAvail, Math.max(1, (npcCounts.n2|0)||1))
-        : Math.min(maxAvail, Math.max(1, N));
+      const need=Math.min(maxAvail, 8);
       forestMushroomsTotal=need;
       for(let i=0;i<need;i++){
         const p=pool[i];
@@ -4017,12 +4053,8 @@ function loadStage(){
       if(forestIsHorse()) setMsg('Сначала лошади → кабан → крот → гриб');
       else if(forestIsMole()||forestIsBoar()) setMsg('Возьми крота, затем грибы: 0/'+forestMushroomsTotal);
       else setMsg('Собери грибы: '+forestMushroomsCollected+'/'+forestMushroomsTotal+', затем доберись до домика');
-    } else if(forestIsHare()){
-      setMsg('Заяц ходит как шахматный король (включая диагонали), может вставать на ёлки, и прыгает между полями 1–10. Доберись до домика.');
-    } else if(forestIsSnake()){
-      setMsg('Змеи только по ёлкам, порядок обхода фиксирован. Под ёлкой ход «отдыха» — выбирают следующую цель; дальше каждый ход — на шаг короля ближе. Доберись до домика.');
     } else {
-      setMsg('Помоги колобку вернуться домой');
+      setMsg('Выйди из дома, собери все фишки и вернись домой.');
     }
   }
 
@@ -5652,6 +5684,7 @@ function pmove(dx,dy){
     tickT=setInterval(tick,tickMs());
   }
   hero.x=nx; hero.y=ny;
+  if(FOREST_CAMPAIGN_2027 && (hero.x!==0 || hero.y!==0)) forestLeftHome=true;
   if(heroActsLikeK2()) k2Territory[nx+','+ny]=K2_OWNER_HERO;
   if(stage>=1&&stage<=8){
     movesPerStage[stage-1]++;
@@ -5919,21 +5952,12 @@ function checkWin(){
   if(FOREST_CAMPAIGN_2027){
     const allMushCollected=!(forestUsesMushrooms() && forestMushrooms.size);
     const aliveNpcOnField=getAllNPC().some(n=>!n.collected);
-    // Серия «Собери грибы»: все грибы + домик. Остальные лесные серии — домик + грибы (и крот при необходимости).
-    if(forestIsMush()){
-      if(!allMushCollected) return;
-      if(aliveNpcOnField) return;
-      if(hero.x!==finishGX()||hero.y!==finishGY()) return;
-    } else if(forestIsHare()||forestIsSnake()){
-      if(hero.x!==finishGX()||hero.y!==finishGY()) return;
-    } else {
-      if(hero.x!==finishGX()||hero.y!==finishGY()) return;
-      if(!allMushCollected) return;
-      if(aliveNpcOnField) return;
-    }
-    if((forestIsMole()||forestIsBoar()||forestIsHorse()) && !forestMoleTaken) return;
+    if(!forestLeftHome) return;
+    if(hero.x!==finishGX()||hero.y!==finishGY()) return;
+    if(!allMushCollected) return;
+    if(aliveNpcOnField) return;
     won=true;
-    setMsg(forestUsesMushrooms()?'Игра пройдена!':'Вы дошли до домика!');
+    setMsg('Игра пройдена! Возвращение домой выполнено.');
     scheduleNextStage(1,2);
     if(replayRecording && !replayMode) maybeRecordSnapshot('win');
     return;

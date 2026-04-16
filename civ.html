@@ -128,6 +128,51 @@
       color: #e5e7eb;
       cursor: pointer;
     }
+    .stage-end-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 12;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.74);
+      padding: 16px;
+    }
+    .stage-end-modal.open { display: flex; }
+    .stage-end-card {
+      width: min(560px, 95vw);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      background: #0b1220;
+      color: #dbeafe;
+      padding: 16px;
+    }
+    .stage-end-card h3 { margin: 0 0 8px 0; font-size: 20px; }
+    .stage-end-card p { margin: 6px 0; font-size: 14px; color: #bfdbfe; }
+    .stage-end-actions {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .stage-end-actions button,
+    .stage-end-actions a {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: #111827;
+      color: #e5e7eb;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .stage-end-actions .stage-next-btn {
+      border-color: #2f5f8a;
+      background: #12314a;
+      color: #d7ecff;
+    }
     .mobile-controls {
       position: fixed;
       left: 50%;
@@ -221,6 +266,17 @@
     <button type="button" data-dir="0">↘</button>
   </div>
   <div class="rotate-lock" id="rotateLock" aria-hidden="true">Поверните телефон обратно в портретный режим</div>
+  <div class="stage-end-modal" id="stageEndModal" role="dialog" aria-modal="true" aria-labelledby="stageEndTitle">
+    <div class="stage-end-card">
+      <h3 id="stageEndTitle">Конец этапа</h3>
+      <p>Первая эпоха завершена.</p>
+      <p id="stageEndStats"></p>
+      <div class="stage-end-actions">
+        <button type="button" id="restartStageBtn">Вернуться к началу этапа</button>
+        <a class="stage-next-btn" id="nextStageBtn" href="civ.html?stage2debug=1">Перейти на следующий этап</a>
+      </div>
+    </div>
+  </div>
   <script>
     (function () {
       const canvas = document.getElementById('field');
@@ -231,9 +287,14 @@
       const rulesCloseBtn = document.getElementById('rulesCloseBtn');
       const mobileControls = document.getElementById('mobileControls');
       const rotateLock = document.getElementById('rotateLock');
+      const stageEndModal = document.getElementById('stageEndModal');
+      const stageEndStats = document.getElementById('stageEndStats');
+      const restartStageBtn = document.getElementById('restartStageBtn');
+      const nextStageBtn = document.getElementById('nextStageBtn');
       const RULES_STORAGE_KEY = 'agrarian-epoch-rules-seen-v1';
       const DEMO_STATE_STORAGE_KEY = 'agrarian-epoch-demo-state-v1';
       const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
+      const STAGE2_DEBUG_MODE = new URLSearchParams(window.location.search).get('stage2debug') === '1';
 
       let HEX_W = 34;
       let SIZE = HEX_W / 2;
@@ -287,6 +348,7 @@
       let controlledLeaderId = null;
       let leaderSpawnSeqA = 0;
       let leaderSpawnSeqB = 0;
+      let stageEndShown = false;
 
       function key(c, r) {
         return c + ',' + r;
@@ -540,10 +602,30 @@
       }
       function maybeFinishEpochIfNoSpace() {
         if (epochFinished) return;
+        if (STAGE2_DEBUG_MODE) return;
         if (!hasPotentialSettlementSpace('A')) {
           epochFinished = true;
           phaseNotice = 'Эпоха завершена: больше негде собрать новое поселение. Ходов игрока: ' + playerMoves;
         }
+      }
+      function updateStageEndStats() {
+        if (!stageEndStats) return;
+        stageEndStats.textContent = 'Ходов: ' + playerMoves + ' | Счёт A: ' + scoreA;
+      }
+      function showStageEndModal() {
+        if (!stageEndModal || STAGE2_DEBUG_MODE || !epochFinished || stageEndShown) return;
+        updateStageEndStats();
+        stageEndModal.classList.add('open');
+        stageEndShown = true;
+      }
+      function hideStageEndModal() {
+        if (!stageEndModal) return;
+        stageEndModal.classList.remove('open');
+      }
+      function restartCurrentStage() {
+        hideStageEndModal();
+        initGame();
+        draw();
       }
       function shoreNearLakeForSide(side) {
         const lake = side === 'A' ? terrainState.leftLake : terrainState.rightLake;
@@ -642,6 +724,7 @@
         playerMoves = 0;
         epochFinished = false;
         phaseNotice = '';
+        stageEndShown = false;
         leaderSpawnSeqA = 0;
         leaderSpawnSeqB = 0;
 
@@ -734,6 +817,86 @@
         } else {
           controlledLeaderId = null;
         }
+      }
+      function seedStage2DebugState() {
+        if (!terrainState || !terrainState.leftRiver || !terrainState.leftRiver.length) return;
+        const occupied = new Set();
+        function pickLandNearRiverIndex(idx) {
+          const river = terrainState.leftRiver;
+          const i = Math.max(0, Math.min(river.length - 1, idx));
+          const anchor = river[i];
+          for (let radius = 0; radius <= 3; radius++) {
+            for (let dc = -radius; dc <= radius; dc++) {
+              for (let dr = -radius; dr <= radius; dr++) {
+                const c = anchor.c + dc;
+                const r = anchor.r + dr;
+                const k = key(c, r);
+                if (!inBoard(c, r) || isWaterCell(c, r)) continue;
+                if (!isNearRiverOrLake('A', c, r)) continue;
+                if (blockedBySettlements.has(k) || occupied.has(k)) continue;
+                return { c, r };
+              }
+            }
+          }
+          return null;
+        }
+        function buildSettlementFromRiverRange(startIdx, endIdx) {
+          const chain = [];
+          const used = new Set();
+          const lo = Math.max(0, Math.min(startIdx, endIdx));
+          const hi = Math.min(terrainState.leftRiver.length - 1, Math.max(startIdx, endIdx));
+          for (let i = lo; i <= hi && chain.length < 5; i++) {
+            const p = pickLandNearRiverIndex(i);
+            if (!p) continue;
+            const k = key(p.c, p.r);
+            if (used.has(k)) continue;
+            used.add(k);
+            chain.push(p);
+          }
+          if (chain.length < 5) return null;
+          for (const p of chain) occupied.add(key(p.c, p.r));
+          return chain;
+        }
+        function pushFrozenSettlement(cells, idSeed) {
+          const leaderCell = cells[0];
+          const leader = {
+            id: 'A3F-' + idSeed,
+            side: 'A',
+            c: leaderCell.c,
+            r: leaderCell.r,
+            cargoTrain: [
+              { c: cells[1].c, r: cells[1].r, level: 2 },
+              { c: cells[2].c, r: cells[2].r, level: 2 },
+              { c: cells[3].c, r: cells[3].r, level: 1 },
+              { c: cells[4].c, r: cells[4].r, level: 1 }
+            ],
+            frozen: true,
+            frozenFrameKeys: new Set(cells.map((p) => key(p.c, p.r)))
+          };
+          leaders.push(leader);
+        }
+
+        ones = [];
+        twos = [];
+        leaders = [];
+        scoreA = 7;
+        playerMoves = 148;
+        epochFinished = false;
+        phaseNotice = 'ОТЛАДКА: старт Вождества после завершения 1-й эпохи.';
+        leaderSpawnSeqA = 100;
+        leaderSpawnSeqB = 0;
+        controlledLeaderId = null;
+        controlledLeaderAId = null;
+
+        const riverLen = terrainState.leftRiver.length;
+        const s1 = buildSettlementFromRiverRange(Math.floor(riverLen * 0.10), Math.floor(riverLen * 0.28));
+        const s2 = buildSettlementFromRiverRange(Math.floor(riverLen * 0.34), Math.floor(riverLen * 0.54));
+        const s3 = buildSettlementFromRiverRange(Math.floor(riverLen * 0.60), Math.floor(riverLen * 0.84));
+        if (s1) pushFrozenSettlement(s1, 1);
+        if (s2) pushFrozenSettlement(s2, 2);
+        if (s3) pushFrozenSettlement(s3, 3);
+        rebuildSettlementPaint();
+        spawnSideUnits('A');
       }
       function getGameStateSnapshot() {
         const leaderState = leaders.map((l) => ({
@@ -1378,8 +1541,10 @@
 
         hud.textContent =
           (DEMO_MODE ? 'ДЕМО: бот играет за A | наблюдение | ' : '3: WEASDZX (J - пауза) | ') +
+          (STAGE2_DEBUG_MODE ? 'Отладка Вождества | ' : '') +
           '3 + 2 2 1 1 | В реку и озеро ходить нельзя | Ходы ' + playerMoves + ' | Счёт A ' + scoreA +
           (phaseNotice ? ' | ' + phaseNotice : '');
+        if (epochFinished) showStageEndModal();
       }
 
       function loop(now) {
@@ -1431,6 +1596,12 @@
       }
       if (rulesBtn) rulesBtn.addEventListener('click', () => showRules(false));
       if (rulesCloseBtn) rulesCloseBtn.addEventListener('click', hideRules);
+      if (restartStageBtn) restartStageBtn.addEventListener('click', restartCurrentStage);
+      if (nextStageBtn) {
+        nextStageBtn.addEventListener('click', () => {
+          try { sessionStorage.removeItem(DEMO_STATE_STORAGE_KEY); } catch (_) {}
+        });
+      }
       if (rulesModal) {
         rulesModal.addEventListener('click', (e) => {
           if (e.target === rulesModal) hideRules();
@@ -1438,6 +1609,7 @@
       }
       initGame();
       tryRestoreStateAfterDemoToggle();
+      if (STAGE2_DEBUG_MODE) seedStage2DebugState();
       refreshRotateLock();
       try {
         if (screen.orientation && typeof screen.orientation.lock === 'function') {

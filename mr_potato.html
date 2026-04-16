@@ -359,6 +359,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   const state={
     loaded:false, running:false, score:0,
     item:null, lastItemName:null, selected:new Set(), pendingNext:false,
+    roundOrder:[], roundIx:0,
     currentLog:null, journal:[],
     volume:0.8, fontScale:1,
     itemSpeech:'brief',
@@ -369,7 +370,69 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     flashDur:600,
     _flashBuf:null,
     _flashRaf:0,
+    fireworks:[],
+    fireworksUntil:0,
+    _fireworkRaf:0,
   };
+  function shuffleInPlace(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j=(Math.random()*(i+1))|0;
+      const t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+    }
+    return arr;
+  }
+  function stopFireworks(){
+    if(state._fireworkRaf){
+      cancelAnimationFrame(state._fireworkRaf);
+      state._fireworkRaf=0;
+    }
+    state.fireworks.length=0;
+    state.fireworksUntil=0;
+  }
+  function launchFireworks(){
+    stopFireworks();
+    state.fireworksUntil=performance.now()+3400;
+    const w=Math.max(240, wrap.clientWidth|0);
+    const h=Math.max(240, wrap.clientHeight|0);
+    const colors=['#ff5f6d','#ffc371','#7ed957','#56ccf2','#c471ed','#f9f871','#ffffff'];
+    for(let b=0;b<8;b++){
+      const cx=40+Math.random()*(w-80);
+      const cy=35+Math.random()*(h*0.45);
+      const n=20+((Math.random()*18)|0);
+      for(let i=0;i<n;i++){
+        const a=(Math.PI*2*i)/n+Math.random()*0.45;
+        const sp=1.2+Math.random()*3.6;
+        state.fireworks.push({
+          x:cx, y:cy,
+          vx:Math.cos(a)*sp,
+          vy:Math.sin(a)*sp-0.8,
+          life:42+((Math.random()*24)|0),
+          ttl:42+((Math.random()*24)|0),
+          r:1.8+Math.random()*2.8,
+          c:colors[(Math.random()*colors.length)|0]
+        });
+      }
+    }
+    function stepFireworks(){
+      const now=performance.now();
+      for(const p of state.fireworks){
+        p.x+=p.vx;
+        p.y+=p.vy;
+        p.vy+=0.045;
+        p.vx*=0.995;
+        p.life--;
+      }
+      state.fireworks=state.fireworks.filter(p=>p.life>0);
+      draw();
+      if(now<state.fireworksUntil && state.fireworks.length){
+        state._fireworkRaf=requestAnimationFrame(stepFireworks);
+      } else {
+        state._fireworkRaf=0;
+        draw();
+      }
+    }
+    state._fireworkRaf=requestAnimationFrame(stepFireworks);
+  }
   function cancelOrganFlash(){
     if(state._flashRaf){
       cancelAnimationFrame(state._flashRaf);
@@ -652,8 +715,11 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   }
 
   function pickItem(){
-    const pool=ITEMS.filter(x=>x.name!==state.lastItemName);
-    const item=pool[(Math.random()*pool.length)|0];
+    if(state.roundIx>=state.roundOrder.length){
+      onWinRound();
+      return;
+    }
+    const item=state.roundOrder[state.roundIx++];
     state.item=item;
     state.lastItemName=item.name;
     state.selected.clear();
@@ -666,6 +732,20 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     itemNameEl.textContent=item.name;
     renderBalls();
     if(state.running) speakItemName(item.name);
+  }
+  function onWinRound(){
+    state.running=false;
+    state.pendingNext=false;
+    state.item=null;
+    answerMarkEl.textContent='ПОБЕДА';
+    answerMarkEl.className='answer-mark ok';
+    promptEl.textContent='Список пройден';
+    itemEmojiEl.textContent='🎉';
+    itemNameEl.textContent='Ты дошел до конца списка';
+    setStatus('Победа! Все вопросы пройдены без повторов.', 'ok');
+    clearSpeakQueue();
+    updateHud();
+    launchFireworks();
   }
   function hitOrganAt(ix, iy){
     for(const o of ORGANS){
@@ -780,6 +860,17 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
         }
       }
     }
+    if(state.fireworks.length){
+      for(const p of state.fireworks){
+        const a=Math.max(0, Math.min(1, p.life/Math.max(1,p.ttl)));
+        ctx.globalAlpha=a;
+        ctx.fillStyle=p.c;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
   }
   function canvasToImgCoords(clientX, clientY){
     const r=cv.getBoundingClientRect();
@@ -834,6 +925,9 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     speakIdleCallbacks.length=0;
     state.running=true;
     state.score=0; state.lastItemName=null; state.selected.clear();
+    state.roundOrder=shuffleInPlace(ITEMS.slice());
+    state.roundIx=0;
+    stopFireworks();
     pickItem();
     setStatus('Старт! Тапай зоны, пока не соберешь правильный набор.', 'info');
     updateHud();
@@ -848,6 +942,9 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     state.running=false;
     state.score=0; state.item=null; state.lastItemName=null;
     state.selected.clear();
+    state.roundOrder=[];
+    state.roundIx=0;
+    stopFireworks();
     state.pendingNext=false;
     state.currentLog=null;
     state.journal=[];

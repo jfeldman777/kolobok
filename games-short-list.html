@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>Краткий список игр</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      background: #111;
+      color: #eee;
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.45;
+    }
+    body {
+      padding: calc(12px + env(safe-area-inset-top, 0px)) 16px calc(20px + env(safe-area-inset-bottom, 0px));
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: clamp(1.25rem, 4vw, 1.5rem);
+      font-weight: 800;
+      color: #E8A020;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .lead {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 16px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 18px;
+      color: #7ec8e3;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid #2f4e5b;
+      border-radius: 10px;
+      padding: 8px 12px;
+      background: #18262d;
+    }
+    .back-link:hover { filter: brightness(1.08); }
+    .list {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .list h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9a8a5a;
+      margin-bottom: 10px;
+    }
+    ul {
+      padding-left: 18px;
+    }
+    li {
+      margin-bottom: 8px;
+      color: #ddd;
+    }
+    li a {
+      color: #7ec8e3;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    li a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Краткий список игр</h1>
+  <p class="lead">Быстрый обзор игр и тренажёров.</p>
+  <a class="back-link" href="index.html">← На главную страницу</a>
+
+  <section class="list" aria-label="Игры">
+    <h2>Игры и тренажёры</h2>
+    <ul>
+      <li><a href="kolobok_martina.html">Колобок для Мартина</a></li>
+      <li><a href="mr_potato.html">Мр-потейто</a></li>
+      <li><a href="razogrev.html">Колобок-альпинист</a></li>
+      <li><a href="crews4sailing.html">Собираем друзей</a></li>
+      <li><a href="kolobok_2026.html">Колобок и его команда</a></li>
+      <li><a href="kolobok_extra.html">Колобок-экстрасенс</a></li>
+      <li><a href="civ.html">Аграрная эпоха</a></li>
+      <li><a href="kolobok2brata.html">Два брата-колобка — кооперация</a></li>
+      <li><a href="kolobok2brata.html">Два брата-колобка — конкуренция</a></li>
+    </ul>
+  </section>
+</body>
+</html>
