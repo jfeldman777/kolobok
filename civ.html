@@ -25,6 +25,9 @@
       height: 100vh;
       background: radial-gradient(circle at 50% 20%, #17233f 0%, #0b1220 60%, #090f1c 100%);
     }
+    #field:focus {
+      outline: none;
+    }
     .hud {
       position: fixed;
       top: 10px;
@@ -41,6 +44,23 @@
       -webkit-user-select: none;
       user-select: none;
       pointer-events: none;
+    }
+    .hud-controls {
+      position: fixed;
+      top: 56px;
+      left: 12px;
+      z-index: 4;
+      padding: 6px 10px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: rgba(11, 18, 32, 0.72);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      font-size: 12px;
+      color: #cbd5e1;
+      pointer-events: auto;
+      -webkit-user-select: none;
+      user-select: none;
     }
     .rules-btn {
       position: fixed;
@@ -205,6 +225,7 @@
     .mobile-controls button:active { filter: brightness(1.15); }
     @media (max-width: 900px) {
       .hud { display: none; }
+      .hud-controls { display: block; }
       .mobile-controls { display: grid; }
       #field {
         height: calc(100vh - 84px - env(safe-area-inset-bottom));
@@ -228,12 +249,20 @@
     @media (max-width: 900px) and (orientation: landscape) {
       .rotate-lock { display: flex; }
       #field, .mobile-controls, .rules-btn, .home-btn, .hud { visibility: hidden; }
+      .hud-controls { visibility: hidden; }
     }
   </style>
 </head>
 <body>
-  <canvas id="field" aria-label="Поле Цивилизация"></canvas>
+  <canvas id="field" tabindex="0" aria-label="Поле Цивилизация"></canvas>
   <div class="hud">Цивилизация: шестиугольная сетка, ширина клетки ~40px</div>
+  <div class="hud-controls">
+    <button id="saveFieldBtn" type="button" style="background:#1f2937;border:1px solid #475569;color:#e2e8f0;border-radius:10px;padding:6px 10px;font-weight:800;cursor:pointer;">Сохранить поле</button>
+    <button id="loadFieldBtn" type="button" style="background:#1f2937;border:1px solid #475569;color:#e2e8f0;border-radius:10px;padding:6px 10px;font-weight:800;cursor:pointer;margin-left:6px;">Загрузить поле</button>
+    <button id="resetFieldBtn" type="button" style="background:#7f1d1d;border:1px solid #ef4444;color:#fee2e2;border-radius:10px;padding:6px 10px;font-weight:800;cursor:pointer;margin-left:6px;">Сбросить поле</button>
+    <button id="recoverCtrlBtn" type="button" style="background:#0f766e;border:1px solid #14b8a6;color:#ecfeff;border-radius:10px;padding:6px 10px;font-weight:800;cursor:pointer;margin-left:6px;">Вернуть управление</button>
+    <span id="saveHint" style="margin-left:10px;color:#94a3b8;"></span>
+  </div>
   <a class="home-btn" href="index.html" aria-label="Вернуться на главную" title="На главную">
     <svg viewbox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M3 10.5 12 3l9 7.5"></path>
@@ -273,7 +302,7 @@
       <p id="stageEndStats"></p>
       <div class="stage-end-actions">
         <button type="button" id="restartStageBtn">Вернуться к началу этапа</button>
-        <a class="stage-next-btn" id="nextStageBtn" href="civ.html?stage2debug=1">Перейти на следующий этап</a>
+        <a class="stage-next-btn" id="nextStageBtn" href="#">Перейти на следующий этап</a>
       </div>
     </div>
   </div>
@@ -283,6 +312,11 @@
       const ctx = canvas.getContext('2d');
       const hud = document.querySelector('.hud');
       const rulesBtn = document.getElementById('rulesBtn');
+      const saveFieldBtn = document.getElementById('saveFieldBtn');
+      const loadFieldBtn = document.getElementById('loadFieldBtn');
+      const resetFieldBtn = document.getElementById('resetFieldBtn');
+      const recoverCtrlBtn = document.getElementById('recoverCtrlBtn');
+      const saveHint = document.getElementById('saveHint');
       const rulesModal = document.getElementById('rulesModal');
       const rulesCloseBtn = document.getElementById('rulesCloseBtn');
       const mobileControls = document.getElementById('mobileControls');
@@ -293,8 +327,35 @@
       const nextStageBtn = document.getElementById('nextStageBtn');
       const RULES_STORAGE_KEY = 'agrarian-epoch-rules-seen-v1';
       const DEMO_STATE_STORAGE_KEY = 'agrarian-epoch-demo-state-v1';
+      const STAGE2_STATE_STORAGE_KEY = 'agrarian-epoch-stage2-state-v1';
       const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
       const STAGE2_DEBUG_MODE = new URLSearchParams(window.location.search).get('stage2debug') === '1';
+      const QUICK_SAVE_KEY = 'agrarian-epoch-quick-save-v1';
+      /** Макс. число вагонов 1/2/3 у поезда 4 (лидер «4» не считается). Раньше 9 — блокировало подцеп после полного состава. */
+      const CHIEFDOM_CARGO_MAX = 99;
+      /**
+       * Второй этап: все пронумерованные «доп. правила» (1–9). false — только ход поезда 4/5 по полю, без остального.
+       * Первая эпоха (поселения «3») этот флаг не читает.
+       *
+       * 1 — доп. правила 1–9 (мостик, коридор, цели к поселению и т.д.). Ограда Храма считается и при false — см. refreshChiefdomCarryState.
+       *    Храм: (а) в вагонах ≥1 рангов 1/2/3 и ровно 11 клеток состава; (б) клетки = шаблон «восьмёрки» (с поворотом на 60°);
+       *    (в) соседи снаружи фигуры — пустые сухие клетки вне поселений.
+       * 2 — пауза поезда 4 до Enter (chiefdomAwaitMoveAck), если флаг true; при появлении ограды Храма не ставится.
+       * 3 — автоподбор в refresh: chiefdomLooseTokens + обычные 1 и 2 с поля.
+       * 4 — поглощение соседних голов «3» у поселений (chiefdomAbsorbAdjacentLeaderHeads).
+       * 5 — клавиши 1/2/3: мостик в отмеченной клетке.
+       * 6 — пробел: фишки на фиолетовом коридоре.
+       * 7 — ensureChiefTrainTarget: цель — поселение, фишка у рамки при подходе ≤2.
+       * 8 — отрисовка коридора 4 → ближайшее «3».
+       * 9 — absorbAllLooseTokensToChief при beginChiefdomAfterEpoch (внепоселковые фишки в состав).
+       */
+      const CHIEFDOM_ENABLE_RULES_1_9 = false;
+      /** Подбор loose / «1» / «2» только от головы поезда (иначе длинный состав = «рёв» всей восьмёрки за тик). Немного больше 8, чтобы компенсировать отказ от вагонов. */
+      const CHIEFDOM_PICKUP_HEX_DIST = 10;
+      /** Фишка на «заблокированной» клетке (у ограды / мостик): голова 4 может подойти только обходом — считаем шаги ходов головы. */
+      const CHIEFDOM_PICKUP_WALK_MAX = 28;
+      /** Если обход не сошёлся, запас по чистой гекс-сетке для фишек на blocked (редко, очень широкое поселение). */
+      const CHIEFDOM_PICKUP_HEX_BLOCKED_EXTRA = 14;
 
       let HEX_W = 34;
       let SIZE = HEX_W / 2;
@@ -346,9 +407,25 @@
       let epochFinished = false;
       let controlledLeaderAId = null;
       let controlledLeaderId = null;
+      /**
+       * Клик по фишке: ручное управление WEASDZX; два игровых тика без направления → авто.
+       * freeMode: 1 покой, 2 блуждание, 3 прямая с отражением (ранг 3/4 как 3).
+       */
+      let pickedMicroToken = null;
       let leaderSpawnSeqA = 0;
       let leaderSpawnSeqB = 0;
       let stageEndShown = false;
+      let chiefdomMode = false;
+      let chiefdomLeaderId = null;
+      let chiefdomVisitedSettlements = new Set();
+      let chiefdomLooseTokens = []; // временные фишки 1/2/3, появляющиеся у поселений
+      /** Клетки Храма: 11 гексов по chiefdomPatternCells («восьмёрка»); на карте — двойной забор (см. drawChiefdomCapitalFrames). */
+      let chiefdomCapitalTokens = [];
+      /** Внутренний контур «восьмёрки» Храма (ключи c,r) — ограда как у поселений, без фишек на клетках. */
+      let chiefdomTempleFenceInner = null;
+      let chiefdomTrainMoveSerial = 0; // номер последнего реального хода игрока 4
+      /** «Тройки» с клавиатуры: одна клетка, шаг по направлению dirIdx, отскок от края/воды/ограды/фишек. */
+      let bouncingThrees = [];
 
       function key(c, r) {
         return c + ',' + r;
@@ -381,6 +458,9 @@
       }
       function cubeDistance(a, b) {
         return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y), Math.abs(a.z - b.z));
+      }
+      function hexDistance(c1, r1, c2, r2) {
+        return cubeDistance(oddQToCube(c1, r1), oddQToCube(c2, r2));
       }
       function pathBetween(a, b) {
         const ac = oddQToCube(a.c, a.r);
@@ -438,6 +518,77 @@
         const r = Math.round((y - ro - SIZE) / STEP_Y);
         return { c, r };
       }
+      function pickLeaderByCanvasPoint(x, y) {
+        let best = null;
+        let bestD = Infinity;
+        const maxD = Math.max(16, HEX_W * 0.52);
+        for (const l of leaders) {
+          if (!l || l.hideTokensForChiefdom) continue;
+          const p = hexCenter(l.c, l.r);
+          const dx = p.x - x;
+          const dy = p.y - y;
+          const d = Math.hypot(dx, dy);
+          if (d > maxD) continue;
+          if (d < bestD) {
+            bestD = d;
+            best = l;
+          }
+        }
+        return best;
+      }
+      /** ПКМ по голове поезда 4/5: только голова (клетка лидера), тот же радиус, что у двойного клика по лидеру. */
+      function pickChiefTrainHeadByCanvasPoint(x, y) {
+        let best = null;
+        let bestD = Infinity;
+        const maxD = Math.max(16, HEX_W * 0.52);
+        for (const l of leaders) {
+          if (!l || l.hideTokensForChiefdom || !isChiefTrainRole(l.role)) continue;
+          const p = hexCenter(l.c, l.r);
+          const d = Math.hypot(p.x - x, p.y - y);
+          if (d > maxD) continue;
+          if (d < bestD) {
+            bestD = d;
+            best = l;
+          }
+        }
+        return best;
+      }
+      function destroyChiefTrainByRightClick(evt) {
+        if (DEMO_MODE || !chiefdomMode) return false;
+        const rect = canvas.getBoundingClientRect();
+        const x = evt.clientX - rect.left;
+        const y = evt.clientY - rect.top;
+        const chief = pickChiefTrainHeadByCanvasPoint(x, y);
+        if (!chief) return false;
+        const who = chiefTrainDisplayDigit(chief.role);
+        clearChiefdomTempleAndAllChiefTrains();
+        phaseNotice = 'Храм и поезда 4/5 сняты с поля (ПКМ по поезду ' + who + ').';
+        quickSaveToLocalStorage();
+        draw();
+        return true;
+      }
+      function transferControlToLeaderByDoubleClick(evt) {
+        if (!evt) return false;
+        const rect = canvas.getBoundingClientRect();
+        const x = evt.clientX - rect.left;
+        const y = evt.clientY - rect.top;
+        const leader = pickLeaderByCanvasPoint(x, y);
+        if (!leader) return false;
+        if (leader.side === 'A') {
+          if (isChiefTrainRole(leader.role)) {
+            chiefdomMode = true;
+            chiefdomLeaderId = leader.id;
+          }
+          controlledLeaderAId = leader.id;
+        } else if (leader.side === 'B') {
+          controlledLeaderId = leader.id;
+        }
+        const who = isChiefTrainRole(leader.role) ? ('поезд ' + chiefTrainDisplayDigit(leader.role)) : 'игрок 3';
+        phaseNotice = 'Управление передано: ' + who + '.';
+        quickSaveToLocalStorage();
+        draw();
+        return true;
+      }
       function drawHex(cx, cy, fill, stroke, lw) {
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {
@@ -492,11 +643,13 @@
           for (const s of t.segs) addCell(s.c, s.r);
         }
         for (const l of leaders) {
+          if (l.hideTokensForChiefdom) continue;
           addCell(l.c, l.r);
           if (l.cargoTrain && l.cargoTrain.length) {
             for (const s of l.cargoTrain) addCell(s.c, s.r);
           }
         }
+        for (const b of bouncingThrees) addCell(b.c, b.r);
         const out = [];
         for (const [k, cnt] of counts.entries()) {
           if (cnt > 1) out.push(k);
@@ -547,16 +700,1721 @@
         }
         return { c: side === 'A' ? boardMinC + 4 : boardMaxC - 4, r: Math.floor((boardMinR + boardMaxR) / 2) };
       }
-      function isOccupied(c, r) {
+      function isOccupied(c, r, ignoreBounceId) {
         for (const o of ones) if (o.c === c && o.r === r) return true;
         for (const t of twos) {
           for (const s of t.segs) if (s.c === c && s.r === r) return true;
         }
-        for (const l of leaders) if (l.c === c && l.r === r) return true;
+        for (const l of leaders) {
+          if (l.hideTokensForChiefdom) continue;
+          if (l.c === c && l.r === r) return true;
+          if (l.cargoTrain && l.cargoTrain.length) {
+            for (const s of l.cargoTrain) if (s.c === c && s.r === r) return true;
+          }
+        }
+        for (const t of chiefdomLooseTokens) if (t.c === c && t.r === r) return true;
+        for (const t of chiefdomCapitalTokens) if (t.c === c && t.r === r) return true;
+        for (const t of bouncingThrees) {
+          if (ignoreBounceId && t.id === ignoreBounceId) continue;
+          if (t.c === c && t.r === r) return true;
+        }
         return false;
+      }
+      function chiefdomSettlementLeadersA() {
+        return leaders
+          .filter((l) => l.side === 'A' && l.frozen && l.frozenFrameKeys && l.frozenFrameKeys.size)
+          .sort((a, b) => riverProximityIndex('A', a.c, a.r) - riverProximityIndex('A', b.c, b.r));
+      }
+      function nearestSettlementForChief(l) {
+        const all = chiefdomSettlementLeadersA().filter((s) => !chiefdomVisitedSettlements.has(s.id));
+        if (!all.length) return null;
+        let best = null;
+        let bestD = Infinity;
+        for (const s of all) {
+          const d = hexDistance(l.c, l.r, s.c, s.r);
+          if (d < bestD) {
+            bestD = d;
+            best = s;
+          }
+        }
+        return best;
+      }
+      function isChiefTrainRole(role) {
+        return role === 'chief4' || role === 'chief5';
+      }
+      /** Поезд 4 после ограды храма ждёт явного Enter — без этого не двигается и не «спасается» телепортом. */
+      function chiefTrainAwaitingAck(l) {
+        if (!CHIEFDOM_ENABLE_RULES_1_9) return false;
+        return !!(l && isChiefTrainRole(l.role) && l.chiefdomAwaitMoveAck);
+      }
+      function newestChiefTrainLeaderA() {
+        for (let i = leaders.length - 1; i >= 0; i--) {
+          const l = leaders[i];
+          if (!l || l.side !== 'A' || l.frozen) continue;
+          if (!isChiefTrainRole(l.role)) continue;
+          return l;
+        }
+        return null;
+      }
+      /** Для коридора/мостика: активный поезд (chiefdomLeaderId) или первый 4/5 на карте. */
+      function getChiefTrainLeaderForGeometry() {
+        if (!chiefdomMode) return null;
+        const chiefs = leaders.filter((l) => l.side === 'A' && !l.frozen && isChiefTrainRole(l.role));
+        const byCtrl = controlledLeaderAId && chiefs.find((x) => x.id === controlledLeaderAId);
+        if (byCtrl) return byCtrl;
+        const byId =
+          chiefdomLeaderId &&
+          leaders.find((l) => l.id === chiefdomLeaderId && l.side === 'A' && !l.frozen && isChiefTrainRole(l.role));
+        if (byId) return byId;
+        return (
+          leaders.find((l) => l.role === 'chief4' && l.side === 'A' && !l.frozen) ||
+          leaders.find((l) => l.role === 'chief5' && l.side === 'A' && !l.frozen) ||
+          null
+        );
+      }
+      /** Поезд, для которого считается подбор: сначала управляемый (активная голова), иначе chiefdomLeaderId, иначе любой 4/5. */
+      function chiefdomActiveTrainLeaderForPickup() {
+        if (!chiefdomMode) return null;
+        const chiefs = leaders.filter((l) => l.side === 'A' && !l.frozen && isChiefTrainRole(l.role));
+        if (!chiefs.length) return null;
+        const byControl = controlledLeaderAId && chiefs.find((x) => x.id === controlledLeaderAId);
+        if (byControl) return byControl;
+        const byLeader = chiefdomLeaderId && chiefs.find((x) => x.id === chiefdomLeaderId);
+        if (byLeader) return byLeader;
+        return chiefs.find((x) => x.role === 'chief4') || chiefs.find((x) => x.role === 'chief5') || chiefs[0];
+      }
+      /** Голова поезда 4/5 для контекста клавиш (спавн 1/2/3): в вождестве — не лидер «3». */
+      function leaderAForKeyboardSpawnContext() {
+        if (chiefdomMode) {
+          const chief = chiefdomActiveTrainLeaderForPickup();
+          if (chief) return chief;
+        }
+        return leaders.find((x) => x.id === controlledLeaderAId && !x.hideTokensForChiefdom) || null;
+      }
+      function chiefTrainDisplayDigit(role) {
+        if (role === 'chief5') return '4';
+        if (role === 'chief4') return '4';
+        return '3';
+      }
+      /** Клетки на одном из кратчайших путей между головой 4 и головой ближайшего «3» в поселении (без концов). */
+      const CHIEFDOM_4_TO_3_CORRIDOR_STYLE = { fill: 'rgba(217, 70, 239, 0.26)', stroke: 'rgba(168, 85, 247, 0.55)' };
+      function drawChiefdomRoadCell(c, r) {
+        const p = hexCenter(c, r);
+        // Одноклеточная дорога: только заливка клетки, без обводки, чтобы не утолщать маршрут.
+        drawHex(p.x, p.y, 'rgba(168,85,247,0.28)', null, 0);
+      }
+      function chiefdomTempleOriginCell() {
+        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
+          const sorted = Array.from(chiefdomTempleFenceInner).sort();
+          const k0 = sorted[0];
+          if (k0) return parseKey(k0);
+        }
+        if (Array.isArray(chiefdomCapitalTokens) && chiefdomCapitalTokens.length) {
+          const c = chiefdomCapitalTokens[0];
+          if (c && typeof c.c === 'number' && typeof c.r === 'number') return { c: c.c, r: c.r };
+        }
+        return null;
+      }
+      function visibleChiefdomSettlementsA() {
+        return leaders.filter((l) =>
+          l &&
+          l.side === 'A' &&
+          l.frozen &&
+          !l.hideTokensForChiefdom &&
+          l.frozenFrameKeys &&
+          l.frozenFrameKeys.size &&
+          !isChiefTrainRole(l.role)
+        );
+      }
+      function chiefdomTempleOrigins() {
+        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
+          const o = chiefdomTempleOriginCell();
+          return o ? [o] : [];
+        }
+        if (!Array.isArray(chiefdomCapitalTokens) || !chiefdomCapitalTokens.length) return [];
+        const bySite = new Map();
+        for (const t of chiefdomCapitalTokens) {
+          const sid = t && t.siteId ? String(t.siteId) : 'legacy';
+          if (!bySite.has(sid)) bySite.set(sid, []);
+          bySite.get(sid).push(t);
+        }
+        const out = [];
+        for (const tokens of bySite.values()) {
+          if (!tokens.length) continue;
+          // Якорь площадки — первая клетка в chiefdomPatternCells (талия восьмёрки).
+          const c = tokens[0];
+          if (c && typeof c.c === 'number' && typeof c.r === 'number') out.push({ c: c.c, r: c.r });
+        }
+        return out;
+      }
+      function chiefdomStablePreviewTempleOrigin() {
+        // Точка отсчёта для коридора 4→поселение (CHIEFDOM_ENABLE_RULES_1_9), не для ограды Храма.
+        const base =
+          leaders.find((l) => l && l.side === 'A' && l.role === 'chief4' && !l.frozen) ||
+          leaders.find((l) => l && l.side === 'A' && l.role === 'chief4');
+        if (!base) return null;
+        return { c: base.c, r: base.r };
+      }
+      function cellsBetweenChief4AndNearestSettlementA() {
+        if (!chiefdomMode) return [];
+        const chief = getChiefTrainLeaderForGeometry();
+        if (!chief) return [];
+        const target = nearestSettlementForChief(chief);
+        if (!target) return [];
+        const path = pathBetween({ c: chief.c, r: chief.r }, { c: target.c, r: target.r });
+        if (path.length <= 2) return [];
+        return path.slice(1, -1);
+      }
+      function drawChiefdomCorridorBetween4AndNearestSettlement() {
+        if (!chiefdomMode) return;
+        const templeOrigins = chiefdomTempleOrigins();
+        const previewOrigin = templeOrigins.length ? null : chiefdomStablePreviewTempleOrigin();
+        if (!templeOrigins.length && !previewOrigin) return;
+        const settlements = visibleChiefdomSettlementsA();
+        if (!settlements.length) return;
+        const roadKeys = new Set();
+        for (const s of settlements) {
+          const origin = templeOrigins.length
+            ? templeOrigins.reduce((best, o) => (
+              hexDistance(o.c, o.r, s.c, s.r) < hexDistance(best.c, best.r, s.c, s.r) ? o : best
+            ))
+            : previewOrigin;
+          if (!origin) continue;
+          // Входим в поселение через ближайшую к Храму клетку его рамки.
+          let target = { c: s.c, r: s.r };
+          if (s.frozenFrameKeys && s.frozenFrameKeys.size) {
+            let best = null;
+            let bestD = Infinity;
+            for (const k of s.frozenFrameKeys) {
+              const p = parseKey(k);
+              const d = hexDistance(origin.c, origin.r, p.c, p.r);
+              if (d < bestD) {
+                bestD = d;
+                best = p;
+              }
+            }
+            if (best) target = best;
+          }
+          // Только прямой маршрут в 1 клетку толщиной (без обходных веток).
+          const path = pathBetween(origin, target);
+          if (!path || path.length <= 2) continue;
+          for (let i = 1; i < path.length - 1; i++) {
+            const cell = path[i];
+            if (!inBoard(cell.c, cell.r)) continue;
+            const rk = key(cell.c, cell.r);
+            roadKeys.add(rk);
+          }
+        }
+        for (const k of roadKeys) {
+          const c = parseKey(k);
+          drawChiefdomRoadCell(c.c, c.r);
+        }
+      }
+      function cellOnAnyFrozenSettlementFrame(c, r) {
+        for (const l of leaders) {
+          if (l && l.frozen && l.frozenFrameKeys && l.frozenFrameKeys.has(key(c, r))) return true;
+        }
+        return false;
+      }
+      /** Клетки контура Храма (11 гексов «восьмёрки»): забор и/или старые фишки столицы. */
+      function chiefdomTempleInnerCellKeys() {
+        const keys = new Set();
+        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
+          for (const k of chiefdomTempleFenceInner) keys.add(k);
+          return keys;
+        }
+        if (!Array.isArray(chiefdomCapitalTokens)) return keys;
+        for (const t of chiefdomCapitalTokens) keys.add(key(t.c, t.r));
+        return keys;
+      }
+      /** Храм + кольцо «двойного забора» (как в drawChiefdomCapitalFrames). */
+      function chiefdomTempleFenceCellKeys() {
+        const inner = chiefdomTempleInnerCellKeys();
+        if (!inner.size) return new Set();
+        return dilateCellKeysOnLand(inner);
+      }
+      function cellInChiefdomTempleFenceZone(c, r) {
+        return chiefdomTempleFenceCellKeys().has(key(c, r));
+      }
+      /** Снять Храм и все поезда 4/5 (A) одним действием — связка «храм + четвёрка + состав». */
+      function clearChiefdomTempleAndAllChiefTrains() {
+        chiefdomCapitalTokens = [];
+        chiefdomTempleFenceInner = null;
+        leaders = leaders.filter((l) => !(l.side === 'A' && isChiefTrainRole(l.role)));
+        chiefdomLeaderId = null;
+        controlledLeaderAId = null;
+        clearMicroPick();
+        enforceChiefTrainLeaders();
+        if (!setControlledLeaderA('4')) setControlledLeaderA('3');
+      }
+      function buildMicroPickFromKind(kind, id, cellKey) {
+        return {
+          kind,
+          id: id || null,
+          cellKey: cellKey || null,
+          managed: true,
+          _idleStreak: 0,
+          _dirAckSinceLastTick: false,
+          _skipFirstIdleTick: true,
+          freeMode: 1,
+          rayDirIdx: 0,
+        };
+      }
+      function assignPickedMicroAfterKeyboardSpawn(level, id) {
+        if (level === 1) pickedMicroToken = buildMicroPickFromKind('one', id, null);
+        else if (level === 2) pickedMicroToken = buildMicroPickFromKind('two', id, null);
+        else if (level === 3) pickedMicroToken = buildMicroPickFromKind('bounce3', id, null);
+      }
+      /** Ранг «парной» к 4 фишки для j-й фиолетовой клетки коридора (0 — сосед с головой 4 → 3). */
+      function chiefdomCorridorPairedLevel(leader4, corridorIndex) {
+        if (!leader4) return 3;
+        const j = Number(corridorIndex) || 0;
+        if (j <= 0) return 3;
+        const ct = leader4.cargoTrain || [];
+        const seg = ct[j - 1];
+        const lv = seg && Number(seg.level);
+        if (lv === 1 || lv === 2 || lv === 3) return lv;
+        return 3;
+      }
+      function spawnChiefdomCorridorChipsOnSpace() {
+        if (!chiefdomMode) return false;
+        const chief = getChiefTrainLeaderForGeometry();
+        if (!chief) {
+          phaseNotice = 'Сначала нажми 4, чтобы появился поезд 4.';
+          return false;
+        }
+        const cells = cellsBetweenChief4AndNearestSettlementA();
+        if (!cells.length) {
+          phaseNotice = 'Нет фиолетового коридора к ближайшему поселению.';
+          return false;
+        }
+        let placed = 0;
+        for (let j = 0; j < cells.length; j++) {
+          const cell = cells[j];
+          if (!inBoard(cell.c, cell.r) || isWaterCell(cell.c, cell.r)) continue;
+          if (isOccupied(cell.c, cell.r)) continue;
+          const lvl = chiefdomCorridorPairedLevel(chief, j);
+          removePortableTokensAtCell(cell.c, cell.r);
+          chiefdomLooseTokens.push({ c: cell.c, r: cell.r, level: lvl });
+          placed++;
+        }
+        if (placed) {
+          phaseNotice =
+            'Пробел: на коридоре появились фишки (' + placed + ') по рангу пар к поезду ' + chiefTrainDisplayDigit(chief.role) + '.';
+          return true;
+        }
+        phaseNotice = 'Пробел: все клетки коридора заняты или в воде.';
+        return false;
+      }
+      /** Единая отмеченная клетка для ручного спавна 1/2/3: мостик, либо первая клетка коридора 4->ближайшее поселение. */
+      function chiefdomMarkedSpawnCell() {
+        if (!chiefdomMode) return null;
+        const bridge = findBridgeGapCell();
+        if (bridge) return bridge;
+        const corridor = cellsBetweenChief4AndNearestSettlementA();
+        if (!corridor.length) return null;
+        const cell = corridor[0];
+        if (!cell) return null;
+        if (!inBoard(cell.c, cell.r) || isWaterCell(cell.c, cell.r)) return null;
+        if (isOccupied(cell.c, cell.r)) return null;
+        return cell;
+      }
+      function chiefCargoCounts(leader4) {
+        const counts = { 1: 0, 2: 0, 3: 0 };
+        if (!leader4 || !Array.isArray(leader4.cargoTrain)) return counts;
+        for (const s of leader4.cargoTrain) {
+          const lvl = Number(s.level);
+          if (lvl === 1 || lvl === 2 || lvl === 3) counts[lvl]++;
+        }
+        return counts;
+      }
+      function chiefNeededLevelForBalance(leader4) {
+        const counts = chiefCargoCounts(leader4);
+        const total = counts[1] + counts[2] + counts[3];
+        if (total >= CHIEFDOM_CARGO_MAX) return null;
+        let bestLevel = null;
+        let bestCount = Infinity;
+        for (const lvl of [3, 2, 1]) {
+          if (counts[lvl] < bestCount) {
+            bestCount = counts[lvl];
+            bestLevel = lvl;
+          }
+        }
+        return bestLevel;
+      }
+      /** В вагонах поезда 4/5 есть хотя бы один ранг r (1/2/3). Голова не считается. */
+      function chiefTrainCargoHasRank(leader4, r) {
+        if (!leader4 || !Array.isArray(leader4.cargoTrain)) return false;
+        for (const s of leader4.cargoTrain) {
+          const lv = Number(s.level);
+          if (lv === r) return true;
+        }
+        return false;
+      }
+      /**
+       * Вождество: фишку ранга X можно добавить в состав только если уже есть (X+1) в вагонах;
+       * для X=3 «старший» — голова поезда «4» (нет вагона ранга 4).
+       */
+      function chiefTrainCanReceiveRankX(leader4, x) {
+        if (!chiefdomMode || !leader4 || !isChiefTrainRole(leader4.role)) return true;
+        const X = Number(x);
+        if (X !== 1 && X !== 2 && X !== 3) return true;
+        const need = X + 1;
+        if (need === 4) return true;
+        if (X === 2) {
+          const ct = leader4.cargoTrain;
+          const empty = !ct || !ct.length;
+          if (empty) return true;
+        }
+        return chiefTrainCargoHasRank(leader4, need);
+      }
+      function pushChiefCargoBalanced(leader4, suggestedLevel) {
+        if (!leader4) return false;
+        const counts = chiefCargoCounts(leader4);
+        const total = counts[1] + counts[2] + counts[3];
+        if (total >= CHIEFDOM_CARGO_MAX) return false;
+        const sLvl = Number(suggestedLevel);
+        let level = null;
+        // Явная фишка 1/2/3 — цепляем её; верхняя граница — CHIEFDOM_CARGO_MAX, без порядка «сначала 3, потом 2…».
+        if (sLvl === 1 || sLvl === 2 || sLvl === 3) {
+          level = sLvl;
+        } else {
+          level = chiefNeededLevelForBalance(leader4);
+        }
+        if (level == null) return false;
+        if (!chiefTrainCanReceiveRankX(leader4, level)) return false;
+        if (!leader4.cargoTrain) leader4.cargoTrain = [];
+        const tail = leader4.cargoTrain.length
+          ? leader4.cargoTrain[leader4.cargoTrain.length - 1]
+          : { c: leader4.c, r: leader4.r };
+        leader4.cargoTrain.push({ c: tail.c, r: tail.r, level });
+        return true;
+      }
+      function spawnChiefdomTokenNearSettlement(leader4, settlement, level) {
+        if (!leader4 || !settlement || !settlement.frozenFrameKeys) return false;
+        const cells = [...settlement.frozenFrameKeys]
+          .map(parseKey)
+          .sort((a, b) => hexDistance(leader4.c, leader4.r, a.c, a.r) - hexDistance(leader4.c, leader4.r, b.c, b.r));
+        for (const cell of cells) {
+          if (isWaterCell(cell.c, cell.r)) continue;
+          if (isOccupied(cell.c, cell.r)) continue;
+          chiefdomLooseTokens.push({ c: cell.c, r: cell.r, level: level });
+          return true;
+        }
+        return false;
+      }
+      function removePortableTokensAtCell(c, r) {
+        const K = key(c, r);
+        chiefdomLooseTokens = chiefdomLooseTokens.filter((t) => key(t.c, t.r) !== K);
+        for (let i = ones.length - 1; i >= 0; i--) {
+          if (ones[i].c === c && ones[i].r === r) ones.splice(i, 1);
+        }
+        for (let i = twos.length - 1; i >= 0; i--) {
+          const tr = twos[i];
+          if (!Array.isArray(tr.segs)) continue;
+          if (tr.segs.some((s) => s.c === c && s.r === r)) twos.splice(i, 1);
+        }
+        bouncingThrees = bouncingThrees.filter((b) => b.c !== c || b.r !== r);
+      }
+      /** После подбора мостиковой фишки: на клетке остаётся настоящая 1/2/3 для дальнейшей игры. */
+      function placeRealChiefdomBridgeCopy(c, r, lvl) {
+        removePortableTokensAtCell(c, r);
+        const L = Number(lvl) || 1;
+        if (L === 1) ones.push({ id: '1-br-' + Date.now(), c, r });
+        else if (L === 2) twos.push({ id: '2-br-' + Date.now(), side: 'A', segs: [{ c, r }] });
+        else chiefdomLooseTokens.push({ c, r, level: 3 });
+      }
+      /** Расстояние для подцепа: только голова — иначе весь изогнутый состав одновременно «рядом» с десятками фишек на коридоре. */
+      function chiefdomHexDistHeadToCell(leader4, c, r) {
+        if (!leader4) return Infinity;
+        return hexDistance(leader4.c, leader4.r, c, r);
+      }
+      /** Число ходов головы поезда до (gc,gr) по тем же правилам, что applyLeaderMoveById (вода, ограда, занятость). */
+      function chiefdomWalkHeadStepsToCell(leader4, gc, gr) {
+        if (!leader4) return Infinity;
+        const goal = key(gc, gr);
+        const sk = key(leader4.c, leader4.r);
+        const q = [{ c: leader4.c, r: leader4.r }];
+        const dist = new Map([[sk, 0]]);
+        for (let qi = 0; qi < q.length; qi++) {
+          const cur = q[qi];
+          const ck = key(cur.c, cur.r);
+          const dk = dist.get(ck);
+          if (ck === goal) return dk;
+          if (dk >= CHIEFDOM_PICKUP_WALK_MAX) continue;
+          for (const n of getNeighbors(cur.c, cur.r)) {
+            const nk = key(n.c, n.r);
+            if (dist.has(nk)) continue;
+            if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+            if (blockedBySettlements.has(nk)) continue;
+            if (isOccupied(n.c, n.r)) continue;
+            dist.set(nk, dk + 1);
+            q.push(n);
+          }
+        }
+        return Infinity;
+      }
+      /** Подцеп с учётом ограды: на blocked-клетке фишка «с другой стороны стены» — важен обход головой, не только hex по составу. */
+      function chiefdomTrainCanPickupCell(leader4, c, r) {
+        const hexD = chiefdomHexDistHeadToCell(leader4, c, r);
+        if (hexD <= CHIEFDOM_PICKUP_HEX_DIST) return true;
+        const tk = key(c, r);
+        if (!blockedBySettlements.has(tk)) return false;
+        let bestWalk = Infinity;
+        for (const n of getNeighbors(c, r)) {
+          const nk = key(n.c, n.r);
+          if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+          if (blockedBySettlements.has(nk)) continue;
+          const w = chiefdomWalkHeadStepsToCell(leader4, n.c, n.r);
+          if (w < bestWalk) bestWalk = w;
+        }
+        if (bestWalk <= CHIEFDOM_PICKUP_WALK_MAX) return true;
+        return hexD <= CHIEFDOM_PICKUP_HEX_BLOCKED_EXTRA;
+      }
+      function chiefdomCollectLooseTokens(leader4) {
+        if (!leader4) return;
+        for (let i = chiefdomLooseTokens.length - 1; i >= 0; i--) {
+          const t = chiefdomLooseTokens[i];
+          const lv = Number(t.level);
+          if (lv !== 1 && lv !== 2 && lv !== 3) continue;
+          if (!chiefdomTrainCanPickupCell(leader4, t.c, t.r)) continue;
+          if (pushChiefCargoBalanced(leader4, lv)) {
+            const c = t.c;
+            const r = t.r;
+            const needCopy = !!t.leavePhantomOnPickup;
+            chiefdomLooseTokens.splice(i, 1);
+            if (needCopy) placeRealChiefdomBridgeCopy(c, r, lv);
+          }
+        }
+      }
+      function chiefdomCollectPlainOnes(leader4) {
+        if (!leader4) return;
+        for (let i = ones.length - 1; i >= 0; i--) {
+          const o = ones[i];
+          if (chiefdomHexDistHeadToCell(leader4, o.c, o.r) > CHIEFDOM_PICKUP_HEX_DIST) continue;
+          if (!pushChiefCargoBalanced(leader4, 1)) continue;
+          ones.splice(i, 1);
+        }
+      }
+      /** «Тройки» с клавиатуры (шар): как loose-3 по дистанции. */
+      function chiefdomCollectBouncingThrees(leader4) {
+        if (!leader4) return;
+        for (let i = bouncingThrees.length - 1; i >= 0; i--) {
+          const t = bouncingThrees[i];
+          if (!chiefdomTrainCanPickupCell(leader4, t.c, t.r)) continue;
+          if (!pushChiefCargoBalanced(leader4, 3)) continue;
+          bouncingThrees.splice(i, 1);
+        }
+      }
+      function chiefdomCollectPlainTwos(leader4) {
+        if (!leader4) return;
+        for (let i = twos.length - 1; i >= 0; i--) {
+          const t = twos[i];
+          if (!t || !Array.isArray(t.segs) || !t.segs.length) continue;
+          const head2 = t.segs[0];
+          const touches =
+            t.segs.length === 1
+              ? chiefdomTrainCanPickupCell(leader4, head2.c, head2.r)
+              : t.segs.some((s) => chiefdomHexDistHeadToCell(leader4, s.c, s.r) <= CHIEFDOM_PICKUP_HEX_DIST);
+          if (!touches) continue;
+          const needSlots = t.segs.length; // 2 + (len-1) единиц по правилу длинной «двойки»
+          const cts0 = chiefCargoCounts(leader4);
+          if (cts0[1] + cts0[2] + cts0[3] + needSlots > CHIEFDOM_CARGO_MAX) continue;
+          const beforeLen = leader4.cargoTrain ? leader4.cargoTrain.length : 0;
+          if (!pushChiefCargoBalanced(leader4, 2)) continue;
+          let absorbedAll = true;
+          for (let j = 1; j < t.segs.length; j++) {
+            if (!pushChiefCargoBalanced(leader4, 1)) {
+              absorbedAll = false;
+              break;
+            }
+          }
+          if (!absorbedAll) {
+            while (leader4.cargoTrain && leader4.cargoTrain.length > beforeLen) leader4.cargoTrain.pop();
+            continue;
+          }
+          twos.splice(i, 1);
+        }
+      }
+      /** maxHexSteps: 1 — соседи по грани; до 4 — несколько колец (длинный поезд + «2» чуть в стороне у озера). */
+      function chiefdomTrainNeighborKeys(leader4, maxHexSteps) {
+        const maxSteps = maxHexSteps == null ? 1 : Math.max(1, Math.min(4, maxHexSteps));
+        const cells = [];
+        cells.push({ c: leader4.c, r: leader4.r });
+        if (leader4.cargoTrain && leader4.cargoTrain.length) {
+          for (const s of leader4.cargoTrain) cells.push({ c: s.c, r: s.r });
+        }
+        const keys = new Set();
+        const dist = new Map();
+        const q = [];
+        for (const cell of cells) {
+          const k = key(cell.c, cell.r);
+          if (!dist.has(k)) {
+            dist.set(k, 0);
+            keys.add(k);
+            q.push({ c: cell.c, r: cell.r });
+          }
+        }
+        for (let qi = 0; qi < q.length; qi++) {
+          const cur = q[qi];
+          const dk = dist.get(key(cur.c, cur.r));
+          if (dk >= maxSteps) continue;
+          for (const n of getNeighbors(cur.c, cur.r)) {
+            const nk = key(n.c, n.r);
+            if (!dist.has(nk)) {
+              dist.set(nk, dk + 1);
+              keys.add(nk);
+              if (dk + 1 < maxSteps) q.push({ c: n.c, r: n.r });
+            }
+          }
+        }
+        return keys;
+      }
+      function cellTouchesSettlementFrame(B, settlement) {
+        if (!B || !settlement || !settlement.frozenFrameKeys) return false;
+        const bk = key(B.c, B.r);
+        if (settlement.frozenFrameKeys.has(bk)) return true;
+        return getNeighbors(B.c, B.r).some((n) => settlement.frozenFrameKeys.has(key(n.c, n.r)));
+      }
+      function findBridgeGapCell() {
+        const chief = getChiefTrainLeaderForGeometry();
+        if (!chief) return null;
+        const parts = [{ c: chief.c, r: chief.r }];
+        if (chief.cargoTrain && chief.cargoTrain.length) {
+          for (const s of chief.cargoTrain) parts.push({ c: s.c, r: s.r });
+        }
+        const candidates = new Map();
+        for (const settlement of leaders) {
+          if (!settlement.frozen || settlement.hideTokensForChiefdom) continue;
+          if (!settlement.frozenFrameKeys || !settlement.frozenFrameKeys.size) continue;
+          if (isChiefTrainRole(settlement.role)) continue;
+          const hx = settlement.c;
+          const hy = settlement.r;
+          for (const part of parts) {
+            if (hexDistance(part.c, part.r, hx, hy) !== 2) continue;
+            for (const nb of getNeighbors(part.c, part.r)) {
+              if (hexDistance(nb.c, nb.r, hx, hy) !== 1) continue;
+              if (!inBoard(nb.c, nb.r) || isWaterCell(nb.c, nb.r)) continue;
+              if (isOccupied(nb.c, nb.r)) continue;
+              if (!blockedBySettlements.has(key(nb.c, nb.r))) continue;
+              if (!cellTouchesSettlementFrame(nb, settlement)) continue;
+              candidates.set(key(nb.c, nb.r), { c: nb.c, r: nb.r });
+            }
+          }
+        }
+        if (candidates.size !== 1) return null;
+        return [...candidates.values()][0];
+      }
+      function trySpawnBridgeChip(bridge, lvl) {
+        if (!bridge || lvl == null) return false;
+        removePortableTokensAtCell(bridge.c, bridge.r);
+        chiefdomLooseTokens.push({
+          c: bridge.c,
+          r: bridge.r,
+          level: lvl,
+          leavePhantomOnPickup: true,
+          collectibleAfterChiefMoveSerial: 0
+        });
+        phaseNotice =
+          'Мостик: фишка ' +
+          lvl +
+          '. Подцеп: до ' +
+          CHIEFDOM_PICKUP_HEX_DIST +
+          ' гекс от состава; у ограды — ещё и обход головой до ' +
+          CHIEFDOM_PICKUP_WALK_MAX +
+          ' ходов по проходимым клеткам. После подбора на клетке остаётся такая же фишка. Shift+3 — игрок 3.';
+        return true;
+      }
+      function digit123FromEvent(e) {
+        if (!e || e.ctrlKey || e.metaKey || e.altKey) return null;
+        const code = e.code;
+        if (code === 'Digit1' || code === 'Numpad1') return 1;
+        if (code === 'Digit2' || code === 'Numpad2') return 2;
+        if (code === 'Digit3' || code === 'Numpad3') return 3;
+        const kk = String(e.key || '').trim();
+        if (kk === '1' || kk === '2' || kk === '3') return Number(kk);
+        if (typeof e.keyCode === 'number') {
+          if (e.keyCode === 49) return 1;
+          if (e.keyCode === 50) return 2;
+          if (e.keyCode === 51) return 3;
+        }
+        return null;
+      }
+      function neighborHexFromDir(c, r, dirIdx) {
+        const dirsEven = [
+          { dc: 1, dr: 0 },
+          { dc: 1, dr: -1 },
+          { dc: 0, dr: -1 },
+          { dc: -1, dr: -1 },
+          { dc: -1, dr: 0 },
+          { dc: 0, dr: 1 }
+        ];
+        const dirsOdd = [
+          { dc: 1, dr: 1 },
+          { dc: 1, dr: 0 },
+          { dc: 0, dr: -1 },
+          { dc: -1, dr: 0 },
+          { dc: -1, dr: 1 },
+          { dc: 0, dr: 1 }
+        ];
+        const d = (c & 1) ? dirsOdd[((dirIdx % 6) + 6) % 6] : dirsEven[((dirIdx % 6) + 6) % 6];
+        return { c: c + d.dc, r: r + d.dr };
+      }
+      function cellBlockedForBouncingThree(nc, nr, selfId) {
+        if (!inBoard(nc, nr)) return true;
+        if (isWaterCell(nc, nr)) return true;
+        if (blockedBySettlements.has(key(nc, nr))) return true;
+        return isOccupied(nc, nr, selfId);
+      }
+      function readHexDirFromKeyEvent(e) {
+        if (!e || e.ctrlKey || e.metaKey || e.altKey) return null;
+        const k = String(e.key || '').toLowerCase();
+        const code = e.code;
+        const mapLeftByKey = { x: 0, d: 0, e: 1, w: 2, a: 3, z: 4, s: 5 };
+        const mapLeftByCode = { KeyX: 0, KeyD: 0, KeyE: 1, KeyW: 2, KeyA: 3, KeyZ: 4, KeyS: 5 };
+        if (mapLeftByCode[code] != null) return mapLeftByCode[code];
+        if (mapLeftByKey[k] != null) return mapLeftByKey[k];
+        return null;
+      }
+      function microRankFromLevel(lv) {
+        const n = Number(lv) || 1;
+        if (n >= 4) return 3;
+        return n;
+      }
+      function microFreeModeFromRank(lv) {
+        const r = microRankFromLevel(lv);
+        if (r >= 3) return 3;
+        if (r === 2) return 2;
+        return 1;
+      }
+      function clearMicroPick() {
+        pickedMicroToken = null;
+      }
+      function validatePickedMicroToken() {
+        if (!pickedMicroToken) return;
+        const pm = pickedMicroToken;
+        let ok = false;
+        if (pm.kind === 'one') ok = ones.some((o) => o.id === pm.id);
+        else if (pm.kind === 'two') ok = twos.some((t) => t.id === pm.id);
+        else if (pm.kind === 'bounce3') ok = bouncingThrees.some((b) => b.id === pm.id);
+        else if (pm.kind === 'loose') ok = chiefdomLooseTokens.some((t) => key(t.c, t.r) === pm.cellKey);
+        if (!ok) clearMicroPick();
+      }
+      function resolveMicroPickCell(pm) {
+        if (!pm) return null;
+        if (pm.kind === 'one') {
+          const o = ones.find((x) => x.id === pm.id);
+          return o ? { c: o.c, r: o.r } : null;
+        }
+        if (pm.kind === 'two') {
+          const t = twos.find((x) => x.id === pm.id);
+          return t && t.segs && t.segs[0] ? { c: t.segs[0].c, r: t.segs[0].r } : null;
+        }
+        if (pm.kind === 'bounce3') {
+          const b = bouncingThrees.find((x) => x.id === pm.id);
+          return b ? { c: b.c, r: b.r } : null;
+        }
+        if (pm.kind === 'loose') {
+          const t = chiefdomLooseTokens.find((x) => key(x.c, x.r) === pm.cellKey);
+          return t ? { c: t.c, r: t.r } : null;
+        }
+        return null;
+      }
+      function microPickRank(pm) {
+        if (pm.kind === 'one') return 1;
+        if (pm.kind === 'two') return 2;
+        if (pm.kind === 'bounce3') return 3;
+        if (pm.kind === 'loose') {
+          const t = chiefdomLooseTokens.find((x) => key(x.c, x.r) === pm.cellKey);
+          return t ? microRankFromLevel(t.level) : 1;
+        }
+        return 1;
+      }
+      function activateMicroFreeMode() {
+        if (!pickedMicroToken) return;
+        const pm = pickedMicroToken;
+        pm.managed = false;
+        pm._idleStreak = 0;
+        pm._dirAckSinceLastTick = false;
+        pm.freeMode = microFreeModeFromRank(microPickRank(pm));
+        pm.rayDirIdx = randomInt(0, 5);
+        if (pm.kind === 'two') {
+          const tr = twos.find((x) => x.id === pm.id);
+          if (tr) tr.keyFreeWander = pm.freeMode === 2;
+        }
+      }
+      function tickMicroManagedIdle() {
+        if (!pickedMicroToken || !pickedMicroToken.managed) return;
+        const pm = pickedMicroToken;
+        if (pm._skipFirstIdleTick) {
+          pm._skipFirstIdleTick = false;
+          pm._dirAckSinceLastTick = false;
+          return;
+        }
+        if (!pm._dirAckSinceLastTick) {
+          pm._idleStreak = (pm._idleStreak || 0) + 1;
+          if (pm._idleStreak >= 2) activateMicroFreeMode();
+        } else {
+          pm._idleStreak = 0;
+        }
+        pm._dirAckSinceLastTick = false;
+      }
+      function shouldSkipBouncingThreeAutoTick(t) {
+        if (!pickedMicroToken || pickedMicroToken.kind !== 'bounce3' || pickedMicroToken.id !== t.id) return false;
+        if (pickedMicroToken.managed) return true;
+        return pickedMicroToken.freeMode !== 3;
+      }
+      function randomMoveTwoSkipForMicro(t) {
+        if (!pickedMicroToken || pickedMicroToken.kind !== 'two' || pickedMicroToken.id !== t.id) return false;
+        if (pickedMicroToken.managed) return true;
+        return pickedMicroToken.freeMode === 3;
+      }
+      function microTwoCanEnterCell(train, nc, nr) {
+        if (!inBoard(nc, nr) || isWaterCell(nc, nr) || blockedBySettlements.has(key(nc, nr))) return false;
+        const segs = train.segs;
+        if (!segs || !segs.length) return false;
+        const tail = segs[segs.length - 1];
+        const intoTail = segs.length > 1 && nc === tail.c && nr === tail.r;
+        for (let i = 1; i < segs.length; i++) {
+          if (intoTail && i === segs.length - 1) continue;
+          if (segs[i].c === nc && segs[i].r === nr) return false;
+        }
+        for (const l of leaders) {
+          if (l.hideTokensForChiefdom) continue;
+          if (l.c === nc && l.r === nr) return false;
+          if (l.cargoTrain && l.cargoTrain.some((s) => s.c === nc && s.r === nr)) return false;
+        }
+        for (const o of ones) if (o.c === nc && o.r === nr) return false;
+        for (const b of bouncingThrees) if (b.c === nc && b.r === nr) return false;
+        for (const x of chiefdomLooseTokens) if (x.c === nc && x.r === nr) return false;
+        for (const x of chiefdomCapitalTokens) if (x.c === nc && x.r === nr) return false;
+        for (const ot of twos) {
+          if (ot.id === train.id) continue;
+          for (const s of ot.segs) if (s.c === nc && s.r === nr) return false;
+        }
+        return true;
+      }
+      function tryMicroPortableMove(dirIdx) {
+        if (!pickedMicroToken || !pickedMicroToken.managed) return false;
+        const pm = pickedMicroToken;
+        const d = ((dirIdx % 6) + 6) % 6;
+        if (pm.kind === 'one') {
+          const o = ones.find((x) => x.id === pm.id);
+          if (!o) return false;
+          const p = neighborHexFromDir(o.c, o.r, d);
+          if (!inBoard(p.c, p.r) || isWaterCell(p.c, p.r) || blockedBySettlements.has(key(p.c, p.r))) return false;
+          if (isOccupied(p.c, p.r)) return false;
+          o.c = p.c;
+          o.r = p.r;
+          return true;
+        }
+        if (pm.kind === 'two') {
+          const tr = twos.find((x) => x.id === pm.id);
+          if (!tr || !tr.segs || !tr.segs.length) return false;
+          const head = tr.segs[0];
+          const p = neighborHexFromDir(head.c, head.r, d);
+          if (!microTwoCanEnterCell(tr, p.c, p.r)) return false;
+          moveTrain(tr, p);
+          maybeAttachOne(tr);
+          return true;
+        }
+        if (pm.kind === 'bounce3') {
+          const b = bouncingThrees.find((x) => x.id === pm.id);
+          if (!b) return false;
+          b.dirIdx = d;
+          const p = neighborHexFromDir(b.c, b.r, b.dirIdx);
+          if (!cellBlockedForBouncingThree(p.c, p.r, b.id)) {
+            b.c = p.c;
+            b.r = p.r;
+            return true;
+          }
+          b.dirIdx = (b.dirIdx + 3) % 6;
+          for (let k = 0; k < 6; k++) {
+            const p2 = neighborHexFromDir(b.c, b.r, b.dirIdx);
+            if (!cellBlockedForBouncingThree(p2.c, p2.r, b.id)) {
+              b.c = p2.c;
+              b.r = p2.r;
+              return true;
+            }
+            b.dirIdx = (b.dirIdx + 1) % 6;
+          }
+          return true;
+        }
+        if (pm.kind === 'loose') {
+          const t = chiefdomLooseTokens.find((x) => key(x.c, x.r) === pm.cellKey);
+          if (!t) return false;
+          const p = neighborHexFromDir(t.c, t.r, d);
+          if (!inBoard(p.c, p.r) || isWaterCell(p.c, p.r) || blockedBySettlements.has(key(p.c, p.r))) return false;
+          if (isOccupied(p.c, p.r)) return false;
+          t.c = p.c;
+          t.r = p.r;
+          pm.cellKey = key(t.c, t.r);
+          return true;
+        }
+        return false;
+      }
+      function tryHandleMicroPortableKey(e, dirIdx) {
+        if (!pickedMicroToken || !pickedMicroToken.managed) return false;
+        const pm = pickedMicroToken;
+        if (pm.kind !== 'one' && pm.kind !== 'two' && pm.kind !== 'bounce3' && pm.kind !== 'loose') return false;
+        pm._dirAckSinceLastTick = true;
+        tryMicroPortableMove(dirIdx);
+        quickSaveToLocalStorage();
+        return true;
+      }
+      function microRayStepLooseOrCapital(isCapital) {
+        const pm = pickedMicroToken;
+        if (!pm) return;
+        const arr = isCapital ? chiefdomCapitalTokens : chiefdomLooseTokens;
+        const t = arr.find((x) => key(x.c, x.r) === pm.cellKey);
+        if (!t) {
+          clearMicroPick();
+          return;
+        }
+        const tryStep = () => {
+          const p = neighborHexFromDir(t.c, t.r, pm.rayDirIdx);
+          if (!inBoard(p.c, p.r) || isWaterCell(p.c, p.r) || blockedBySettlements.has(key(p.c, p.r))) return null;
+          if (isOccupied(p.c, p.r)) return null;
+          return p;
+        };
+        let p = tryStep();
+        if (p) {
+          t.c = p.c;
+          t.r = p.r;
+          pm.cellKey = key(t.c, t.r);
+          return;
+        }
+        pm.rayDirIdx = (pm.rayDirIdx + 3) % 6;
+        for (let k = 0; k < 6; k++) {
+          p = tryStep();
+          if (p) {
+            t.c = p.c;
+            t.r = p.r;
+            pm.cellKey = key(t.c, t.r);
+            return;
+          }
+          pm.rayDirIdx = (pm.rayDirIdx + 1) % 6;
+        }
+      }
+      function microRayStepOne() {
+        const pm = pickedMicroToken;
+        if (!pm || pm.kind !== 'one') return;
+        const o = ones.find((x) => x.id === pm.id);
+        if (!o) {
+          clearMicroPick();
+          return;
+        }
+        const tryStep = () => {
+          const p = neighborHexFromDir(o.c, o.r, pm.rayDirIdx);
+          if (!inBoard(p.c, p.r) || isWaterCell(p.c, p.r) || blockedBySettlements.has(key(p.c, p.r))) return null;
+          if (isOccupied(p.c, p.r)) return null;
+          return p;
+        };
+        let p = tryStep();
+        if (p) {
+          o.c = p.c;
+          o.r = p.r;
+          return;
+        }
+        pm.rayDirIdx = (pm.rayDirIdx + 3) % 6;
+        for (let k = 0; k < 6; k++) {
+          p = tryStep();
+          if (p) {
+            o.c = p.c;
+            o.r = p.r;
+            return;
+          }
+          pm.rayDirIdx = (pm.rayDirIdx + 1) % 6;
+        }
+      }
+      function microRayStepTwoTrain() {
+        const pm = pickedMicroToken;
+        if (!pm || pm.kind !== 'two') return;
+        const tr = twos.find((x) => x.id === pm.id);
+        if (!tr || !tr.segs || !tr.segs.length) {
+          clearMicroPick();
+          return;
+        }
+        const d = pm.rayDirIdx;
+        const head = tr.segs[0];
+        const p = neighborHexFromDir(head.c, head.r, d);
+        if (microTwoCanEnterCell(tr, p.c, p.r)) {
+          moveTrain(tr, p);
+          maybeAttachOne(tr);
+          return;
+        }
+        pm.rayDirIdx = (d + 3) % 6;
+        for (let k = 0; k < 6; k++) {
+          const p2 = neighborHexFromDir(tr.segs[0].c, tr.segs[0].r, pm.rayDirIdx);
+          if (microTwoCanEnterCell(tr, p2.c, p2.r)) {
+            moveTrain(tr, p2);
+            maybeAttachOne(tr);
+            return;
+          }
+          pm.rayDirIdx = (pm.rayDirIdx + 1) % 6;
+        }
+      }
+      function microRandomWanderBounceThree() {
+        const pm = pickedMicroToken;
+        if (!pm || pm.kind !== 'bounce3') return;
+        const b = bouncingThrees.find((x) => x.id === pm.id);
+        if (!b) {
+          clearMicroPick();
+          return;
+        }
+        const order = [0, 1, 2, 3, 4, 5];
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = randomInt(0, i);
+          const tmp = order[i];
+          order[i] = order[j];
+          order[j] = tmp;
+        }
+        for (const d of order) {
+          b.dirIdx = d;
+          const p = neighborHexFromDir(b.c, b.r, d);
+          if (!cellBlockedForBouncingThree(p.c, p.r, b.id)) {
+            b.c = p.c;
+            b.r = p.r;
+            return;
+          }
+        }
+      }
+      function microRandomWanderLooseOrCapital(isCapital) {
+        const pm = pickedMicroToken;
+        if (!pm) return;
+        const arr = isCapital ? chiefdomCapitalTokens : chiefdomLooseTokens;
+        const t = arr.find((x) => key(x.c, x.r) === pm.cellKey);
+        if (!t) {
+          clearMicroPick();
+          return;
+        }
+        const nbs = getNeighbors(t.c, t.r).filter(
+          (n) =>
+            inBoard(n.c, n.r) &&
+            !isWaterCell(n.c, n.r) &&
+            !blockedBySettlements.has(key(n.c, n.r)) &&
+            !isOccupied(n.c, n.r)
+        );
+        if (!nbs.length) return;
+        const pick = nbs[randomInt(0, nbs.length - 1)];
+        t.c = pick.c;
+        t.r = pick.r;
+        pm.cellKey = key(t.c, t.r);
+      }
+      function microRandomWanderOne() {
+        const pm = pickedMicroToken;
+        if (!pm || pm.kind !== 'one') return;
+        const o = ones.find((x) => x.id === pm.id);
+        if (!o) {
+          clearMicroPick();
+          return;
+        }
+        const nbs = getNeighbors(o.c, o.r).filter(
+          (n) =>
+            inBoard(n.c, n.r) &&
+            !isWaterCell(n.c, n.r) &&
+            !blockedBySettlements.has(key(n.c, n.r)) &&
+            !isOccupied(n.c, n.r)
+        );
+        if (!nbs.length) return;
+        const pick = nbs[randomInt(0, nbs.length - 1)];
+        o.c = pick.c;
+        o.r = pick.r;
+      }
+      function tickPickedMicroFreeMovement() {
+        if (!pickedMicroToken || pickedMicroToken.managed) return;
+        const pm = pickedMicroToken;
+        if (pm.kind === 'one') {
+          if (pm.freeMode === 2) microRandomWanderOne();
+          else if (pm.freeMode === 3) microRayStepOne();
+          return;
+        }
+        if (pm.kind === 'two') {
+          if (pm.freeMode === 3) microRayStepTwoTrain();
+          return;
+        }
+        if (pm.kind === 'bounce3') {
+          if (pm.freeMode === 1) return;
+          if (pm.freeMode === 2) microRandomWanderBounceThree();
+          return;
+        }
+        if (pm.kind === 'loose') {
+          if (pm.freeMode === 1) return;
+          if (pm.freeMode === 2) microRandomWanderLooseOrCapital(false);
+          else if (pm.freeMode === 3) microRayStepLooseOrCapital(false);
+          return;
+        }
+      }
+      function pickPortableTokenAtCanvas(x, y) {
+        const maxD = Math.max(16, HEX_W * 0.52);
+        const cands = [];
+        function pushCand(z, c, r, payload) {
+          const p = hexCenter(c, r);
+          const d = Math.hypot(p.x - x, p.y - y);
+          if (d > maxD) return;
+          cands.push({ z, d, payload });
+        }
+        for (const b of bouncingThrees) pushCand(45, b.c, b.r, { kind: 'bounce3', id: b.id });
+        for (const lt of chiefdomLooseTokens) pushCand(40, lt.c, lt.r, { kind: 'loose', cellKey: key(lt.c, lt.r) });
+        for (const t of twos) {
+          if (!t.segs || !t.segs.length) continue;
+          const h = t.segs[0];
+          pushCand(35, h.c, h.r, { kind: 'two', id: t.id });
+        }
+        for (const o of ones) pushCand(25, o.c, o.r, { kind: 'one', id: o.id });
+        if (!cands.length) return null;
+        cands.sort((a, b) => b.z - a.z || a.d - b.d);
+        return cands[0].payload;
+      }
+      function pickMicroTokenAtEvent(evt) {
+        if (DEMO_MODE || !evt) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = evt.clientX - rect.left;
+        const y = evt.clientY - rect.top;
+        const pl = pickPortableTokenAtCanvas(x, y);
+        if (!pl) {
+          clearMicroPick();
+          draw();
+          return;
+        }
+        pickedMicroToken = buildMicroPickFromKind(pl.kind, pl.id || null, pl.cellKey || null);
+        phaseNotice = 'Фишка: ручное управление WEASDZX. Два тика без направления → авто (1 покой, 2 блуждание, 3 луч).';
+        quickSaveToLocalStorage();
+        draw();
+      }
+      function drawPickedMicroHud() {
+        if (!pickedMicroToken) return;
+        validatePickedMicroToken();
+        if (!pickedMicroToken) return;
+        const cell = resolveMicroPickCell(pickedMicroToken);
+        if (!cell) return;
+        const p = hexCenter(cell.c, cell.r);
+        const modeLabel = pickedMicroToken.managed
+          ? 'ручное'
+          : pickedMicroToken.freeMode === 1
+            ? 'авто: покой'
+            : pickedMicroToken.freeMode === 2
+              ? 'авто: блуждание'
+              : 'авто: луч';
+        ctx.save();
+        ctx.font = '600 11px system-ui,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        const lines = ['WEASDZX', modeLabel];
+        let y0 = p.y - Math.max(14, HEX_W * 0.42);
+        for (let i = 0; i < lines.length; i++) {
+          const t = lines[i];
+          const w = ctx.measureText(t).width + 10;
+          const h = 14;
+          const x0 = p.x - w / 2;
+          const yy = y0 - i * (h + 2);
+          ctx.fillStyle = 'rgba(15,23,42,0.88)';
+          ctx.strokeStyle = 'rgba(148,163,184,0.9)';
+          ctx.lineWidth = 1;
+          ctx.fillRect(x0, yy - h + 2, w, h);
+          ctx.strokeRect(x0, yy - h + 2, w, h);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillText(t, p.x, yy - 1);
+        }
+        ctx.restore();
+      }
+      function tickBouncingThrees() {
+        if (!bouncingThrees.length) return;
+        for (const t of bouncingThrees) {
+          if (shouldSkipBouncingThreeAutoTick(t)) continue;
+          const tryStep = () => {
+            const p = neighborHexFromDir(t.c, t.r, t.dirIdx);
+            return cellBlockedForBouncingThree(p.c, p.r, t.id) ? null : p;
+          };
+          let p = tryStep();
+          if (p) {
+            t.c = p.c;
+            t.r = p.r;
+            continue;
+          }
+          t.dirIdx = (t.dirIdx + 3) % 6;
+          for (let k = 0; k < 6; k++) {
+            p = tryStep();
+            if (p) {
+              t.c = p.c;
+              t.r = p.r;
+              break;
+            }
+            t.dirIdx = (t.dirIdx + 1) % 6;
+          }
+        }
+      }
+      function spawnCellLegalForKeyboard(cell) {
+        if (!cell || !inBoard(cell.c, cell.r)) return false;
+        if (isWaterCell(cell.c, cell.r) || blockedBySettlements.has(key(cell.c, cell.r))) return false;
+        if (cellOnAnyFrozenSettlementFrame(cell.c, cell.r)) return false;
+        if (cellInChiefdomTempleFenceZone(cell.c, cell.r)) return false;
+        if (isOccupied(cell.c, cell.r)) return false;
+        return true;
+      }
+      function pickSpawnCellOutsideFencesForKeyboard() {
+        const forbid = chiefdomTempleFenceCellKeys();
+        for (let tries = 0; tries < 600; tries++) {
+          const c = randomInt(boardMinC + 2, boardMaxC - 2);
+          const r = randomInt(boardMinR + 2, boardMaxR - 2);
+          if (!inBoard(c, r) || isWaterCell(c, r)) continue;
+          if (blockedBySettlements.has(key(c, r))) continue;
+          if (forbid.has(key(c, r))) continue;
+          if (cellOnAnyFrozenSettlementFrame(c, r)) continue;
+          if (isOccupied(c, r)) continue;
+          return { c, r };
+        }
+        return null;
+      }
+      function pickSpawnCellForKeyboardRank() {
+        const l = leaderAForKeyboardSpawnContext();
+        if (l) {
+          const nbs = getNeighbors(l.c, l.r);
+          for (let i = nbs.length - 1; i > 0; i--) {
+            const j = randomInt(0, i);
+            const tmp = nbs[i];
+            nbs[i] = nbs[j];
+            nbs[j] = tmp;
+          }
+          for (const n of nbs) {
+            if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+            if (blockedBySettlements.has(key(n.c, n.r))) continue;
+            if (cellOnAnyFrozenSettlementFrame(n.c, n.r)) continue;
+            if (cellInChiefdomTempleFenceZone(n.c, n.r)) continue;
+            if (isOccupied(n.c, n.r)) continue;
+            return n;
+          }
+        }
+        let fb = pickSpawnCellOutsideFencesForKeyboard();
+        if (spawnCellLegalForKeyboard(fb)) return fb;
+        fb = pickFreeCell('A');
+        if (spawnCellLegalForKeyboard(fb)) return fb;
+        return pickSpawnCellOutsideFencesForKeyboard();
+      }
+      function spawnFreeRankTokenFromKeyboard(level) {
+        let cell = pickSpawnCellForKeyboardRank();
+        if (!spawnCellLegalForKeyboard(cell)) {
+          cell = null;
+          for (let i = 0; i < 160; i++) {
+            const c = pickSpawnCellOutsideFencesForKeyboard();
+            if (spawnCellLegalForKeyboard(c)) {
+              cell = c;
+              break;
+            }
+          }
+        }
+        if (!spawnCellLegalForKeyboard(cell)) return false;
+        const id = 'kbd' + level + '-' + Date.now();
+        if (level === 1) {
+          ones.push({ id, c: cell.c, r: cell.r });
+          phaseNotice =
+            'Фишка 1 вне оград; управление у неё (клик — другая фишка). 2 — блуждающая «2»; 3 — шар; Shift+3 — игрок 3.';
+        } else if (level === 2) {
+          twos.push({ id, side: 'A', segs: [{ c: cell.c, r: cell.r }], keyFreeWander: true });
+          phaseNotice = 'Фишка 2 вне оград; управление у неё (клик — сменить).';
+        } else if (level === 3) {
+          bouncingThrees.push({ id, c: cell.c, r: cell.r, dirIdx: randomInt(0, 5) });
+          phaseNotice = 'Фишка 3 вне оград; управление у неё (клик — сменить).';
+        } else return false;
+        assignPickedMicroAfterKeyboardSpawn(level, id);
+        return true;
+      }
+      function chiefdomAbsorbAdjacentLeaderHeads(leader4) {
+        if (!leader4 || !isChiefTrainRole(leader4.role)) return false;
+        const touch = chiefdomTrainNeighborKeys(leader4);
+        let did = false;
+        const toRemove = [];
+        for (const l of leaders) {
+          if (!l || l.id === leader4.id) continue;
+          if (isChiefTrainRole(l.role)) continue;
+          if (l.side !== 'A') continue;
+          if (l.hideTokensForChiefdom) continue;
+          if (!touch.has(key(l.c, l.r))) continue;
+          if (pushChiefCargoBalanced(leader4, 3)) {
+            did = true;
+            if (l.frozen && l.frozenFrameKeys && l.frozenFrameKeys.size) {
+              l.hideTokensForChiefdom = true;
+            } else {
+              toRemove.push(l.id);
+            }
+          }
+        }
+        if (toRemove.length) {
+          leaders = leaders.filter((x) => !toRemove.includes(x.id));
+        }
+        return did;
+      }
+      function refreshChiefdomCarryState(leader4) {
+        if (!chiefdomMode || !leader4 || !isChiefTrainRole(leader4.role)) return;
+        let absorbedHead = false;
+        if (CHIEFDOM_ENABLE_RULES_1_9) {
+          const awaitAck = chiefTrainAwaitingAck(leader4);
+          if (!awaitAck) {
+            absorbedHead = chiefdomAbsorbAdjacentLeaderHeads(leader4);
+          }
+          chiefdomCollectLooseTokens(leader4);
+          chiefdomCollectPlainTwos(leader4);
+          chiefdomCollectPlainOnes(leader4);
+          chiefdomCollectBouncingThrees(leader4);
+          if (awaitAck) return;
+        } else {
+          chiefdomCollectLooseTokens(leader4);
+          chiefdomCollectPlainTwos(leader4);
+          chiefdomCollectPlainOnes(leader4);
+          chiefdomCollectBouncingThrees(leader4);
+        }
+        const carried = leader4.cargoTrain ? leader4.cargoTrain.length : 0;
+        const who = chiefTrainDisplayDigit(leader4.role);
+        const tryTempleFence = chiefdomTempleEmergenceReady(leader4);
+        if (tryTempleFence) {
+          if (placeChiefdomCapital(leader4)) {
+            phaseNotice =
+              'Храм: двойная ограда вокруг «восьмёрки» (как у поселений), поезд и состав не трогаем.';
+            quickSaveToLocalStorage();
+          }
+        } else if (CHIEFDOM_ENABLE_RULES_1_9 && (leader4.id === controlledLeaderAId || absorbedHead)) {
+          if (absorbedHead) phaseNotice = 'Поезд ' + who + ' подцепил фишку 3 у поселения/лидера.';
+          else
+            phaseNotice =
+              'Поезд ' +
+              who +
+              ': ' +
+              carried +
+              ' вагонов (храм: ровно 11 клеток шаблона «восьмёрка», в вагонах 1+2+3, кольцо соседей снаружи пустое; макс. ' +
+              CHIEFDOM_CARGO_MAX +
+              ').';
+        }
+        if (CHIEFDOM_ENABLE_RULES_1_9 && absorbedHead) quickSaveToLocalStorage();
+      }
+      /** Каждый поезд 4/5 — своя «голова»: подбор рядом считается для всех составов. */
+      function refreshChiefdomCarryStateForAllChiefTrains() {
+        if (!chiefdomMode) return;
+        const chiefs = leaders.filter((l) => l.side === 'A' && !l.frozen && isChiefTrainRole(l.role));
+        for (let i = 0; i < chiefs.length; i++) refreshChiefdomCarryState(chiefs[i]);
+      }
+      /** Число сухих гексов в контуре Храма (фигура «восьмёрка»). */
+      const CHIEFDOM_TEMPLE_PATTERN_COUNT = 11;
+      /**
+       * Смещения в кубических координатах (x+y+z=0) от якоря: связные 11 гексов — «восьмёрка»
+       * (талия в начале списка).
+       */
+      const CHIEFDOM_TEMPLE_CUBE_OFFSETS = [
+        [0, 0, 0],
+        [1, -1, 0],
+        [1, 0, -1],
+        [0, 1, -1],
+        [-1, 1, 0],
+        [-1, 0, 1],
+        [0, -1, 1],
+        [-2, 1, 1],
+        [-1, -1, 2],
+        [2, -2, 0],
+        [2, -1, -1],
+      ];
+      /** Поворот смещения в кубовых координатах на 60° (сохраняет x+y+z=0); три шага — полный оборот на класс эквивалентности. */
+      function chiefdomRotateCubeOffset60(d, steps) {
+        let x = d[0];
+        let y = d[1];
+        let z = d[2];
+        let s = ((Number(steps) || 0) % 6) + 6;
+        s %= 6;
+        for (let i = 0; i < s; i++) {
+          const nx = -z;
+          const ny = -x;
+          const nz = -y;
+          x = nx;
+          y = ny;
+          z = nz;
+        }
+        return [x, y, z];
+      }
+      /** Отражение в кубовых координатах (swap x↔y), сумма 0 сохраняется. */
+      function chiefdomFlipCubeOffsetXY(d) {
+        return [d[1], d[0], d[2]];
+      }
+      /** symIdx 0..11: шесть поворотов и те же с предварительным отражением (все ориентации «восьмёрки» на гекс-сетке). */
+      function chiefdomTempleSymmetryDecode(symIdx) {
+        const s = (((Number(symIdx) || 0) % 12) + 12) % 12;
+        return { flip: s >= 6, rot: s % 6 };
+      }
+      /** 11 гексов «восьмёрки» от якоря; symIdx — поворот/зеркало (см. chiefdomTempleSymmetryDecode). */
+      function chiefdomPatternCells(centerC, centerR, symIdx) {
+        const { flip, rot } = chiefdomTempleSymmetryDecode(symIdx);
+        const h = oddQToCube(centerC, centerR);
+        const out = [];
+        for (let i = 0; i < CHIEFDOM_TEMPLE_CUBE_OFFSETS.length; i++) {
+          let d0 = CHIEFDOM_TEMPLE_CUBE_OFFSETS[i];
+          if (flip) d0 = chiefdomFlipCubeOffsetXY(d0);
+          const d = chiefdomRotateCubeOffset60(d0, rot);
+          const q = cubeToOddQ(h.x + d[0], h.y + d[1], h.z + d[2]);
+          out.push({ c: q.c, r: q.r });
+        }
+        return out;
+      }
+      /** Занятость клетки, не считая голову и вагоны указанного поезда 4/5 (кольцо вокруг «восьмёрки»). */
+      function isOccupiedExcludingChiefTrain(c, r, chief) {
+        if (!chief) return isOccupied(c, r);
+        const skip = new Set();
+        skip.add(key(chief.c, chief.r));
+        for (const s of chief.cargoTrain || []) skip.add(key(s.c, s.r));
+        if (skip.has(key(c, r))) return false;
+        return isOccupied(c, r);
+      }
+      function chiefdomChiefTrainOccupiedKeys(leader4) {
+        const keys = new Set();
+        if (!leader4) return keys;
+        keys.add(key(leader4.c, leader4.r));
+        for (const s of leader4.cargoTrain || []) keys.add(key(s.c, s.r));
+        return keys;
+      }
+      function chiefdomTrainOverlapsExistingCapital(leader4) {
+        if (!leader4) return false;
+        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
+          const hit = (c, r) => chiefdomTempleFenceInner.has(key(c, r));
+          if (hit(leader4.c, leader4.r)) return true;
+          for (const s of leader4.cargoTrain || []) {
+            if (hit(s.c, s.r)) return true;
+          }
+        }
+        if (!chiefdomCapitalTokens || !chiefdomCapitalTokens.length) return false;
+        for (const t of chiefdomCapitalTokens) {
+          if (leader4.c === t.c && leader4.r === t.r) return true;
+          for (const s of leader4.cargoTrain || []) {
+            if (s.c === t.c && s.r === t.r) return true;
+          }
+        }
+        return false;
+      }
+      function chiefdomTempleCompositionOk(leader4) {
+        const counts = chiefCargoCounts(leader4);
+        if (counts[1] < 1 || counts[2] < 1 || counts[3] < 1) return false;
+        const trainKeys = chiefdomChiefTrainOccupiedKeys(leader4);
+        if (trainKeys.size !== CHIEFDOM_TEMPLE_PATTERN_COUNT) return false;
+        const cargoLen = leader4.cargoTrain ? leader4.cargoTrain.length : 0;
+        return cargoLen === CHIEFDOM_TEMPLE_PATTERN_COUNT - 1;
+      }
+      function chiefdomFindFigureEightAnchorForTrain(trainKeys) {
+        if (!trainKeys || trainKeys.size !== CHIEFDOM_TEMPLE_PATTERN_COUNT) return null;
+        for (let sym = 0; sym < 12; sym++) {
+          for (const tk of trainKeys) {
+            const p = parseKey(tk);
+            const cells = chiefdomPatternCells(p.c, p.r, sym);
+            if (cells.length !== CHIEFDOM_TEMPLE_PATTERN_COUNT) continue;
+            const pat = new Set(cells.map((x) => key(x.c, x.r)));
+            if (pat.size !== CHIEFDOM_TEMPLE_PATTERN_COUNT) continue;
+            let same = true;
+            for (const k of trainKeys) {
+              if (!pat.has(k)) {
+                same = false;
+                break;
+              }
+            }
+            if (!same) continue;
+            for (const k of pat) {
+              if (!trainKeys.has(k)) {
+                same = false;
+                break;
+              }
+            }
+            if (same) return { c: p.c, r: p.r, sym };
+          }
+        }
+        return null;
+      }
+      /**
+       * Восьмёрка без жёсткого шаблона: 11 клеток связны, нет «листьев» (степень 1), и ранг циклов ≥ 2
+       * (E − V + 1 ≥ 2 для связного графа) — не одно кольцо и не змейка, а минимум два независимых цикла.
+       */
+      function chiefdomTrainFigureEightByCycleRank(trainKeys) {
+        if (!trainKeys || trainKeys.size !== CHIEFDOM_TEMPLE_PATTERN_COUNT) return false;
+        const start = trainKeys.values().next().value;
+        const seen = new Set([start]);
+        const stack = [start];
+        while (stack.length) {
+          const k = stack.pop();
+          const p = parseKey(k);
+          for (const n of getNeighbors(p.c, p.r)) {
+            const nk = key(n.c, n.r);
+            if (!trainKeys.has(nk) || seen.has(nk)) continue;
+            seen.add(nk);
+            stack.push(nk);
+          }
+        }
+        if (seen.size !== CHIEFDOM_TEMPLE_PATTERN_COUNT) return false;
+        let edges = 0;
+        for (const k of trainKeys) {
+          const p = parseKey(k);
+          for (const n of getNeighbors(p.c, p.r)) {
+            const nk = key(n.c, n.r);
+            if (trainKeys.has(nk) && k < nk) edges++;
+          }
+        }
+        const rank = edges - CHIEFDOM_TEMPLE_PATTERN_COUNT + 1;
+        if (rank < 2) return false;
+        for (const k of trainKeys) {
+          const p = parseKey(k);
+          let d = 0;
+          for (const n of getNeighbors(p.c, p.r)) {
+            if (trainKeys.has(key(n.c, n.r))) d++;
+          }
+          if (d <= 1) return false;
+        }
+        return true;
+      }
+      function chiefdomTempleFencePatternKeysFromTrain(leader4) {
+        if (!leader4 || !chiefdomTempleCompositionOk(leader4)) return null;
+        const trainKeys = chiefdomChiefTrainOccupiedKeys(leader4);
+        if (trainKeys.size !== CHIEFDOM_TEMPLE_PATTERN_COUNT) return null;
+        const anchor = chiefdomFindFigureEightAnchorForTrain(trainKeys);
+        if (anchor) {
+          return new Set(chiefdomPatternCells(anchor.c, anchor.r, anchor.sym).map((x) => key(x.c, x.r)));
+        }
+        if (chiefdomTrainFigureEightByCycleRank(trainKeys)) return new Set(trainKeys);
+        return null;
+      }
+      function chiefdomFigureEightOuterRingFullyClear(leader4, patternKeys) {
+        const outer = new Set();
+        for (const tk of patternKeys) {
+          const p = parseKey(tk);
+          for (const n of getNeighbors(p.c, p.r)) {
+            const nk = key(n.c, n.r);
+            if (!patternKeys.has(nk)) outer.add(nk);
+          }
+        }
+        for (const nk of outer) {
+          const p = parseKey(nk);
+          // Граница поля от окна (board*) меняется в draw(); сосед вне поля не считаем «загрязнителем» кольца.
+          if (!inBoard(p.c, p.r)) continue;
+          if (isWaterCell(p.c, p.r)) return false;
+          if (blockedBySettlements.has(nk)) return false;
+          if (isOccupiedExcludingChiefTrain(p.c, p.r, leader4)) return false;
+        }
+        return true;
+      }
+      function chiefdomTempleEmergenceReady(leader4) {
+        if (!leader4 || !isChiefTrainRole(leader4.role)) return false;
+        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) return false;
+        if (chiefdomTrainOverlapsExistingCapital(leader4)) return false;
+        const patternKeys = chiefdomTempleFencePatternKeysFromTrain(leader4);
+        if (!patternKeys) return false;
+        return chiefdomFigureEightOuterRingFullyClear(leader4, patternKeys);
+      }
+      function placeChiefdomCapital(leader4) {
+        if (!leader4) return false;
+        if (!chiefdomTempleEmergenceReady(leader4)) return false;
+        const patternKeys = chiefdomTempleFencePatternKeysFromTrain(leader4);
+        if (!patternKeys) return false;
+        chiefdomTempleFenceInner = patternKeys;
+        chiefdomCapitalTokens = [];
+        return true;
+      }
+      function absorbAllLooseTokensToChief(leader4) {
+        if (!leader4) return;
+        const onFrame = cellOnAnyFrozenSettlementFrame;
+        const keepOnes = [];
+        const poolOnes = [];
+        for (const o of ones) {
+          if (onFrame(o.c, o.r)) keepOnes.push(o);
+          else poolOnes.push(o);
+        }
+        const keepTwos = [];
+        const poolTwos = [];
+        for (const t of twos) {
+          if (t.side !== 'A' || !Array.isArray(t.segs) || !t.segs.length) {
+            keepTwos.push(t);
+            continue;
+          }
+          if (t.segs.some((s) => onFrame(s.c, s.r))) keepTwos.push(t);
+          else poolTwos.push(t);
+        }
+        const keepLoose = [];
+        const poolLoose = [];
+        for (const t of chiefdomLooseTokens) {
+          if (onFrame(t.c, t.r)) keepLoose.push(t);
+          else poolLoose.push(t);
+        }
+        ones = keepOnes;
+        twos = keepTwos;
+        chiefdomLooseTokens = keepLoose;
+
+        function absorbAnyLoose3() {
+          const idx = poolLoose.findIndex((t) => Number(t.level) === 3);
+          if (idx < 0) return false;
+          if (!pushChiefCargoBalanced(leader4, 3)) return false;
+          poolLoose.splice(idx, 1);
+          return true;
+        }
+        while (chiefCargoCounts(leader4)[3] < 1) {
+          if (!absorbAnyLoose3()) break;
+        }
+
+        function absorbWholeTwoFromPool() {
+          const i = poolTwos.findIndex((t) => Array.isArray(t.segs) && t.segs.length);
+          if (i < 0) return false;
+          const t = poolTwos[i];
+          if (!pushChiefCargoBalanced(leader4, 2)) return false;
+          for (let k = 1; k < t.segs.length; k++) {
+            if (!pushChiefCargoBalanced(leader4, 1)) break;
+          }
+          poolTwos.splice(i, 1);
+          return true;
+        }
+        function absorbOneLooseLevel(lv) {
+          const idx = poolLoose.findIndex((t) => Number(t.level) === lv);
+          if (idx < 0) return false;
+          if (!pushChiefCargoBalanced(leader4, lv)) return false;
+          poolLoose.splice(idx, 1);
+          return true;
+        }
+        while (chiefCargoCounts(leader4)[2] < 1) {
+          if (absorbOneLooseLevel(2)) continue;
+          if (absorbWholeTwoFromPool()) continue;
+          break;
+        }
+
+        function popOneOne() {
+          if (!poolOnes.length || !pushChiefCargoBalanced(leader4, 1)) return false;
+          poolOnes.shift();
+          return true;
+        }
+        for (let guard = 0; guard < 600; guard++) {
+          const cts = chiefCargoCounts(leader4);
+          if (cts[1] + cts[2] + cts[3] >= CHIEFDOM_CARGO_MAX) break;
+          let moved = false;
+          if (cts[3] < 1 && absorbAnyLoose3()) moved = true;
+          else if (cts[2] < 1 && absorbOneLooseLevel(2)) moved = true;
+          else if (cts[2] < 1 && absorbWholeTwoFromPool()) moved = true;
+          else if (absorbOneLooseLevel(3)) moved = true;
+          else if (absorbOneLooseLevel(2)) moved = true;
+          else if (absorbWholeTwoFromPool()) moved = true;
+          else if (absorbOneLooseLevel(1)) moved = true;
+          else if (popOneOne()) moved = true;
+          else {
+            for (let li = poolLoose.length - 1; li >= 0; li--) {
+              const lv = Number(poolLoose[li].level) || 1;
+              if (pushChiefCargoBalanced(leader4, lv)) {
+                poolLoose.splice(li, 1);
+                moved = true;
+                break;
+              }
+            }
+          }
+          if (!moved) break;
+        }
+
+        chiefdomLooseTokens = chiefdomLooseTokens.concat(poolLoose);
+        ones = ones.concat(poolOnes);
+        twos = twos.concat(poolTwos);
+      }
+      function enforceChiefTrainLeaders() {
+        for (const role of ['chief4', 'chief5']) {
+          const same = leaders.filter((l) => l.role === role && l.side === 'A');
+          if (same.length <= 1) continue;
+          const keep = same.find((l) => l.id === chiefdomLeaderId) || same[0];
+          leaders = leaders.filter((l) => l.role !== role || l.side !== 'A' || l.id === keep.id);
+        }
+        if (chiefdomLeaderId && !leaders.some((l) => l.id === chiefdomLeaderId)) {
+          const fb = leaders.find((l) => l.side === 'A' && !l.frozen && isChiefTrainRole(l.role));
+          chiefdomLeaderId = fb ? fb.id : null;
+        }
+        if (controlledLeaderAId && !leaders.some((l) => l.id === controlledLeaderAId)) {
+          const fb = leaders.find((l) => l.side === 'A' && !l.frozen && isChiefTrainRole(l.role));
+          if (fb) controlledLeaderAId = fb.id;
+        }
+        return (
+          (chiefdomLeaderId && leaders.find((l) => l.id === chiefdomLeaderId && isChiefTrainRole(l.role))) ||
+          leaders.find((l) => l.role === 'chief4' && l.side === 'A') ||
+          null
+        );
+      }
+      function ensureChiefTrainTarget(leader4) {
+        if (!leader4) return;
+        const need = chiefNeededLevelForBalance(leader4);
+        if (need == null) return;
+        let targetSettlement = nearestSettlementForChief(leader4);
+        // Когда все поселения уже посещены, разрешаем новый круг — чтобы добрать вагоны до CHIEFDOM_CARGO_MAX.
+        if (!targetSettlement) {
+          chiefdomVisitedSettlements = new Set();
+          targetSettlement = nearestSettlementForChief(leader4);
+        }
+        if (!targetSettlement) return;
+        // "Через клетку": подходим к поселению на дистанцию 2 и рождаем нужную фишку.
+        if (hexDistance(leader4.c, leader4.r, targetSettlement.c, targetSettlement.r) <= 2) {
+          const spawned = spawnChiefdomTokenNearSettlement(leader4, targetSettlement, need);
+          if (spawned) chiefdomVisitedSettlements.add(targetSettlement.id);
+        }
+      }
+      /** Режим вождества без игрока 4: появление только по клавише 4. */
+      function beginChiefdomAfterEpoch() {
+        chiefdomMode = true;
+        chiefdomVisitedSettlements = new Set();
+        chiefdomLooseTokens = [];
+        chiefdomCapitalTokens = [];
+        chiefdomTempleFenceInner = null;
+        chiefdomTrainMoveSerial = 0;
+        chiefdomLeaderId = null;
+        const existing4 = leaders.find((l) => l.side === 'A' && l.role === 'chief4');
+        if (existing4) {
+          chiefdomLeaderId = existing4.id;
+          controlledLeaderAId = existing4.id;
+          if (CHIEFDOM_ENABLE_RULES_1_9) {
+            absorbAllLooseTokensToChief(existing4);
+            phaseNotice = 'Продолжение: игрок 4 уже в игре и получил все внепоселковые фишки.';
+          } else {
+            phaseNotice =
+              'Продолжение: игрок 4 в игре. Правила 1–9 второго этапа выключены (CHIEFDOM_ENABLE_RULES_1_9).';
+          }
+          return;
+        }
+        phaseNotice = CHIEFDOM_ENABLE_RULES_1_9
+          ? 'Эпоха поселений завершена. Нажми клавишу 4 в любом месте — появится игрок 4 и подберёт внепоселковые фишки.'
+          : 'Эпоха поселений завершена. Нажми 4 — появится игрок 4 (подбор/мостик/коридор 1–9 выключены).';
+      }
+      function setControlledLeaderA(kind){
+        const want = String(kind||'').trim();
+        if(want==='4'){
+          const l4 =
+            leaders.find((l) => l.id === chiefdomLeaderId && isChiefTrainRole(l.role) && l.side === 'A' && !l.frozen) ||
+            leaders.find((l) => l.role === 'chief4' && l.side === 'A' && !l.frozen) ||
+            leaders.find((l) => l.role === 'chief5' && l.side === 'A' && !l.frozen) ||
+            newestChiefTrainLeaderA();
+          if (l4 && !l4.frozen) {
+            controlledLeaderAId = l4.id;
+            chiefdomLeaderId = l4.id;
+            return true;
+          }
+          return false;
+        }
+        // '3' (по умолчанию): самый свежий незамороженный лидер 3 (не chief4) с реальным ходом.
+        for(let i=leaders.length-1;i>=0;i--){
+          const l=leaders[i];
+          if(l.side!=='A') continue;
+          if(l.frozen) continue;
+          if(isChiefTrainRole(l.role)) continue;
+          if(!hasLegalLeaderStep(l)) continue;
+          controlledLeaderAId = l.id;
+          return true;
+        }
+        // Если ходов у "3" нет, но есть хотя бы незамороженная "3" — выбираем её для явной индикации.
+        for(let i=leaders.length-1;i>=0;i--){
+          const l=leaders[i];
+          if(l.side!=='A') continue;
+          if(l.frozen) continue;
+          if(isChiefTrainRole(l.role)) continue;
+          controlledLeaderAId = l.id;
+          return true;
+        }
+        return false;
+      }
+      function updateChiefdomAfterMove(leader4) {
+        if (!chiefdomMode || !leader4 || !isChiefTrainRole(leader4.role)) return;
+        enforceChiefTrainLeaders();
+        if (CHIEFDOM_ENABLE_RULES_1_9) ensureChiefTrainTarget(leader4);
+        refreshChiefdomCarryState(leader4);
       }
       function hasLegalLeaderStep(l) {
         if (!l || l.frozen) return false;
+        if (chiefTrainAwaitingAck(l)) return false;
         const nbs = getNeighbors(l.c, l.r);
         for (const n of nbs) {
           if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
@@ -574,6 +2432,9 @@
             if (isWaterCell(c, r)) continue;
             const k = key(c, r);
             if (blockedBySettlements.has(k)) continue;
+            // В расчёт берем только действительно свободные клетки:
+            // занятые фишками/лидерами не подходят для нового поселения.
+            if (isOccupied(c, r)) continue;
             if (!isNearRiverOrLake(side, c, r)) continue;
             candidate.add(k);
           }
@@ -601,11 +2462,13 @@
         return false;
       }
       function maybeFinishEpochIfNoSpace() {
-        if (epochFinished) return;
-        if (STAGE2_DEBUG_MODE) return;
-        if (!hasPotentialSettlementSpace('A')) {
-          epochFinished = true;
-          phaseNotice = 'Эпоха завершена: больше негде собрать новое поселение. Ходов игрока: ' + playerMoves;
+        // По требованию: эпоха НЕ заканчивается автоматически по признакам поля.
+        if (chiefdomMode) return;
+        const noSettlementSpace = !hasPotentialSettlementSpace('A');
+        const hasMovableA = leaders.some((l) => l.side === 'A' && !l.frozen && hasLegalLeaderStep(l));
+        const noActiveLeaderA = !leaders.some((l) => l.side === 'A' && !l.frozen);
+        if (noSettlementSpace || (noActiveLeaderA && !hasMovableA)) {
+          phaseNotice = 'Новых поселений по авто-признакам нет. Переход в следующий этап — только по клавише 4.';
         }
       }
       function updateStageEndStats() {
@@ -613,6 +2476,12 @@
         stageEndStats.textContent = 'Ходов: ' + playerMoves + ' | Счёт A: ' + scoreA;
       }
       function showStageEndModal() {
+        if (
+          chiefdomMode &&
+          !chiefdomCapitalTokens.length &&
+          !(chiefdomTempleFenceInner && chiefdomTempleFenceInner.size)
+        )
+          return;
         if (!stageEndModal || STAGE2_DEBUG_MODE || !epochFinished || stageEndShown) return;
         updateStageEndStats();
         stageEndModal.classList.add('open');
@@ -623,6 +2492,10 @@
         stageEndModal.classList.remove('open');
       }
       function restartCurrentStage() {
+        // Полное "сбросить": чтобы при перезагрузке не подхватывался старый автосейв.
+        try { localStorage.removeItem(QUICK_SAVE_KEY); } catch (_) {}
+        try { sessionStorage.removeItem(STAGE2_STATE_STORAGE_KEY); } catch (_) {}
+        try { sessionStorage.removeItem(DEMO_STATE_STORAGE_KEY); } catch (_) {}
         hideStageEndModal();
         initGame();
         draw();
@@ -679,8 +2552,37 @@
         if (candidates.length) return candidates[randomInt(0, candidates.length - 1)];
         return pickFreeCell(side);
       }
+      function hasFreeStepFromCell(c, r) {
+        const nbs = getNeighbors(c, r);
+        for (const n of nbs) {
+          if (!inBoard(n.c, n.r) || isWaterCell(n.c, n.r)) continue;
+          if (blockedBySettlements.has(key(n.c, n.r))) continue;
+          if (isOccupied(n.c, n.r)) continue;
+          return true;
+        }
+        return false;
+      }
+      function pickMovableSpawnCell(side) {
+        for (let i = 0; i < 80; i++) {
+          const p = pickFreeBankCell(side);
+          if (p && hasFreeStepFromCell(p.c, p.r)) return p;
+        }
+        const candidates = [];
+        for (let c = boardMinC; c <= boardMaxC; c++) {
+          for (let r = boardMinR; r <= boardMaxR; r++) {
+            if (!inBoard(c, r) || isWaterCell(c, r)) continue;
+            const k = key(c, r);
+            if (blockedBySettlements.has(k) || isOccupied(c, r)) continue;
+            if (!isNearRiverOrLake(side, c, r)) continue;
+            if (!hasFreeStepFromCell(c, r)) continue;
+            candidates.push({ c, r });
+          }
+        }
+        if (candidates.length) return candidates[randomInt(0, candidates.length - 1)];
+        return pickFreeBankCell(side);
+      }
       function spawnSideUnits(side) {
-        if (epochFinished) return;
+        if (epochFinished) epochFinished = false;
         if (side === 'B' && !ENABLE_SIDE_B) return;
         // Готовые поезда/поселки/фишки не трогаем: добавляем только новый набор.
 
@@ -727,6 +2629,15 @@
         stageEndShown = false;
         leaderSpawnSeqA = 0;
         leaderSpawnSeqB = 0;
+        chiefdomMode = false;
+        chiefdomLeaderId = null;
+        chiefdomVisitedSettlements = new Set();
+        chiefdomLooseTokens = [];
+        chiefdomCapitalTokens = [];
+        chiefdomTempleFenceInner = null;
+        chiefdomTrainMoveSerial = 0;
+        bouncingThrees = [];
+        pickedMicroToken = null;
 
         const leftRiver = terrainState.leftRiver;
         const rightRiver = terrainState.rightRiver;
@@ -878,6 +2789,7 @@
 
         ones = [];
         twos = [];
+        bouncingThrees = [];
         leaders = [];
         scoreA = 7;
         playerMoves = 148;
@@ -897,14 +2809,65 @@
         if (s3) pushFrozenSettlement(s3, 3);
         rebuildSettlementPaint();
         spawnSideUnits('A');
+        chiefdomMode = true;
+        chiefdomLeaderId = null;
+        chiefdomVisitedSettlements = new Set();
+        chiefdomLooseTokens = [];
+        chiefdomCapitalTokens = [];
+        chiefdomTempleFenceInner = null;
+        chiefdomTrainMoveSerial = 0;
+        phaseNotice = 'ОТЛАДКА: старт Вождества. Нажми 4, чтобы появился игрок 4.';
       }
+
+      function serializeTerrainState(ts) {
+        if (!ts || typeof ts !== 'object') return null;
+        return {
+          mountain: ts.mountain ? { c: ts.mountain.c, r: ts.mountain.r } : null,
+          leftLake: ts.leftLake ? { c: ts.leftLake.c, r: ts.leftLake.r } : null,
+          rightLake: ts.rightLake ? { c: ts.rightLake.c, r: ts.rightLake.r } : null,
+          leftLakeCells: ts.leftLakeCells instanceof Set ? Array.from(ts.leftLakeCells) : [],
+          rightLakeCells: ts.rightLakeCells instanceof Set ? Array.from(ts.rightLakeCells) : [],
+          riverCells: ts.riverCells instanceof Set ? Array.from(ts.riverCells) : [],
+          leftRiver: Array.isArray(ts.leftRiver) ? ts.leftRiver.map((p) => ({ c: p.c, r: p.r })) : [],
+          rightRiver: Array.isArray(ts.rightRiver) ? ts.rightRiver.map((p) => ({ c: p.c, r: p.r })) : []
+        };
+      }
+
+      function applyTerrainStateSnapshot(ts) {
+        if (!ts || typeof ts !== 'object') return false;
+        const hasCoords = (o) => o && typeof o.c === 'number' && typeof o.r === 'number';
+        if (!hasCoords(ts.mountain) || !hasCoords(ts.leftLake) || !hasCoords(ts.rightLake)) return false;
+
+        const leftLakeCells = Array.isArray(ts.leftLakeCells) ? new Set(ts.leftLakeCells) : new Set();
+        const rightLakeCells = Array.isArray(ts.rightLakeCells) ? new Set(ts.rightLakeCells) : new Set();
+        const riverCells = Array.isArray(ts.riverCells) ? new Set(ts.riverCells) : new Set();
+
+        const leftRiver = Array.isArray(ts.leftRiver) ? ts.leftRiver.map((p) => ({ c: p.c, r: p.r })) : [];
+        const rightRiver = Array.isArray(ts.rightRiver) ? ts.rightRiver.map((p) => ({ c: p.c, r: p.r })) : [];
+
+        terrainState = {
+          mountain: { c: ts.mountain.c, r: ts.mountain.r },
+          leftLake: { c: ts.leftLake.c, r: ts.leftLake.r },
+          rightLake: { c: ts.rightLake.c, r: ts.rightLake.r },
+          leftLakeCells,
+          rightLakeCells,
+          riverCells,
+          leftRiver,
+          rightRiver
+        };
+        return true;
+      }
+
       function getGameStateSnapshot() {
         const leaderState = leaders.map((l) => ({
           id: l.id,
           side: l.side,
           c: l.c,
           r: l.r,
+          role: l.role || null,
           frozen: !!l.frozen,
+          hideTokensForChiefdom: !!l.hideTokensForChiefdom,
+          chiefdomAwaitMoveAck: !!l.chiefdomAwaitMoveAck,
           cargoTrain: Array.isArray(l.cargoTrain)
             ? l.cargoTrain.map((s) => ({ c: s.c, r: s.r, level: s.level }))
             : [],
@@ -915,18 +2878,40 @@
           twos: twos.map((t) => ({
             id: t.id,
             side: t.side,
+            keyFreeWander: !!t.keyFreeWander,
             segs: Array.isArray(t.segs) ? t.segs.map((s) => ({ c: s.c, r: s.r })) : []
           })),
+          bouncingThrees: bouncingThrees.map((b) => ({ id: b.id, c: b.c, r: b.r, dirIdx: Number(b.dirIdx) || 0 })),
           leaders: leaderState,
           scoreA,
           scoreB,
           playerMoves,
-          epochFinished,
+          epochFinished: false,
           phaseNotice,
+          // Фиксированная точка отсчёта координат клетки на сетке (ландшафт не трогаем).
+          // Вся “геометрия” фишек/границ хранится в координатах (c,r), поэтому эта метка помогает однозначно интерпретировать их.
+          origin: { c: 0, r: 0 },
+          terrainState: serializeTerrainState(terrainState),
           controlledLeaderAId,
           controlledLeaderId,
           leaderSpawnSeqA,
-          leaderSpawnSeqB
+          leaderSpawnSeqB,
+          chiefdomMode,
+          chiefdomLeaderId,
+          chiefdomVisitedSettlements: Array.from(chiefdomVisitedSettlements || []),
+          chiefdomLooseTokens: chiefdomLooseTokens.map((t) => ({
+            c: t.c,
+            r: t.r,
+            level: t.level,
+            leavePhantomOnPickup: !!t.leavePhantomOnPickup,
+            collectibleAfterChiefMoveSerial: Number(t.collectibleAfterChiefMoveSerial) || 0
+          })),
+          chiefdomCapitalTokens: chiefdomCapitalTokens.map((t) => ({ c: t.c, r: t.r, level: t.level, siteId: t.siteId || null })),
+          chiefdomTempleFenceInner:
+            chiefdomTempleFenceInner && chiefdomTempleFenceInner.size
+              ? Array.from(chiefdomTempleFenceInner)
+              : [],
+          chiefdomTrainMoveSerial
         };
       }
       function applyGameStateSnapshot(state) {
@@ -936,14 +2921,26 @@
         twos = state.twos.map((t) => ({
           id: t.id,
           side: t.side,
+          keyFreeWander: !!t.keyFreeWander,
           segs: Array.isArray(t.segs) ? t.segs.map((s) => ({ c: s.c, r: s.r })) : []
         }));
+        bouncingThrees = Array.isArray(state.bouncingThrees)
+          ? state.bouncingThrees.map((b) => ({
+              id: String(b.id || 'b3-' + Date.now()),
+              c: Number(b.c),
+              r: Number(b.r),
+              dirIdx: (((Number(b.dirIdx) || 0) % 6) + 6) % 6
+            }))
+          : [];
         leaders = state.leaders.map((l) => ({
           id: l.id,
           side: l.side,
           c: l.c,
           r: l.r,
+          role: l.role || null,
           frozen: !!l.frozen,
+          hideTokensForChiefdom: !!l.hideTokensForChiefdom,
+          chiefdomAwaitMoveAck: !!l.chiefdomAwaitMoveAck,
           cargoTrain: Array.isArray(l.cargoTrain)
             ? l.cargoTrain.map((s) => ({ c: s.c, r: s.r, level: s.level }))
             : [],
@@ -952,14 +2949,165 @@
         scoreA = Number(state.scoreA) || 0;
         scoreB = Number(state.scoreB) || 0;
         playerMoves = Number(state.playerMoves) || 0;
-        epochFinished = Boolean(state.epochFinished);
+        epochFinished = false;
         phaseNotice = typeof state.phaseNotice === 'string' ? state.phaseNotice : '';
         controlledLeaderAId = state.controlledLeaderAId || null;
         controlledLeaderId = state.controlledLeaderId || null;
         leaderSpawnSeqA = Number(state.leaderSpawnSeqA) || 0;
         leaderSpawnSeqB = Number(state.leaderSpawnSeqB) || 0;
+        chiefdomMode = Boolean(state.chiefdomMode);
+        chiefdomLeaderId = state.chiefdomLeaderId || null;
+        chiefdomVisitedSettlements = new Set(Array.isArray(state.chiefdomVisitedSettlements) ? state.chiefdomVisitedSettlements : []);
+        chiefdomLooseTokens = Array.isArray(state.chiefdomLooseTokens)
+          ? state.chiefdomLooseTokens.map((t) => ({
+            c: t.c,
+            r: t.r,
+            level: t.level,
+            leavePhantomOnPickup: !!t.leavePhantomOnPickup,
+            collectibleAfterChiefMoveSerial: Number(t.collectibleAfterChiefMoveSerial) || 0
+          }))
+          : [];
+        chiefdomCapitalTokens = Array.isArray(state.chiefdomCapitalTokens)
+          ? state.chiefdomCapitalTokens.map((t) => ({ c: t.c, r: t.r, level: t.level, siteId: t.siteId || null }))
+          : [];
+        chiefdomTempleFenceInner =
+          Array.isArray(state.chiefdomTempleFenceInner) && state.chiefdomTempleFenceInner.length
+            ? new Set(state.chiefdomTempleFenceInner.map(String))
+            : null;
+        chiefdomTrainMoveSerial = Number(state.chiefdomTrainMoveSerial) || 0;
+        // Старые сохранения: «фантомы» превращаем в настоящие фишки.
+        if (Array.isArray(state.chiefdomPhantomChips)) {
+          for (const ph of state.chiefdomPhantomChips) {
+            if (ph && typeof ph.c === 'number' && typeof ph.r === 'number') placeRealChiefdomBridgeCopy(ph.c, ph.r, ph.level || 1);
+          }
+        }
+        if (state.terrainState) applyTerrainStateSnapshot(state.terrainState);
         rebuildSettlementPaint();
+        pickedMicroToken = null;
         return true;
+      }
+      function downloadJsonSnapshot(snapshot, filename) {
+        try {
+          const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json;charset=utf-8' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 800);
+        } catch (_) {}
+      }
+      function saveStateForStage2AndDownload() {
+        try {
+          const snapshot = getGameStateSnapshot();
+          sessionStorage.setItem(STAGE2_STATE_STORAGE_KEY, JSON.stringify(snapshot));
+          const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+          downloadJsonSnapshot(snapshot, 'agrarian_epoch_map_' + stamp + '.json');
+        } catch (_) {}
+      }
+      /** Первый поезд «4» на карте (или восстановление существующего). */
+      function ensureChief4TrainExists() {
+        let l4 = leaders.find((l) => l.side === 'A' && l.role === 'chief4' && !l.frozen);
+        chiefdomMode = true;
+        if (l4) {
+          if (!hasLegalLeaderStep(l4)) {
+            const respawn = pickMovableSpawnCell('A');
+            l4.c = respawn.c;
+            l4.r = respawn.r;
+          }
+          chiefdomLeaderId = l4.id;
+          controlledLeaderAId = l4.id;
+          phaseNotice = 'Поезд 4 уже на карте; управление передано ему.';
+          return l4;
+        }
+        const id = 'A4-chiefdom';
+        const spawn = pickMovableSpawnCell('A');
+        l4 = { id, side: 'A', c: spawn.c, r: spawn.r, cargoTrain: [], frozen: false, frozenFrameKeys: null, role: 'chief4' };
+        leaders.push(l4);
+        chiefdomLeaderId = id;
+        controlledLeaderAId = id;
+        phaseNotice = 'Поезд 4 на карте: пустой состав. Набирай 3/2/1 в поселениях.';
+        return l4;
+      }
+      function addStage2Player4() {
+        ensureChief4TrainExists();
+      }
+      function startStage2Inline() {
+        // Этап 2: карта готова, игрок 4 появляется только по клавише 4.
+        chiefdomMode = true;
+        chiefdomVisitedSettlements = new Set();
+        chiefdomLooseTokens = [];
+        chiefdomCapitalTokens = [];
+        chiefdomTempleFenceInner = null;
+        chiefdomTrainMoveSerial = 0;
+        chiefdomLeaderId = null;
+        epochFinished = false;
+        stageEndShown = false;
+        if (stageEndModal) stageEndModal.classList.remove('open');
+        phaseNotice = 'Этап вождества: нажми клавишу 4, чтобы появился игрок 4.';
+      }
+      function tryRestoreStage2State() {
+        try {
+          const raw = sessionStorage.getItem(STAGE2_STATE_STORAGE_KEY);
+          if (!raw) return false;
+          sessionStorage.removeItem(STAGE2_STATE_STORAGE_KEY);
+          const state = JSON.parse(raw);
+          return applyGameStateSnapshot(state);
+        } catch (_) {
+          return false;
+        }
+      }
+      function quickSaveToLocalStorage(){
+        try{
+          const snap=getGameStateSnapshot();
+          localStorage.setItem(QUICK_SAVE_KEY, JSON.stringify(snap));
+          if(saveHint) saveHint.textContent='Сохранено';
+          setTimeout(()=>{ if(saveHint) saveHint.textContent=''; }, 1200);
+        }catch(_e){}
+      }
+      function quickLoadFromLocalStorage(){
+        try{
+          const raw=localStorage.getItem(QUICK_SAVE_KEY);
+          if(!raw) { if(saveHint) saveHint.textContent='Нет сохранения'; setTimeout(()=>{ if(saveHint) saveHint.textContent=''; }, 1200); return; }
+          const snap=JSON.parse(raw);
+          if(applyGameStateSnapshot(snap)){
+            if(saveHint) saveHint.textContent='Загружено';
+            setTimeout(()=>{ if(saveHint) saveHint.textContent=''; }, 1200);
+            draw();
+          }
+        }catch(_e){}
+      }
+      function saveFieldToFile(){
+        try{
+          const snap=getGameStateSnapshot();
+          const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+          downloadJsonSnapshot(snap, 'agrarian_epoch_field_' + stamp + '.json');
+          quickSaveToLocalStorage();
+        }catch(_e){}
+      }
+      function loadFieldFromFile(){
+        const inp=document.createElement('input');
+        inp.type='file';
+        inp.accept='application/json,.json';
+        inp.onchange=()=>{
+          const f=inp.files && inp.files[0];
+          if(!f) return;
+          const fr=new FileReader();
+          fr.onload=()=>{
+            try{
+              const snap=JSON.parse(String(fr.result||''));
+              if(applyGameStateSnapshot(snap)){
+                quickSaveToLocalStorage();
+                if(saveHint) saveHint.textContent='Загружено из файла';
+                setTimeout(()=>{ if(saveHint) saveHint.textContent=''; }, 1400);
+                draw();
+              }
+            }catch(_e){}
+          };
+          fr.readAsText(f);
+        };
+        inp.click();
       }
       function saveStateForDemoToggle() {
         try {
@@ -1014,7 +3162,11 @@
       function randomMoveTwo(train) {
         const head = train.segs[0];
         const opts = getNeighbors(head.c, head.r).filter(n => inBoard(n.c, n.r) && !isWaterCell(n.c, n.r));
-        const free = opts.filter(n => !leaders.some(l => l.c === n.c && l.r === n.r));
+        const free = opts.filter(
+          (n) =>
+            !leaders.some((l) => !l.hideTokensForChiefdom && l.c === n.c && l.r === n.r) &&
+            !bouncingThrees.some((b) => b.c === n.c && b.r === n.r)
+        );
         if (!free.length) return;
         const allowed = free.filter(n => !blockedBySettlements.has(key(n.c, n.r)));
         if (!allowed.length) return;
@@ -1023,9 +3175,18 @@
         if (train.segs.length === 1) maybeAttachOne(train);
       }
       function tickTwos() {
+        // В режиме поезда 4 «двойки» не должны уходить случайным ходом с клетки, куда подъехал поезд — иначе подцеп срывается.
+        if (chiefdomMode) {
+          for (const t of twos) {
+            if (t.keyFreeWander) randomMoveTwo(t);
+          }
+          return;
+        }
         for (const t of twos) randomMoveTwo(t);
       }
       function catchByLeaders() {
+        // Иначе лидер «3» с коротким составом забирает «2» по старым правилам раньше, чем поезд 4 успеет её подцепить.
+        if (chiefdomMode) return;
         for (const l of leaders) {
           if (l.frozen) continue;
           if (l.cargoTrain && l.cargoTrain.length >= 4) continue; // 3 + 4 = длина 5 (максимум)
@@ -1074,21 +3235,22 @@
       }
       /** Клетка «у воды» для стороны: своя река или своё озеро (на воде или в соседе с водой). */
       function isNearRiverOrLake(side, c, r) {
-        const rivers = (!ENABLE_SIDE_B && side === 'A')
-          ? [terrainState.leftRiver, terrainState.rightRiver]
-          : [side === 'A' ? terrainState.leftRiver : terrainState.rightRiver];
-        const rk = new Set();
-        for (const river of rivers) {
-          for (const p of river) rk.add(key(p.c, p.r));
+        const waterSets = [];
+        if (!ENABLE_SIDE_B && side === 'A') {
+          waterSets.push(terrainState.riverCells, terrainState.leftLakeCells, terrainState.rightLakeCells);
+        } else if (side === 'A') {
+          waterSets.push(new Set(terrainState.leftRiver.map((p) => key(p.c, p.r))), terrainState.leftLakeCells);
+        } else {
+          waterSets.push(new Set(terrainState.rightRiver.map((p) => key(p.c, p.r))), terrainState.rightLakeCells);
         }
-        if (rk.has(key(c, r))) return true;
-        if (getNeighbors(c, r).some(n => rk.has(key(n.c, n.r)))) return true;
-        const lakeSets = (!ENABLE_SIDE_B && side === 'A')
-          ? [terrainState.leftLakeCells, terrainState.rightLakeCells]
-          : [side === 'A' ? terrainState.leftLakeCells : terrainState.rightLakeCells];
-        for (const lakeCells of lakeSets) {
-          if (lakeCells.has(key(c, r))) return true;
-          if (getNeighbors(c, r).some(n => lakeCells.has(key(n.c, n.r)))) return true;
+        // Соседство считаем по hexDistance: общая грань (distance=1) всегда считается «у воды».
+        for (const water of waterSets) {
+          if (!water || !water.size) continue;
+          if (water.has(key(c, r))) return true;
+          for (const wk of water) {
+            const w = parseKey(wk);
+            if (hexDistance(c, r, w.c, w.r) <= 1) return true;
+          }
         }
         return false;
       }
@@ -1107,30 +3269,41 @@
         }
         return bestIdx;
       }
-
-      function claimRiverBankTerritory(l) {
-        if (epochFinished) return;
-        if (l.frozen) return;
-        if (!l.cargoTrain || !l.cargoTrain.length) return;
-        const chain = [{ c: l.c, r: l.r, level: 3 }, ...l.cargoTrain.map(s => ({ c: s.c, r: s.r, level: s.level }))];
-        if (chain.length !== 5) return;
-        if (new Set(chain.map((s) => key(s.c, s.r))).size !== 5) return; // при наложении фишек поселок не создаем
-
+      function evaluateSettlementChain(l) {
+        const fail = (reason, extra) => Object.assign({ ok: false, reason }, extra || {});
+        if (epochFinished) return fail('epochFinished');
+        if (!l) return fail('no leader');
+        if (l.frozen) return fail('leader frozen');
+        const cargo = Array.isArray(l.cargoTrain) ? l.cargoTrain : [];
+        const chain = [{ c: l.c, r: l.r, level: 3 }, ...cargo.map((s) => ({ c: s.c, r: s.r, level: s.level }))];
+        const chainLen = chain.length;
+        const uniq = new Set(chain.map((s) => key(s.c, s.r))).size;
         let nearCount = 0;
         for (const s of chain) {
           if (isNearRiverOrLake(l.side, s.c, s.r)) nearCount++;
         }
-        if (nearCount !== chain.length) return; // весь поезд вдоль реки или озера
-
-        // Цепочка должна начинаться с 3 и содержать 22 и 11 в любом порядке.
-        if (chain[0].level !== 3) return;
+        const head2 = chainLen > 1 && Number(chain[1].level) === 2;
         let twosCount = 0;
         let onesCount = 0;
         for (let i = 1; i < chain.length; i++) {
-          if (chain[i].level === 2) twosCount++;
-          else if (chain[i].level === 1) onesCount++;
+          const lv = Number(chain[i].level);
+          if (lv === 2) twosCount++;
+          else if (lv === 1) onesCount++;
         }
-        if (twosCount !== 2 || onesCount !== 2) return;
+        const dbg = { chain, chainLen, uniq, nearCount, head2, twosCount, onesCount };
+        if (chainLen !== 5) return fail('chainLen != 5', dbg);
+        if (uniq !== 5) return fail('overlap in chain', dbg);
+        if (nearCount !== chainLen) return fail('not all cells near water', dbg);
+        if (Number(chain[0].level) !== 3) return fail('head != 3', dbg);
+        if (!head2) return fail('second car != 2', dbg);
+        if (twosCount !== 2 || onesCount !== 2) return fail('tail levels must be 2,2,1,1', dbg);
+        return Object.assign({ ok: true, reason: 'ok' }, dbg);
+      }
+
+      function claimRiverBankTerritory(l) {
+        const evalChain = evaluateSettlementChain(l);
+        if (!evalChain.ok) return;
+        const chain = evalChain.chain;
 
         // Поезд вдоль реки/озера: обводим только клетки самого состава.
         for (const s of chain) {
@@ -1142,11 +3315,8 @@
         // чтобы новые фишки не рождались на его территории.
         const blockedArea = dilateCellKeysOnLand(l.frozenFrameKeys);
         for (const k of blockedArea) blockedBySettlements.add(k);
-        if (!hasPotentialSettlementSpace(l.side)) {
-          epochFinished = true;
-          phaseNotice = 'Эпоха завершена: вся береговая линия застроена. Ходов игрока: ' + playerMoves;
-          return;
-        }
+        // Чекпойнт: фиксируем консистентную карту сразу после создания поселения.
+        quickSaveToLocalStorage();
         spawnSideUnits(l.side);
       }
 
@@ -1156,6 +3326,7 @@
         const l = leaders.find(x => x.id === leaderId);
         if (!l) return false;
         if (l.frozen) return false;
+        if (chiefTrainAwaitingAck(l)) return false;
         const d = (l.c & 1) ? dirsOdd[dirIdx] : dirsEven[dirIdx];
         const nc = l.c + d.dc;
         const nr = l.r + d.dr;
@@ -1172,14 +3343,22 @@
             l.cargoTrain[i] = { c: prevCargo[i - 1].c, r: prevCargo[i - 1].r, level: prevCargo[i].level };
           }
         }
-        maybeAttachOneToLeaderCargo(l);
-        catchByLeaders();
-        claimRiverBankTerritory(l);
-        deliverLeaders();
+        if (isChiefTrainRole(l.role)) {
+          chiefdomTrainMoveSerial++;
+          updateChiefdomAfterMove(l);
+        } else {
+          maybeAttachOneToLeaderCargo(l);
+          catchByLeaders();
+          claimRiverBankTerritory(l);
+          deliverLeaders();
+        }
+        // Автосейв после каждого хода.
+        quickSaveToLocalStorage();
         return true;
       }
       function legalLeaderMoves(l) {
         if (!l || l.frozen) return [];
+        if (chiefTrainAwaitingAck(l)) return [];
         const dirsEven = [{ dc: 1, dr: 0 }, { dc: 1, dr: -1 }, { dc: 0, dr: -1 }, { dc: -1, dr: -1 }, { dc: -1, dr: 0 }, { dc: 0, dr: 1 }];
         const dirsOdd = [{ dc: 1, dr: 1 }, { dc: 1, dr: 0 }, { dc: 0, dr: -1 }, { dc: -1, dr: 0 }, { dc: -1, dr: 1 }, { dc: 0, dr: 1 }];
         const dirs = (l.c & 1) ? dirsOdd : dirsEven;
@@ -1259,32 +3438,226 @@
         const moved = applyLeaderMoveById(id, dir);
         if (moved) playerMoves++;
       }
+      function ensureEpochControlAlive() {
+        if (chiefdomMode || epochFinished) return;
+        const movableA = leaders.some((l) => l.side === 'A' && !l.frozen && hasLegalLeaderStep(l));
+        if (movableA) return;
+        if (hasPotentialSettlementSpace('A')) {
+          spawnSideUnits('A');
+          ensureActiveControlledLeader('A');
+          phaseNotice = 'Добавлен новый ходовой набор 3-2-2-1-1.';
+          return;
+        }
+        maybeFinishEpochIfNoSpace();
+      }
+      function recoverControlNow() {
+        if (!chiefdomMode) ensureEpochControlAlive();
+        let id = ensureActiveControlledLeader('A');
+        if (!id && chiefdomMode) {
+          setControlledLeaderA('4');
+          id = ensureActiveControlledLeader('A');
+        }
+        if (id) {
+          const l = leaders.find((x) => x.id === id);
+          const who = l && isChiefTrainRole(l.role) ? chiefTrainDisplayDigit(l.role) : '3';
+          phaseNotice = 'Управление восстановлено: игрок ' + who + '.';
+        } else if (!epochFinished) {
+          phaseNotice = 'Не удалось вернуть управление: нет доступных ходов.';
+        }
+        draw();
+      }
       function ensureActiveControlledLeader(side) {
-        if (epochFinished) return null;
+        if (epochFinished && !chiefdomMode) epochFinished = false;
+        if (side === 'A' && chiefdomMode) {
+          const chiefs = leaders.filter((l) => l.side === 'A' && !l.frozen && isChiefTrainRole(l.role));
+          const chief =
+            (controlledLeaderAId && chiefs.find((l) => l.id === controlledLeaderAId)) ||
+            (chiefdomLeaderId && chiefs.find((l) => l.id === chiefdomLeaderId)) ||
+            chiefs.find((l) => l.role === 'chief4') ||
+            chiefs.find((l) => l.role === 'chief5') ||
+            chiefs[chiefs.length - 1] ||
+            null;
+          if (chief && !chief.frozen) {
+            if (!chiefTrainAwaitingAck(chief) && !hasLegalLeaderStep(chief)) {
+              const rescue = pickMovableSpawnCell('A');
+              chief.c = rescue.c;
+              chief.r = rescue.r;
+              phaseNotice = 'Поезд ' + chiefTrainDisplayDigit(chief.role) + ' переставлен: ход восстановлен.';
+              quickSaveToLocalStorage();
+            }
+            controlledLeaderAId = chief.id;
+            return chief.id;
+          }
+        }
         const currentId = side === 'A' ? controlledLeaderAId : controlledLeaderId;
         const current = leaders.find((x) => x.id === currentId);
-        if (current && !current.frozen) return current.id;
+        if (current && !current.frozen && hasLegalLeaderStep(current)) return current.id;
         // Берем последнего созданного незамороженного лидера своей стороны.
         for (let i = leaders.length - 1; i >= 0; i--) {
           const l = leaders[i];
-          if (l.side === side && !l.frozen) {
+          if (l.side === side && !l.frozen && hasLegalLeaderStep(l)) {
             if (side === 'A') controlledLeaderAId = l.id;
             else controlledLeaderId = l.id;
             return l.id;
           }
         }
         // Если активного лидера не осталось, создаем новый набор для стороны.
+        if (side === 'A' && !hasPotentialSettlementSpace('A')) {
+          maybeFinishEpochIfNoSpace();
+          return null;
+        }
         spawnSideUnits(side);
         const fallbackId = side === 'A' ? controlledLeaderAId : controlledLeaderId;
         const fallback = leaders.find((x) => x.id === fallbackId);
-        if (fallback && !fallback.frozen) return fallback.id;
+        if (fallback && !fallback.frozen && hasLegalLeaderStep(fallback)) return fallback.id;
+        // Если даже после спавна нет ни одного хода, проверяем условие завершения эпохи.
+        maybeFinishEpochIfNoSpace();
+        if (!chiefdomMode && side === 'A') {
+          phaseNotice = 'Ход невозможен: новых поселений больше не собрать.';
+        }
         return null;
+      }
+
+      function isDigit4Key(e) {
+        if (!e) return false;
+        const code = e.code;
+        if (code === 'Digit4' || code === 'Numpad4') return true;
+        const k = (e.key || '').toLowerCase();
+        if (k === '4') return true;
+        // Старые браузеры / редкие раскладки: физическая «4» часто даёт keyCode 52.
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && typeof e.keyCode === 'number' && e.keyCode === 52) return true;
+        return false;
       }
 
       function onKey(e) {
         if (DEMO_MODE) return;
         const k = e.key.toLowerCase();
         const code = e.code;
+        if (code === 'Enter' || code === 'NumpadEnter') {
+          if (chiefdomMode) {
+            const chief =
+              (chiefdomLeaderId && leaders.find((l) => l.id === chiefdomLeaderId && isChiefTrainRole(l.role))) ||
+              newestChiefTrainLeaderA() ||
+              leaders.find((l) => l.role === 'chief4' && l.side === 'A');
+            if (chief && chief.chiefdomAwaitMoveAck) {
+              e.preventDefault();
+              chief.chiefdomAwaitMoveAck = false;
+              phaseNotice = 'Можно снова двигать поезд 4.';
+              quickSaveToLocalStorage();
+              draw();
+              return;
+            }
+          }
+        }
+        // Быстрое сохранение/загрузка поля
+        if((e.ctrlKey||e.metaKey) && (k==='s' || code==='KeyS')){
+          e.preventDefault();
+          saveFieldToFile();
+          return;
+        }
+        if((e.ctrlKey||e.metaKey) && (k==='o' || code==='KeyO')){
+          e.preventDefault();
+          loadFieldFromFile();
+          return;
+        }
+        const microDir = readHexDirFromKeyEvent(e);
+        if (microDir != null && tryHandleMicroPortableKey(e, microDir)) {
+          e.preventDefault();
+          draw();
+          return;
+        }
+        if (code === 'Space' || k === ' ') {
+          if (chiefdomMode) {
+            e.preventDefault();
+            if (CHIEFDOM_ENABLE_RULES_1_9 && spawnChiefdomCorridorChipsOnSpace()) {
+              refreshChiefdomCarryStateForAllChiefTrains();
+              quickSaveToLocalStorage();
+            }
+            draw();
+            return;
+          }
+        }
+        // В режиме вождества: 1/2/3 на мостик — в отмеченной клетке; Shift+3 — переключение на игрока 3 (не спавн «шара»).
+        const spawnCell = chiefdomMarkedSpawnCell();
+        const spawnLvl = digit123FromEvent(e);
+        if (chiefdomMode && CHIEFDOM_ENABLE_RULES_1_9 && spawnCell && spawnLvl != null && !e.shiftKey) {
+          e.preventDefault();
+          trySpawnBridgeChip(spawnCell, spawnLvl);
+          refreshChiefdomCarryStateForAllChiefTrains();
+          quickSaveToLocalStorage();
+          draw();
+          return;
+        }
+        if ((k === '3' || code === 'Digit3') && chiefdomMode && e.shiftKey) {
+          e.preventDefault();
+          if (!setControlledLeaderA('3')) phaseNotice = 'Игрок 3 недоступен для управления.';
+          draw();
+          return;
+        }
+        const kbdLvl = digit123FromEvent(e);
+        if (
+          kbdLvl != null &&
+          !e.ctrlKey &&
+          !e.metaKey &&
+          !e.altKey &&
+          !(chiefdomMode && CHIEFDOM_ENABLE_RULES_1_9 && chiefdomMarkedSpawnCell() && !e.shiftKey)
+        ) {
+          if (spawnFreeRankTokenFromKeyboard(kbdLvl)) {
+            e.preventDefault();
+            quickSaveToLocalStorage();
+            draw();
+            return;
+          }
+        }
+        // Клавиша 4: первый раз — поезд 4, повторно можно выпустить еще один "4" на другом берегу.
+        if (isDigit4Key(e)) {
+          e.preventDefault();
+          chiefdomMode = true;
+          epochFinished = false;
+          stageEndShown = false;
+          hideStageEndModal();
+          const c4 = leaders.find((l) => l.role === 'chief4' && l.side === 'A' && !l.frozen);
+          const c5 = leaders.find((l) => l.role === 'chief5' && l.side === 'A' && !l.frozen);
+          if (!c4) {
+            ensureChief4TrainExists();
+            setControlledLeaderA('4');
+            quickSaveToLocalStorage();
+            draw();
+            return;
+          }
+          if (!c5) {
+            const spawn = pickMovableSpawnCell('A');
+            const id = 'A5-chiefdom';
+            const l5 = {
+              id,
+              side: 'A',
+              c: spawn.c,
+              r: spawn.r,
+              cargoTrain: [],
+              frozen: false,
+              frozenFrameKeys: null,
+              role: 'chief5'
+            };
+            leaders.push(l5);
+            chiefdomLeaderId = id;
+            controlledLeaderAId = id;
+            phaseNotice = 'Выпущен еще один поезд 4: пустой состав. Управление передано новому поезду.';
+            quickSaveToLocalStorage();
+            draw();
+            return;
+          }
+          setControlledLeaderA('4');
+          phaseNotice =
+            'Два поезда 4: у каждого своя голова для подцепа. Клавиши — у выбранного состава; двойной клик по голове — сменить.';
+          quickSaveToLocalStorage();
+          draw();
+          return;
+        }
+        if(k==='r' || code==='KeyR'){
+          e.preventDefault();
+          recoverControlNow();
+          return;
+        }
         const mapLeftByKey = { x: 0, d: 0, e: 1, w: 2, a: 3, z: 4, s: 5 };
         const mapRightByKey = { m: 0, i: 1, u: 2, h: 3, n: 4, k: 5 };
         const mapLeftByCode = { KeyX: 0, KeyD: 0, KeyE: 1, KeyW: 2, KeyA: 3, KeyZ: 4, KeyS: 5 };
@@ -1293,10 +3666,16 @@
         const rightDir = mapRightByCode[code] != null ? mapRightByCode[code] : mapRightByKey[k];
         if (leftDir != null) {
           e.preventDefault();
-          const id = ensureActiveControlledLeader('A');
+          let id = ensureActiveControlledLeader('A');
+          if (!id && chiefdomMode) {
+            setControlledLeaderA('4');
+            id = ensureActiveControlledLeader('A');
+          }
           if (id) {
             const moved = applyLeaderMoveById(id, leftDir);
             if (moved) playerMoves++;
+            else if (chiefdomMode) phaseNotice = 'Ход невозможен: игрок 4 автоматически переустанавливается на ходовую точку.';
+            else phaseNotice = 'Ход невозможен: выбери другое направление.';
           }
           draw();
         } else if (ENABLE_SIDE_B && rightDir != null) {
@@ -1343,6 +3722,41 @@
           ctx.arc(p.x + rr * 0.75, p.y - rr * 0.75, 5, 0, Math.PI * 2);
           ctx.fill();
         }
+      }
+      /** Жёлтая отметка головы поезда 4/5 — рисуется после пульса управления, иначе кольцо закрывает точку. */
+      function drawChiefTrainHeadBadge(c, r) {
+        const p = hexCenter(c, r);
+        const rr = Math.max(8, HEX_W * 0.34);
+        const dotR = Math.max(6.5, HEX_W * 0.12);
+        const cx = p.x + rr * 0.68;
+        const cy = p.y - rr * 0.68;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, dotR + 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(15,23,42,0.5)';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = '#facc15';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(120,53,15,0.95)';
+        ctx.lineWidth = Math.max(1.25, HEX_W * 0.04);
+        ctx.stroke();
+        ctx.restore();
+      }
+      function drawControlledLeaderBlink(c, r, side) {
+        const p = hexCenter(c, r);
+        const t = (Date.now() % 1000) / 1000;
+        const pulse = 0.35 + 0.65 * Math.abs(Math.sin(t * Math.PI * 2));
+        const base = side === 'B' ? '245,158,11' : '56,189,248';
+        const rr = Math.max(12, HEX_W * 0.48) + pulse * Math.max(2, HEX_W * 0.1);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(' + base + ',' + (0.45 + 0.45 * pulse).toFixed(3) + ')';
+        ctx.lineWidth = Math.max(2.5, HEX_W * 0.14);
+        ctx.stroke();
+        ctx.restore();
       }
 
       function computeTerrain() {
@@ -1440,6 +3854,20 @@
         }
         ctx.restore();
       }
+      function settlementColorByLeader(leader, alpha, outer) {
+        const side = (leader && leader.side) || 'A';
+        const frozen = leaders
+          .filter((l) => l.side === side && l.frozen && l.frozenFrameKeys && l.frozenFrameKeys.size)
+          .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        let idx = frozen.findIndex((l) => l.id === (leader && leader.id));
+        if (idx < 0) idx = 0;
+        const base = side === 'B' ? 24 : 146;
+        // Золотой угол: соседние индексы дают хорошо различимые оттенки.
+        const hue = (base + idx * 137.50776405003785) % 360;
+        const sat = outer ? 82 : 76;
+        const lit = outer ? 64 : 52;
+        return 'hsla(' + hue + ',' + sat + '%,' + lit + '%,' + alpha + ')';
+      }
 
       function dilateCellKeysOnLand(cellKeys) {
         const out = new Set(cellKeys);
@@ -1454,19 +3882,16 @@
       }
 
       function drawTerritoryBorders(side) {
-        const keys = new Set();
         for (const l of leaders) {
           if (l.side !== side) continue;
           if (!l.frozen || !l.frozenFrameKeys || !l.frozenFrameKeys.size) continue;
-          for (const k of l.frozenFrameKeys) keys.add(k);
+          const segCount = segmentCountsForCellKeys(l.frozenFrameKeys);
+          strokeHexOutlineSegments(
+            segCount,
+            settlementColorByLeader(l, 0.96, false),
+            Math.max(3, SIZE * 0.34)
+          );
         }
-        if (!keys.size) return;
-        const segCount = segmentCountsForCellKeys(keys);
-        strokeHexOutlineSegments(
-          segCount,
-          side === 'A' ? 'rgba(34,197,94,0.95)' : 'rgba(245,158,11,0.95)',
-          Math.max(3, SIZE * 0.34)
-        );
       }
 
       /** Вторая рамка снаружи (как на картинке): контур расширенного на кольцо соседей участка 32211. */
@@ -1476,9 +3901,41 @@
         const segCount = segmentCountsForCellKeys(dilated);
         strokeHexOutlineSegments(
           segCount,
-          l.side === 'A' ? 'rgba(52,211,153,0.88)' : 'rgba(253,224,71,0.88)',
+          settlementColorByLeader(l, 0.88, true),
           Math.max(4.2, SIZE * 0.44)
         );
+      }
+      /** Храм: двойная ограда как у поселений — внутренняя по 11 клеткам «восьмёрки», внешняя по dilateCellKeysOnLand (как drawTerritoryBorders + drawFrozenSecondFrame). */
+      function drawChiefdomCapitalFrames() {
+        const drawFenceLikeSettlement = (innerKeys) => {
+          if (!innerKeys || !innerKeys.size) return;
+          const pseudo = { side: 'A', frozen: true, frozenFrameKeys: innerKeys, id: '__chiefdom_temple_fence__' };
+          const innerSeg = segmentCountsForCellKeys(innerKeys);
+          strokeHexOutlineSegments(
+            innerSeg,
+            settlementColorByLeader(pseudo, 0.96, false),
+            Math.max(3, SIZE * 0.34)
+          );
+          const dilated = dilateCellKeysOnLand(innerKeys);
+          const outerSeg = segmentCountsForCellKeys(dilated);
+          strokeHexOutlineSegments(
+            outerSeg,
+            settlementColorByLeader(pseudo, 0.88, true),
+            Math.max(4.2, SIZE * 0.44)
+          );
+        };
+        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
+          drawFenceLikeSettlement(chiefdomTempleFenceInner);
+          return;
+        }
+        if (!chiefdomCapitalTokens || !chiefdomCapitalTokens.length) return;
+        const groups = new Map();
+        for (const t of chiefdomCapitalTokens) {
+          const gid = t && t.siteId ? String(t.siteId) : 'legacy';
+          if (!groups.has(gid)) groups.set(gid, new Set());
+          groups.get(gid).add(key(t.c, t.r));
+        }
+        for (const keys of groups.values()) drawFenceLikeSettlement(keys);
       }
 
       function draw() {
@@ -1525,34 +3982,89 @@
         drawTerritoryBorders('A');
         if (ENABLE_SIDE_B) drawTerritoryBorders('B');
         for (const l of leaders) drawFrozenSecondFrame(l);
+        drawChiefdomCapitalFrames();
+        if (chiefdomMode && CHIEFDOM_ENABLE_RULES_1_9) drawChiefdomCorridorBetween4AndNearestSettlement();
 
         for (const o of ones) drawToken(o.c, o.r, 1, 'N', false, false);
         for (const t of twos) {
           for (let i = t.segs.length - 1; i >= 1; i--) drawToken(t.segs[i].c, t.segs[i].r, 1, t.side, false, false);
           drawToken(t.segs[0].c, t.segs[0].r, 2, t.side, false, false);
         }
+        for (const t of chiefdomLooseTokens) {
+          drawToken(t.c, t.r, t.level, 'A', false, false, String(t.level));
+        }
+        for (const b of bouncingThrees) {
+          drawToken(b.c, b.r, 3, 'A', false, false, '3');
+        }
+        for (const t of chiefdomCapitalTokens) {
+          drawToken(t.c, t.r, t.level, 'B', false, false, String(t.level));
+        }
         for (const l of leaders) {
+          if (l.hideTokensForChiefdom) continue;
           if (l.cargoTrain && l.cargoTrain.length) {
             for (const s of l.cargoTrain) drawToken(s.c, s.r, s.level, l.side, false, false);
           }
-          drawToken(l.c, l.r, 3, l.side, true, l.cargoTrain && l.cargoTrain.length > 0, '3');
+          const label = isChiefTrainRole(l.role) ? chiefTrainDisplayDigit(l.role) : '3';
+          const isChief = isChiefTrainRole(l.role);
+          const cargoDot = !isChief && l.cargoTrain && l.cargoTrain.length > 0;
+          drawToken(l.c, l.r, 3, l.side, true, cargoDot, label);
+          const isControlled = (l.side === 'A' && l.id === controlledLeaderAId) || (l.side === 'B' && l.id === controlledLeaderId);
+          if (isControlled) drawControlledLeaderBlink(l.c, l.r, l.side);
+          if (isChief) drawChiefTrainHeadBadge(l.c, l.r);
         }
         drawOverlapMarkers();
+        validatePickedMicroToken();
+        drawPickedMicroHud();
 
         hud.textContent =
           (DEMO_MODE ? 'ДЕМО: бот играет за A | наблюдение | ' : '3: WEASDZX (J - пауза) | ') +
           (STAGE2_DEBUG_MODE ? 'Отладка Вождества | ' : '') +
           '3 + 2 2 1 1 | В реку и озеро ходить нельзя | Ходы ' + playerMoves + ' | Счёт A ' + scoreA +
           (phaseNotice ? ' | ' + phaseNotice : '');
+        const controlledA = leaders.find((x) => x.id === controlledLeaderAId);
+        if (controlledA && controlledA.side === 'A' && !isChiefTrainRole(controlledA.role)) {
+          const e = evaluateSettlementChain(controlledA);
+          hud.textContent +=
+            ' | chiefdom=' +
+            (chiefdomMode ? 'yes' : 'no') +
+            ' epochFinished=' +
+            (epochFinished ? 'yes' : 'no') +
+            ' | id=' +
+            controlledA.id +
+            ' role=' +
+            (controlledA.role || '3') +
+            ' frozen=' +
+            (controlledA.frozen ? 'yes' : 'no') +
+            ' | chain=' +
+            e.chainLen +
+            ' uniq=' +
+            e.uniq +
+            ' near=' +
+            e.nearCount +
+            ' head2=' +
+            (e.head2 ? 'yes' : 'no') +
+            ' twos=' +
+            e.twosCount +
+            ' ones=' +
+            e.onesCount +
+            ' reason=' +
+            e.reason;
+        }
         if (epochFinished) showStageEndModal();
       }
 
       function loop(now) {
         if (now - lastTick >= TICK_MS) {
+          validatePickedMicroToken();
+          tickMicroManagedIdle();
           tickTwos();
+          tickBouncingThrees();
+          tickPickedMicroFreeMovement();
+          if (chiefdomMode) refreshChiefdomCarryStateForAllChiefTrains();
           runDemoBotStep();
           catchByLeaders();
           deliverLeaders();
+          ensureEpochControlAlive();
           maybeFinishEpochIfNoSpace();
           lastTick = now;
         }
@@ -1561,8 +4073,18 @@
       }
 
       function reset() {
+        // Не пересоздаём игру на resize (например, при F12/DevTools),
+        // иначе поле неожиданно "сбрасывается".
         draw();
+        draw();
+      }
+      function resetFieldByButton() {
+        if (!confirm('Сбросить поле и начать заново?')) return;
+        try { localStorage.removeItem(QUICK_SAVE_KEY); } catch (_) {}
+        try { sessionStorage.removeItem(DEMO_STATE_STORAGE_KEY); } catch (_) {}
+        try { sessionStorage.removeItem(STAGE2_STATE_STORAGE_KEY); } catch (_) {}
         initGame();
+        hideStageEndModal();
         draw();
       }
       function refreshRotateLock() {
@@ -1581,7 +4103,25 @@
         rulesModal.classList.remove('open');
       }
 
-      window.addEventListener('keydown', onKey);
+      // capture: true — чтобы срабатывало даже без фокуса на canvas и при NumPad.
+      document.addEventListener('keydown', onKey, { capture: true });
+      canvas.addEventListener('click', (e) => {
+        try {
+          canvas.focus({ preventScroll: true });
+        } catch (_) {
+          canvas.focus();
+        }
+        pickMicroTokenAtEvent(e);
+      });
+      canvas.addEventListener('dblclick', (e) => {
+        if (DEMO_MODE) return;
+        e.preventDefault();
+        transferControlToLeaderByDoubleClick(e);
+      });
+      canvas.addEventListener('contextmenu', (e) => {
+        if (DEMO_MODE) return;
+        if (destroyChiefTrainByRightClick(e)) e.preventDefault();
+      });
       window.addEventListener('resize', reset);
       window.addEventListener('orientationchange', () => { refreshRotateLock(); draw(); });
       if (mobileControls) {
@@ -1595,11 +4135,19 @@
         });
       }
       if (rulesBtn) rulesBtn.addEventListener('click', () => showRules(false));
+      if (saveFieldBtn) saveFieldBtn.addEventListener('click', saveFieldToFile);
+      if (loadFieldBtn) loadFieldBtn.addEventListener('click', loadFieldFromFile);
+      if (resetFieldBtn) resetFieldBtn.addEventListener('click', resetFieldByButton);
+      if (recoverCtrlBtn) recoverCtrlBtn.addEventListener('click', recoverControlNow);
       if (rulesCloseBtn) rulesCloseBtn.addEventListener('click', hideRules);
       if (restartStageBtn) restartStageBtn.addEventListener('click', restartCurrentStage);
       if (nextStageBtn) {
-        nextStageBtn.addEventListener('click', () => {
+        nextStageBtn.addEventListener('click', (e) => {
+          e.preventDefault();
           try { sessionStorage.removeItem(DEMO_STATE_STORAGE_KEY); } catch (_) {}
+          saveStateForStage2AndDownload();
+          startStage2Inline();
+          draw();
         });
       }
       if (rulesModal) {
@@ -1608,8 +4156,10 @@
         });
       }
       initGame();
-      tryRestoreStateAfterDemoToggle();
-      if (STAGE2_DEBUG_MODE) seedStage2DebugState();
+      const restoredStage2 = tryRestoreStage2State();
+      const restoredDemo = !restoredStage2 && tryRestoreStateAfterDemoToggle();
+      if(!restoredStage2 && !restoredDemo) quickLoadFromLocalStorage();
+      if (STAGE2_DEBUG_MODE && !restoredStage2 && !restoredDemo) seedStage2DebugState();
       refreshRotateLock();
       try {
         if (screen.orientation && typeof screen.orientation.lock === 'function') {
