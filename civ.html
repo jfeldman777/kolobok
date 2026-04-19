@@ -421,8 +421,17 @@
       let chiefdomLooseTokens = []; // временные фишки 1/2/3, появляющиеся у поселений
       /** Клетки Храма: 11 гексов по chiefdomPatternCells («восьмёрка»); на карте — двойной забор (см. drawChiefdomCapitalFrames). */
       let chiefdomCapitalTokens = [];
-      /** Внутренний контур «восьмёрки» Храма (ключи c,r) — ограда как у поселений, без фишек на клетках. */
-      let chiefdomTempleFenceInner = null;
+      /** Участки Храма: у каждого свой контур из 11 клеток (Set ключей c,r); может быть несколько восьмёрок. */
+      let chiefdomTempleFenceSites = [];
+      function chiefdomTempleFenceSitesAllInnerKeys() {
+        const keys = new Set();
+        for (let si = 0; si < chiefdomTempleFenceSites.length; si++) {
+          const site = chiefdomTempleFenceSites[si];
+          if (!site || !site.size) continue;
+          for (const k of site) keys.add(k);
+        }
+        return keys;
+      }
       let chiefdomTrainMoveSerial = 0; // номер последнего реального хода игрока 4
       /** «Тройки» с клавиатуры: одна клетка, шаг по направлению dirIdx, отскок от края/воды/ограды/фишек. */
       let bouncingThrees = [];
@@ -804,10 +813,13 @@
         drawHex(p.x, p.y, 'rgba(168,85,247,0.28)', null, 0);
       }
       function chiefdomTempleOriginCell() {
-        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
-          const sorted = Array.from(chiefdomTempleFenceInner).sort();
-          const k0 = sorted[0];
-          if (k0) return parseKey(k0);
+        if (chiefdomTempleFenceSites.length) {
+          const site = chiefdomTempleFenceSites[0];
+          if (site && site.size) {
+            const sorted = Array.from(site).sort();
+            const k0 = sorted[0];
+            if (k0) return parseKey(k0);
+          }
         }
         if (Array.isArray(chiefdomCapitalTokens) && chiefdomCapitalTokens.length) {
           const c = chiefdomCapitalTokens[0];
@@ -827,9 +839,16 @@
         );
       }
       function chiefdomTempleOrigins() {
-        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
-          const o = chiefdomTempleOriginCell();
-          return o ? [o] : [];
+        if (chiefdomTempleFenceSites.length) {
+          const out = [];
+          for (let si = 0; si < chiefdomTempleFenceSites.length; si++) {
+            const site = chiefdomTempleFenceSites[si];
+            if (!site || !site.size) continue;
+            const sorted = Array.from(site).sort();
+            const k0 = sorted[0];
+            if (k0) out.push(parseKey(k0));
+          }
+          return out;
         }
         if (!Array.isArray(chiefdomCapitalTokens) || !chiefdomCapitalTokens.length) return [];
         const bySite = new Map();
@@ -919,8 +938,9 @@
       /** Клетки контура Храма (11 гексов «восьмёрки»): забор и/или старые фишки столицы. */
       function chiefdomTempleInnerCellKeys() {
         const keys = new Set();
-        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
-          for (const k of chiefdomTempleFenceInner) keys.add(k);
+        const fromFence = chiefdomTempleFenceSitesAllInnerKeys();
+        if (fromFence.size) {
+          for (const k of fromFence) keys.add(k);
           return keys;
         }
         if (!Array.isArray(chiefdomCapitalTokens)) return keys;
@@ -939,7 +959,7 @@
       /** Снять Храм и все поезда 4/5 (A) одним действием — связка «храм + четвёрка + состав». */
       function clearChiefdomTempleAndAllChiefTrains() {
         chiefdomCapitalTokens = [];
-        chiefdomTempleFenceInner = null;
+        chiefdomTempleFenceSites = [];
         leaders = leaders.filter((l) => !(l.side === 'A' && isChiefTrainRole(l.role)));
         chiefdomLeaderId = null;
         controlledLeaderAId = null;
@@ -2069,8 +2089,9 @@
       }
       function chiefdomTrainOverlapsExistingCapital(leader4) {
         if (!leader4) return false;
-        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
-          const hit = (c, r) => chiefdomTempleFenceInner.has(key(c, r));
+        const templeInner = chiefdomTempleFenceSitesAllInnerKeys();
+        if (templeInner.size) {
+          const hit = (c, r) => templeInner.has(key(c, r));
           if (hit(leader4.c, leader4.r)) return true;
           for (const s of leader4.cargoTrain || []) {
             if (hit(s.c, s.r)) return true;
@@ -2181,19 +2202,20 @@
             if (!patternKeys.has(nk)) outer.add(nk);
           }
         }
+        const otherTempleInners = chiefdomTempleFenceSitesAllInnerKeys();
         for (const nk of outer) {
           const p = parseKey(nk);
           // Граница поля от окна (board*) меняется в draw(); сосед вне поля не считаем «загрязнителем» кольца.
           if (!inBoard(p.c, p.r)) continue;
           if (isWaterCell(p.c, p.r)) return false;
           if (blockedBySettlements.has(nk)) return false;
+          if (otherTempleInners.has(nk) && !patternKeys.has(nk)) return false;
           if (isOccupiedExcludingChiefTrain(p.c, p.r, leader4)) return false;
         }
         return true;
       }
       function chiefdomTempleEmergenceReady(leader4) {
         if (!leader4 || !isChiefTrainRole(leader4.role)) return false;
-        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) return false;
         if (chiefdomTrainOverlapsExistingCapital(leader4)) return false;
         const patternKeys = chiefdomTempleFencePatternKeysFromTrain(leader4);
         if (!patternKeys) return false;
@@ -2204,7 +2226,7 @@
         if (!chiefdomTempleEmergenceReady(leader4)) return false;
         const patternKeys = chiefdomTempleFencePatternKeysFromTrain(leader4);
         if (!patternKeys) return false;
-        chiefdomTempleFenceInner = patternKeys;
+        chiefdomTempleFenceSites.push(new Set(patternKeys));
         chiefdomCapitalTokens = [];
         return true;
       }
@@ -2350,7 +2372,7 @@
         chiefdomVisitedSettlements = new Set();
         chiefdomLooseTokens = [];
         chiefdomCapitalTokens = [];
-        chiefdomTempleFenceInner = null;
+        chiefdomTempleFenceSites = [];
         chiefdomTrainMoveSerial = 0;
         chiefdomLeaderId = null;
         const existing4 = leaders.find((l) => l.side === 'A' && l.role === 'chief4');
@@ -2476,12 +2498,7 @@
         stageEndStats.textContent = 'Ходов: ' + playerMoves + ' | Счёт A: ' + scoreA;
       }
       function showStageEndModal() {
-        if (
-          chiefdomMode &&
-          !chiefdomCapitalTokens.length &&
-          !(chiefdomTempleFenceInner && chiefdomTempleFenceInner.size)
-        )
-          return;
+        if (chiefdomMode && !chiefdomCapitalTokens.length && !chiefdomTempleFenceSites.length) return;
         if (!stageEndModal || STAGE2_DEBUG_MODE || !epochFinished || stageEndShown) return;
         updateStageEndStats();
         stageEndModal.classList.add('open');
@@ -2634,7 +2651,7 @@
         chiefdomVisitedSettlements = new Set();
         chiefdomLooseTokens = [];
         chiefdomCapitalTokens = [];
-        chiefdomTempleFenceInner = null;
+        chiefdomTempleFenceSites = [];
         chiefdomTrainMoveSerial = 0;
         bouncingThrees = [];
         pickedMicroToken = null;
@@ -2814,7 +2831,7 @@
         chiefdomVisitedSettlements = new Set();
         chiefdomLooseTokens = [];
         chiefdomCapitalTokens = [];
-        chiefdomTempleFenceInner = null;
+        chiefdomTempleFenceSites = [];
         chiefdomTrainMoveSerial = 0;
         phaseNotice = 'ОТЛАДКА: старт Вождества. Нажми 4, чтобы появился игрок 4.';
       }
@@ -2907,10 +2924,7 @@
             collectibleAfterChiefMoveSerial: Number(t.collectibleAfterChiefMoveSerial) || 0
           })),
           chiefdomCapitalTokens: chiefdomCapitalTokens.map((t) => ({ c: t.c, r: t.r, level: t.level, siteId: t.siteId || null })),
-          chiefdomTempleFenceInner:
-            chiefdomTempleFenceInner && chiefdomTempleFenceInner.size
-              ? Array.from(chiefdomTempleFenceInner)
-              : [],
+          chiefdomTempleFenceSites: chiefdomTempleFenceSites.map((site) => Array.from(site)),
           chiefdomTrainMoveSerial
         };
       }
@@ -2970,10 +2984,14 @@
         chiefdomCapitalTokens = Array.isArray(state.chiefdomCapitalTokens)
           ? state.chiefdomCapitalTokens.map((t) => ({ c: t.c, r: t.r, level: t.level, siteId: t.siteId || null }))
           : [];
-        chiefdomTempleFenceInner =
-          Array.isArray(state.chiefdomTempleFenceInner) && state.chiefdomTempleFenceInner.length
-            ? new Set(state.chiefdomTempleFenceInner.map(String))
-            : null;
+        chiefdomTempleFenceSites = [];
+        if (Array.isArray(state.chiefdomTempleFenceSites) && state.chiefdomTempleFenceSites.length) {
+          chiefdomTempleFenceSites = state.chiefdomTempleFenceSites.map((arr) =>
+            new Set((arr || []).map(String))
+          );
+        } else if (Array.isArray(state.chiefdomTempleFenceInner) && state.chiefdomTempleFenceInner.length) {
+          chiefdomTempleFenceSites = [new Set(state.chiefdomTempleFenceInner.map(String))];
+        }
         chiefdomTrainMoveSerial = Number(state.chiefdomTrainMoveSerial) || 0;
         // Старые сохранения: «фантомы» превращаем в настоящие фишки.
         if (Array.isArray(state.chiefdomPhantomChips)) {
@@ -3039,7 +3057,7 @@
         chiefdomVisitedSettlements = new Set();
         chiefdomLooseTokens = [];
         chiefdomCapitalTokens = [];
-        chiefdomTempleFenceInner = null;
+        chiefdomTempleFenceSites = [];
         chiefdomTrainMoveSerial = 0;
         chiefdomLeaderId = null;
         epochFinished = false;
@@ -3907,9 +3925,14 @@
       }
       /** Храм: двойная ограда как у поселений — внутренняя по 11 клеткам «восьмёрки», внешняя по dilateCellKeysOnLand (как drawTerritoryBorders + drawFrozenSecondFrame). */
       function drawChiefdomCapitalFrames() {
-        const drawFenceLikeSettlement = (innerKeys) => {
+        const drawFenceLikeSettlement = (innerKeys, fenceIdx) => {
           if (!innerKeys || !innerKeys.size) return;
-          const pseudo = { side: 'A', frozen: true, frozenFrameKeys: innerKeys, id: '__chiefdom_temple_fence__' };
+          const pseudo = {
+            side: 'A',
+            frozen: true,
+            frozenFrameKeys: innerKeys,
+            id: '__chiefdom_temple_fence__' + (fenceIdx != null ? String(fenceIdx) : '')
+          };
           const innerSeg = segmentCountsForCellKeys(innerKeys);
           strokeHexOutlineSegments(
             innerSeg,
@@ -3924,8 +3947,10 @@
             Math.max(4.2, SIZE * 0.44)
           );
         };
-        if (chiefdomTempleFenceInner && chiefdomTempleFenceInner.size) {
-          drawFenceLikeSettlement(chiefdomTempleFenceInner);
+        if (chiefdomTempleFenceSites.length) {
+          for (let fi = 0; fi < chiefdomTempleFenceSites.length; fi++) {
+            drawFenceLikeSettlement(chiefdomTempleFenceSites[fi], fi);
+          }
           return;
         }
         if (!chiefdomCapitalTokens || !chiefdomCapitalTokens.length) return;
@@ -3935,7 +3960,11 @@
           if (!groups.has(gid)) groups.set(gid, new Set());
           groups.get(gid).add(key(t.c, t.r));
         }
-        for (const keys of groups.values()) drawFenceLikeSettlement(keys);
+        let gi = 0;
+        for (const keys of groups.values()) {
+          drawFenceLikeSettlement(keys, gi);
+          gi++;
+        }
       }
 
       function draw() {
